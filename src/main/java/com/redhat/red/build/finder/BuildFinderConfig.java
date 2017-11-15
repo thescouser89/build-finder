@@ -36,11 +36,15 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 
 import com.redhat.red.build.koji.model.xmlrpc.KojiChecksumType;
 import com.virtlink.commons.configuration2.jackson.JsonConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BuildFinderConfig {
     private static final String CONFIG_FILENAME = "config.json";
 
     private static final Map<String, Object> OPTIONS = new LinkedHashMap<>();
+
+    private final Logger logger = LoggerFactory.getLogger(BuildFinder.class);
 
     static
     {
@@ -83,6 +87,7 @@ public class BuildFinderConfig {
                     config.write(writer);
                 }
             }
+            logger.debug ("Using configuration {}", OPTIONS);
         } catch (ConfigurationException e) {
             e.printStackTrace();
         } catch (IOException e) {
