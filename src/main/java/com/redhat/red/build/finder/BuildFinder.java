@@ -15,34 +15,7 @@
  */
 package com.redhat.red.build.finder;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeSet;
-
 import ch.qos.logback.classic.Level;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.redhat.red.build.finder.report.GAVReport;
 import com.redhat.red.build.finder.report.HTMLReport;
 import com.redhat.red.build.finder.report.NVRReport;
@@ -58,6 +31,32 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiTagInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTaskInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTaskRequest;
 import com.redhat.red.build.koji.model.xmlrpc.messages.GetArchiveTypeRequest;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class BuildFinder {
     private static final String NAME = "koji-build-finder";
@@ -98,6 +97,8 @@ public class BuildFinder {
 
     private static KojiClientSession session;
 
+    private static String outputDir = "";
+
     private static Map<Integer, KojiBuild> findBuilds(Map<String, Collection<String>> checksumTable) {
         LOGGER.info("Ready to find checksums of type {}", checksumType);
 
@@ -108,7 +109,7 @@ public class BuildFinder {
 
         final long startTime = System.nanoTime();
 
-        Map<String, KojiArchiveType> types = null;
+        Map<String, KojiArchiveType> types;
         Set<String> extensionsToCheck = new TreeSet<>();
 
         try {
@@ -189,7 +190,7 @@ public class BuildFinder {
                 continue;
             }
 
-            List<KojiArchiveInfo> archives = null;
+            List<KojiArchiveInfo> archives;
 
             try {
                 LOGGER.info("Looking up archives for checksum {}", checksum);
@@ -406,6 +407,7 @@ public class BuildFinder {
         options.addOption(Option.builder().longOpt("krb-service").numberOfArgs(1).argName("service").required(false).desc("Set Kerberos client service.").build());
         options.addOption(Option.builder().longOpt("krb-principal").numberOfArgs(1).argName("principal").required(false).desc("Set Kerberos client principal.").build());
         options.addOption(Option.builder().longOpt("krb-password").numberOfArgs(1).argName("password").required(false).desc("Set Kerberos password.").build());
+        options.addOption(Option.builder("o").longOpt("output-directory").numberOfArgs(1).argName("outputDirectory").required(false).desc("Configure a base outputDir directory.").build());
 
         String[] unparsedArgs = null;
 
@@ -440,7 +442,7 @@ public class BuildFinder {
             checksumType = KojiChecksumType.valueOf(config.getString("checksum-type"));
 
             if (line.hasOption("checksum-type")) {
-                checksumType = KojiChecksumType.valueOf((String) line.getParsedOptionValue("checksum-type"));
+                checksumType = KojiChecksumType.valueOf(line.getOptionValue("checksum-type"));
                 LOGGER.info("Checksum type: {}", checksumType);
             }
 
@@ -461,40 +463,45 @@ public class BuildFinder {
             kojihubUrl = config.getString("koji-hub-url");
 
             if (line.hasOption("koji-hub-url")) {
-                kojihubUrl = (String) line.getParsedOptionValue("koji-hub-url");
+                kojihubUrl = line.getOptionValue("koji-hub-url");
                 LOGGER.info("Koji hub URL: {}", kojihubUrl);
             }
 
             kojiwebUrl = config.getString("koji-web-url");
 
             if (line.hasOption("koji-web-url")) {
-                kojiwebUrl = (String) line.getParsedOptionValue("koji-web-url");
+                kojiwebUrl = line.getOptionValue("koji-web-url");
                 LOGGER.info("Koji web URL: {}", kojiwebUrl);
             }
 
             if (line.hasOption("krb-ccache")) {
-                krbCCache = (String) line.getParsedOptionValue("krb-ccache");
+                krbCCache = line.getOptionValue("krb-ccache");
                 LOGGER.info("Kerberos ccache: {}", krbCCache);
             }
 
             if (line.hasOption("krb-keytab")) {
-                krbKeytab = (String) line.getParsedOptionValue("krb-keytab");
+                krbKeytab = line.getOptionValue("krb-keytab");
                 LOGGER.info("Kerberos keytab {}", krbKeytab);
             }
 
             if (line.hasOption("krb-service")) {
-                krbService = (String) line.getParsedOptionValue("krb-service");
+                krbService = line.getOptionValue("krb-service");
                 LOGGER.info("Kerberos service: {}", krbService);
             }
 
             if (line.hasOption("krb-principal")) {
-                krbPrincipal = (String) line.getParsedOptionValue("krb-principal");
+                krbPrincipal = line.getOptionValue("krb-principal");
                 LOGGER.info("Kerberos principal: {}", krbPrincipal);
             }
 
             if (line.hasOption("krb-password")) {
-                krbPassword = (String) line.getParsedOptionValue("krb-password");
+                krbPassword = line.getOptionValue("krb-password");
                 LOGGER.info("Read Kerberos password");
+            }
+
+            if (line.hasOption("output-directory")) {
+                outputDir = line.getOptionValue("output-directory") + File.separatorChar;
+                LOGGER.info("Read output directory {} ", outputDir);
             }
 
             for (String unparsedArg : unparsedArgs) {
@@ -515,7 +522,7 @@ public class BuildFinder {
             }
 
             try {
-                File checksumFile = new File(CHECKSUMS_FILENAME_BASENAME + checksumType + ".json");
+                File checksumFile = new File(outputDir + CHECKSUMS_FILENAME_BASENAME + checksumType + ".json");
                 Map<String, Collection<String>> checksums = null;
 
                 if (!checksumFile.exists()) {
@@ -531,7 +538,7 @@ public class BuildFinder {
                     return;
                 }
 
-                File buildsFile = new File(BUILDS_FILENAME);
+                File buildsFile = new File(outputDir + BUILDS_FILENAME);
                 Map<Integer, KojiBuild> builds = null;
 
                 try {
@@ -560,13 +567,13 @@ public class BuildFinder {
                     buildList = Collections.unmodifiableList(buildList);
 
                     Report htmlReport = new HTMLReport(files, buildList, kojiwebUrl);
-                    htmlReport.outputToFile(new File(HTML_FILENAME));
+                    htmlReport.outputToFile(new File(outputDir + HTML_FILENAME));
 
                     Report nvrReport = new NVRReport(buildList);
-                    nvrReport.outputToFile(new File(NVR_FILENAME));
+                    nvrReport.outputToFile(new File(outputDir + NVR_FILENAME));
 
                     Report gavReport = new GAVReport(buildList);
-                    gavReport.outputToFile(new File(GAV_FILENAME));
+                    gavReport.outputToFile(new File(outputDir + GAV_FILENAME));
                 } else {
                     LOGGER.warn("Could not generate report since builds was null");
                 }

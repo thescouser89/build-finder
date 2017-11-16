@@ -22,6 +22,7 @@ The executable jar takes the following options.
     Usage: koji-build-finder <files>
      -a,--archive-type <type>         Add a koji archive type to check. Default:
                                       [null].
+     -d,--debug                       Enable debug logging.
      -h,--help                        Show this help message.
      -k,--checksum-only               Only checksum files and do not find sources.
                                       Default: false.
@@ -32,6 +33,7 @@ The executable jar takes the following options.
         --krb-password <password>     Set Kerberos password.
         --krb-principal <principal>   Set Kerberos client principal.
         --krb-service <service>       Set Kerberos client service.
+     -o,--output-directory            Use specified output directory for report files.
      -t,--checksum-type <type>        Checksum type (md5, sha1, sha256). Default:
                                       md5.
      -x,--exclude <pattern>           Add a pattern to exclude files from source
