@@ -19,21 +19,18 @@
   <appender name="STDOUT"
     class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-      <pattern>
-        %d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
-     </pattern>
+      <pattern>%level %logger{360} - %msg%n</pattern>
     </encoder>
   </appender>
 
-  <logger name="org.apache.commons.beanutils" level="OFF" />
-  <logger name="com.redhat.red.build.finder" level="INFO" />
-  <logger name="com.redhat.red.build.koji" level="OFF" />
-  <logger name="org.apache.http" level="OFF" />
-  <logger name="org.apache.kerby" level="OFF" />
-  <logger name="org.commonjava.util.jhttpc" level="OFF" />
-  <logger name="org.commonjava.rwx" level="OFF" />
+  <logger name="com.redhat.red.build.koji" level="WARN" />
+  <logger name="org.apache.commons.beanutils" level="WARN" />
+  <logger name="org.apache.http" level="WARN" />
+  <logger name="org.apache.kerby" level="WARN" />
+  <logger name="org.commonjava.util.jhttpc" level="WARN" />
+  <logger name="org.commonjava.rwx" level="WARN" />
 
-  <root level="OFF">
+  <root level="INFO">
     <appender-ref ref="STDOUT" />
   </root>
 

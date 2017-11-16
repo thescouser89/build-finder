@@ -28,6 +28,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 
+import ch.qos.logback.classic.Level;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -166,7 +167,7 @@ public class BuildFinder {
             boolean foundExt = false;
 
             for (String filename : filenames) {
-                LOGGER.info("Checking checksum {} and filename {}", checksum, filename);
+                LOGGER.debug("Checking checksum {} and filename {}", checksum, filename);
                 boolean exclude = excludes.stream().anyMatch(x -> filename.matches(x));
 
                 if (exclude) {
@@ -393,6 +394,7 @@ public class BuildFinder {
         List<File> files = new ArrayList<>();
         Options options = new Options();
         options.addOption(Option.builder("h").longOpt("help").desc("Show this help message.").build());
+        options.addOption(Option.builder("d").longOpt("debug").desc("Enable debug logging.").build());
         options.addOption(Option.builder("k").longOpt("checksum-only").numberOfArgs(0).required(false).desc("Only checksum files and do not find sources. Default: " + BuildFinderConfig.getDefaultValue("checksum-only") + ".").build());
         options.addOption(Option.builder("t").longOpt("checksum-type").numberOfArgs(1).argName("type").required(false).type(String.class).desc("Checksum type (" + StringUtils.join(KojiChecksumType.values(), ", ") +"). Default: " + BuildFinderConfig.getDefaultValue("checksum-type") + ".").build());
         options.addOption(Option.builder("a").longOpt("archive-type").numberOfArgs(1).argName("type").required(false).desc("Add a koji archive type to check. Default: [" + StringUtils.join((String[]) BuildFinderConfig.getDefaultValue("archive-type"), ", ") + "].").build());
@@ -419,6 +421,11 @@ public class BuildFinder {
 
             if (unparsedArgs.length == 0) {
                 throw new ParseException("Must specify at least one file");
+            }
+
+            final ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger( org.slf4j.Logger.ROOT_LOGGER_NAME );
+            if (line.hasOption("debug")) {
+                root.setLevel( Level.DEBUG );
             }
 
             BuildFinderConfig config = new BuildFinderConfig();
