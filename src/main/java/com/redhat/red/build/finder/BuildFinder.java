@@ -47,16 +47,19 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.jar.Manifest;
 
 public class BuildFinder {
     private static final String NAME = "koji-build-finder";
@@ -392,6 +395,7 @@ public class BuildFinder {
     }
 
     public static void main(String[] args) {
+        LOGGER.info ("koji-builder-finder " + getManifestInformation());
         List<File> files = new ArrayList<>();
         Options options = new Options();
         options.addOption(Option.builder("h").longOpt("help").desc("Show this help message.").build());
@@ -591,5 +595,40 @@ public class BuildFinder {
             formatter.printHelp(NAME + " <files>", options);
             System.exit(1);
         }
+    }
+
+
+    /**
+     * Retrieves the SHA this was built with.
+     *
+     * @return the GIT sha of this codebase.
+     */
+    private static String getManifestInformation() {
+        String result = "";
+
+        try {
+            final Enumeration<URL> resources;
+            resources = BuildFinder.class.getClassLoader()
+                .getResources("META-INF/MANIFEST.MF");
+
+            while (resources.hasMoreElements()) {
+                final URL jarUrl = resources.nextElement();
+
+                if (jarUrl.getFile()
+                    .contains("koji-build-finder")) {
+                    final Manifest manifest = new Manifest(jarUrl.openStream());
+
+                    result = manifest.getMainAttributes()
+                        .getValue("Implementation-Version");
+                    result += " ( SHA: " + manifest.getMainAttributes()
+                        .getValue("Scm-Revision") + " ) ";
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Unexpected exception processing jar file.", e);
+        }
+
+        return result;
     }
 }
