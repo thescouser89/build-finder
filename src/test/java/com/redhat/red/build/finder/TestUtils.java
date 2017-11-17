@@ -19,18 +19,18 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
-public class TestUtils {
-    public static File resolveFileResource( final String resourceBase, final String resourceName )
-        throws Exception
-    {
-        final URL resource = Thread.currentThread()
-            .getContextClassLoader()
-            .getResource( resourceBase + resourceName );
+public final class TestUtils {
+    private TestUtils() {
+        throw new AssertionError();
+    }
 
-        if ( resource == null )
-        {
-            throw new IOException( "Unable to locate resource for " + resourceBase + resourceName );
+    public static File resolveFileResource(final String resourceBase, final String resourceName) throws IOException {
+        final URL resource = Thread.currentThread().getContextClassLoader().getResource(resourceBase + resourceName);
+
+        if (resource == null) {
+            throw new IOException("Unable to locate resource for " + resourceBase + resourceName);
         }
-        return new File( resource.getPath() );
+
+        return new File(resource.getPath());
     }
 }

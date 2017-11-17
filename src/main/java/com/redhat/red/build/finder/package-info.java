@@ -13,24 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.redhat.red.build.finder.report;
-
-import java.io.File;
-import java.io.IOException;
-
-import org.apache.commons.io.FileUtils;
-
-public abstract class Report {
-    public abstract String render();
-
-    public boolean outputToFile(File file) {
-        try {
-            FileUtils.writeStringToFile(file, render(), "UTF-8", false);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-
-        return true;
-    }
-}
+/**
+ *
+ */
+package com.redhat.red.build.finder;

@@ -61,7 +61,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.jar.Manifest;
 
-public class BuildFinder {
+public final class BuildFinder {
     private static final String NAME = "koji-build-finder";
 
     private static final String CHECKSUMS_FILENAME_BASENAME = "checksums-";
@@ -74,7 +74,9 @@ public class BuildFinder {
 
     private static final String NVR_FILENAME = "nvr.txt";
 
-    private static Logger LOGGER = LoggerFactory.getLogger(BuildFinder.class);
+    private static final int TERM_WIDTH = 80;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BuildFinder.class);
 
     private static boolean checksumOnly;
 
@@ -101,6 +103,10 @@ public class BuildFinder {
     private static KojiClientSession session;
 
     private static String outputDir = "";
+
+    private BuildFinder() {
+        throw new AssertionError();
+    }
 
     private static Map<Integer, KojiBuild> findBuilds(Map<String, Collection<String>> checksumTable) {
         LOGGER.info("Ready to find checksums of type {}", checksumType);
@@ -182,7 +188,7 @@ public class BuildFinder {
                 for (String ext : extensionsToCheck) {
                     if (filename.endsWith("." + ext)) {
                         foundExt = true;
-                        LOGGER.info("Found extension for {}: {}", checksum , ext);
+                        LOGGER.info("Found extension for {}: {}", checksum, ext);
                         break;
                     }
                 }
@@ -295,9 +301,9 @@ public class BuildFinder {
                                 continue;
                             }
 
-                          	tags = session.listTags(buildInfo.getId());
+                            tags = session.listTags(buildInfo.getId());
 
-                           	if (tags.size() == 0) {
+                            if (tags.size() == 0) {
                                 LOGGER.warn("Skipping build id {} due to no tags", buildInfo.getId());
                                 archivesToRemove.add(archive);
                                 continue;
@@ -340,7 +346,7 @@ public class BuildFinder {
 
                             archiveList = new ArrayList<>();
                             archiveList.add(new KojiLocalArchive(archive, new ArrayList<>(filenames)));
-                            
+
                             build = new KojiBuild(buildInfo, taskInfo, taskRequest, archiveList, allArchives, tags);
                             builds.put(archive.getBuildId(), build);
                         } else {
@@ -395,13 +401,14 @@ public class BuildFinder {
     }
 
     public static void main(String[] args) {
-        LOGGER.info ("koji-builder-finder " + getManifestInformation());
+        LOGGER.info("koji-builder-finder " + getManifestInformation());
+
         List<File> files = new ArrayList<>();
         Options options = new Options();
         options.addOption(Option.builder("h").longOpt("help").desc("Show this help message.").build());
         options.addOption(Option.builder("d").longOpt("debug").desc("Enable debug logging.").build());
         options.addOption(Option.builder("k").longOpt("checksum-only").numberOfArgs(0).required(false).desc("Only checksum files and do not find sources. Default: " + BuildFinderConfig.getDefaultValue("checksum-only") + ".").build());
-        options.addOption(Option.builder("t").longOpt("checksum-type").numberOfArgs(1).argName("type").required(false).type(String.class).desc("Checksum type (" + StringUtils.join(KojiChecksumType.values(), ", ") +"). Default: " + BuildFinderConfig.getDefaultValue("checksum-type") + ".").build());
+        options.addOption(Option.builder("t").longOpt("checksum-type").numberOfArgs(1).argName("type").required(false).type(String.class).desc("Checksum type (" + StringUtils.join(KojiChecksumType.values(), ", ") + "). Default: " + BuildFinderConfig.getDefaultValue("checksum-type") + ".").build());
         options.addOption(Option.builder("a").longOpt("archive-type").numberOfArgs(1).argName("type").required(false).desc("Add a koji archive type to check. Default: [" + StringUtils.join((String[]) BuildFinderConfig.getDefaultValue("archive-type"), ", ") + "].").build());
         options.addOption(Option.builder("x").longOpt("exclude").numberOfArgs(1).argName("pattern").required(false).desc("Add a pattern to exclude files from source check. Default: [" + StringUtils.join((String[]) BuildFinderConfig.getDefaultValue("exclude"), ", ") + "].").build());
         options.addOption(Option.builder().longOpt("koji-hub-url").numberOfArgs(1).argName("url").required(false).desc("Set the Koji hub URL.").build());
@@ -429,9 +436,9 @@ public class BuildFinder {
                 throw new ParseException("Must specify at least one file");
             }
 
-            final ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger( org.slf4j.Logger.ROOT_LOGGER_NAME );
+            final ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
             if (line.hasOption("debug")) {
-                root.setLevel( Level.DEBUG );
+                root.setLevel(Level.DEBUG);
             }
 
             BuildFinderConfig config = new BuildFinderConfig();
@@ -463,7 +470,7 @@ public class BuildFinder {
                 excludes = Arrays.asList(line.getOptionValues("exclude"));
                 LOGGER.info("Exclude: {}", Arrays.asList(excludes).toString());
             }
-            
+
             kojihubUrl = config.getString("koji-hub-url");
 
             if (line.hasOption("koji-hub-url")) {
@@ -560,8 +567,8 @@ public class BuildFinder {
                     LOGGER.info("Attempting to load existing builds file {}", buildsFile.getAbsolutePath());
                     builds = JSONUtils.loadBuildsFile(buildsFile);
                 } else {
-                	builds = findBuilds(checksums);
-                	JSONUtils.dumpFile(buildsFile, builds);
+                    builds = findBuilds(checksums);
+                    JSONUtils.dumpFile(buildsFile, builds);
                 }
 
                 if (builds != null) {
@@ -591,7 +598,7 @@ public class BuildFinder {
 
             HelpFormatter formatter = new HelpFormatter();
             formatter.setSyntaxPrefix("Usage: ");
-            formatter.setWidth(80);
+            formatter.setWidth(TERM_WIDTH);
             formatter.printHelp(NAME + " <files>", options);
             System.exit(1);
         }

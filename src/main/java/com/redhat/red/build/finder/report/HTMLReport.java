@@ -60,7 +60,7 @@ public class HTMLReport extends Report {
             + "th { border-style: solid; border-width: 1px; background-color: darkgrey; text-align: left; font-weight: bold; } "
             + "tr, td { border-style: solid; border-width: 1px; font-size: small; }";
 
-	private String kojiwebUrl;
+    private String kojiwebUrl;
 
     private List<KojiBuild> builds;
 
@@ -113,7 +113,7 @@ public class HTMLReport extends Report {
         if (!module.endsWith(".git")) {
             module += ".git";
         }
-        
+
         String newUrl = "https://" + url.getHost() + "/" + module + "/commit/" + commit;
 
         return span().withAlt(newUrl);
@@ -125,13 +125,13 @@ public class HTMLReport extends Report {
         int buildsSize = builds.size() - 1;
 
         if (buildsSize > 0) {
-        	percentImported = (numImports / buildsSize) * 100;
+            percentImported = (numImports / buildsSize) * 100;
         }
 
         String percentBuiltStr = String.format("%.1f", (100.00 - percentImported));
 
-        return document().render() +
-                    html().with(
+        return document().render()
+                     + html().with(
                         head().with(style().withText(HTML_STYLE)).with(
                             title().withText("Build Report")
                         ),
@@ -150,11 +150,11 @@ public class HTMLReport extends Report {
                                           td().with(build.getBuildInfo().getId() > 0 ? linkBuild(build.getBuildInfo().getId()) : errorText(String.valueOf(build.getBuildInfo().getId()))),
                                           td().with(build.getBuildInfo().getId() > 0 ? linkPackage(build.getBuildInfo().getPackageId(), build.getBuildInfo().getName()) : text(""))),
                                           td().with(build.getBuildInfo().getId() > 0 ? text(build.getBuildInfo().getVersion().replace('_', '-')) : text("")),
-                                          td().with(build.getArchives() != null ? ol().with(each(build.getArchives(), archive -> li(linkArchive(archive.getArchive().getArchiveId(), archive.getArchive().getFilename(), build.getTaskInfo() == null || archive.getArchive().getArchiveId() <= 0 || build.containsDuplicateArchive(archive.getArchive())), text(": "), each(archive.getFiles(), file -> text(archive.getFiles().indexOf(file) != (archive.getFiles().size() - 1) ? file + ", " : file))))): text("")),
+                                          td().with(build.getArchives() != null ? ol().with(each(build.getArchives(), archive -> li(linkArchive(archive.getArchive().getArchiveId(), archive.getArchive().getFilename(), build.getTaskInfo() == null || archive.getArchive().getArchiveId() <= 0 || build.containsDuplicateArchive(archive.getArchive())), text(": "), each(archive.getFiles(), file -> text(archive.getFiles().indexOf(file) != (archive.getFiles().size() - 1) ? file + ", " : file))))) : text("")),
                                           td().with(build.getTags() != null ? ul().with(each(build.getTags(), tag -> li(linkTag(tag.getId(), tag.getName())))) : text("")),
-                                          td().with(build.getTaskInfo() != null ? text(build.getTaskInfo().getMethod()) : (build.getBuildInfo().getId() > 0 ? (build.getBuildInfo().getExtra() == null ? errorText("imported build") : (build.getBuildInfo().getExtra().containsKey("build_system") ? text((String)build.getBuildInfo().getExtra().get("build_system") + "-" + (String)build.getBuildInfo().getExtra().get("version")) : errorText("unknown"))) : errorText("not found"))),
-                                          td().with(build.getSourcesZip() != null ? linkArchive(build.getSourcesZip().getArchiveId(), build.getSourcesZip().getFilename(), build.containsDuplicateArchive(build.getSourcesZip())): text("")),
-                                          td().with(build.getPatchesZip() != null ? linkArchive(build.getPatchesZip().getArchiveId(), build.getPatchesZip().getFilename(), build.containsDuplicateArchive(build.getPatchesZip())): text("")),
+                                          td().with(build.getTaskInfo() != null ? text(build.getTaskInfo().getMethod()) : (build.getBuildInfo().getId() > 0 ? (build.getBuildInfo().getExtra() == null ? errorText("imported build") : (build.getBuildInfo().getExtra().containsKey("build_system") ? text((String) build.getBuildInfo().getExtra().get("build_system") + "-" + (String) build.getBuildInfo().getExtra().get("version")) : errorText("unknown"))) : errorText("not found"))),
+                                          td().with(build.getSourcesZip() != null ? linkArchive(build.getSourcesZip().getArchiveId(), build.getSourcesZip().getFilename(), build.containsDuplicateArchive(build.getSourcesZip())) : text("")),
+                                          td().with(build.getPatchesZip() != null ? linkArchive(build.getPatchesZip().getArchiveId(), build.getPatchesZip().getFilename(), build.containsDuplicateArchive(build.getPatchesZip())) : text("")),
                                           td().with(build.getBuildInfo().getTaskId() != null && build.getTaskRequest().asBuildRequest() != null && build.getTaskRequest().asBuildRequest().getSource() != null ? linkSource(build.getTaskRequest().asBuildRequest().getSource()) : errorText("missing URL")),
                                           td().with(build.getBuildInfo().getTaskId() != null ? each(build.getTaskRequest().asMavenBuildRequest().getProperties().entrySet(), entry -> text(entry.getKey() + (entry.getValue() != null ? ("=" + entry.getValue()) : ""))) : errorText("missing URL"))
                                        ))

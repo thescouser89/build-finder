@@ -26,7 +26,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-public class JSONUtils {
+public final class JSONUtils {
+    private JSONUtils() {
+        throw new AssertionError();
+    }
+
     public static String dumpString(Object obj) {
         ObjectMapper mapper = new ObjectMapper();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
@@ -75,7 +79,9 @@ public class JSONUtils {
 
    public static Map<Integer, KojiBuild> loadBuildsFile(File file) {
        ObjectMapper mapper = new ObjectMapper();
-       TypeReference<Map<Integer, KojiBuild>> ref = new TypeReference<Map<Integer, KojiBuild>>() {};
+       TypeReference<Map<Integer, KojiBuild>> ref = new TypeReference<Map<Integer, KojiBuild>>() {
+
+       };
 
        try {
            Map<Integer, KojiBuild> obj = mapper.readValue(file, ref);

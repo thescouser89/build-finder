@@ -32,7 +32,7 @@ public class GAVReport extends Report {
         this.gavs.sort(String::compareToIgnoreCase);
     }
 
-	public String render() {
+    public String render() {
         return this.gavs.stream().map(Object::toString).collect(Collectors.joining("\n"));
     }
 }

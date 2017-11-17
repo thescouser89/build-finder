@@ -44,25 +44,23 @@ public class BuildFinderConfig {
 
     private static final Map<String, Object> OPTIONS = new LinkedHashMap<>();
 
-    private final Logger logger = LoggerFactory.getLogger(BuildFinder.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BuildFinder.class);
 
-    static
-    {
+    static {
             OPTIONS.put("checksum-only", false);
             OPTIONS.put("checksum-type", KojiChecksumType.md5.name());
-            OPTIONS.put("archive-types", new String[] { "jar", "xml", "pom", "so", "dll", "dylib" });
-            OPTIONS.put("excludes", new String[] { "^(?!.*/pom\\.xml$).*/.*\\.xml$" });
+            OPTIONS.put("archive-types", new String[] {"jar", "xml", "pom", "so", "dll", "dylib"});
+            OPTIONS.put("excludes", new String[] {"^(?!.*/pom\\.xml$).*/.*\\.xml$"});
             OPTIONS.put("koji-hub-url", "http://kojihub.my.host/kojihub");
             OPTIONS.put("koji-web-url", "https://kojiweb.my.host/koji");
     }
 
     private JsonConfiguration config;
 
-    FileBasedConfigurationBuilder<JsonConfiguration> builder;
+    private FileBasedConfigurationBuilder<JsonConfiguration> builder = new FileBasedConfigurationBuilder<>(JsonConfiguration.class);
 
     public BuildFinderConfig() {
         Parameters params = new Parameters();
-        builder = new FileBasedConfigurationBuilder<>(JsonConfiguration.class);
 
         try {
             Path path = Paths.get(CONFIG_FILENAME);
@@ -87,7 +85,8 @@ public class BuildFinderConfig {
                     config.write(writer);
                 }
             }
-            logger.debug ("Using configuration {}", OPTIONS);
+
+            LOGGER.debug("Using configuration {}", OPTIONS);
         } catch (ConfigurationException e) {
             e.printStackTrace();
         } catch (IOException e) {
