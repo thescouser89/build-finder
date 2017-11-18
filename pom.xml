@@ -337,7 +337,6 @@
           <configuration>
             <configLocation>checkstyle.xml</configLocation>
             <includeTestSourceDirectory>true</includeTestSourceDirectory>
-            <suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
           </configuration>
           <dependencies>
             <dependency>
@@ -496,7 +495,7 @@
                 <requireMavenVersion>
                   <version>3.0.1</version>
                 </requireMavenVersion>
-              </rules>    
+              </rules>
             </configuration>
           </execution>
         </executions>
