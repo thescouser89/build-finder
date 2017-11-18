@@ -39,13 +39,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DistributionAnalyzer {
-    private static Logger LOGGER = LoggerFactory.getLogger(DistributionAnalyzer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DistributionAnalyzer.class);
 
     private List<File> files;
 
     private String algorithm;
 
-    MultiValuedMap<String, String> map;
+    private MultiValuedMap<String, String> map;
 
     public DistributionAnalyzer(List<File> files, String algorithm) {
         this.files = files;
