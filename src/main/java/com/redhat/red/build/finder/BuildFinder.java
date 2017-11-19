@@ -41,7 +41,6 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,6 +59,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 
 public final class BuildFinder {
     private static final String NAME = "koji-build-finder";
@@ -407,10 +407,15 @@ public final class BuildFinder {
         Options options = new Options();
         options.addOption(Option.builder("h").longOpt("help").desc("Show this help message.").build());
         options.addOption(Option.builder("d").longOpt("debug").desc("Enable debug logging.").build());
-        options.addOption(Option.builder("k").longOpt("checksum-only").numberOfArgs(0).required(false).desc("Only checksum files and do not find sources. Default: " + BuildFinderConfig.getDefaultValue("checksum-only") + ".").build());
-        options.addOption(Option.builder("t").longOpt("checksum-type").numberOfArgs(1).argName("type").required(false).type(String.class).desc("Checksum type (" + StringUtils.join(KojiChecksumType.values(), ", ") + "). Default: " + BuildFinderConfig.getDefaultValue("checksum-type") + ".").build());
-        options.addOption(Option.builder("a").longOpt("archive-type").numberOfArgs(1).argName("type").required(false).desc("Add a koji archive type to check. Default: [" + StringUtils.join((String[]) BuildFinderConfig.getDefaultValue("archive-type"), ", ") + "].").build());
-        options.addOption(Option.builder("x").longOpt("exclude").numberOfArgs(1).argName("pattern").required(false).desc("Add a pattern to exclude files from source check. Default: [" + StringUtils.join((String[]) BuildFinderConfig.getDefaultValue("exclude"), ", ") + "].").build());
+        options.addOption(Option.builder("k").longOpt("checksum-only").numberOfArgs(0).required(false).desc("Only checksum files and do not find sources. Default: "
+            + BuildFinderConfig.getDefaultValue("checksum-only") + ".").build());
+        options.addOption(Option.builder("t").longOpt("checksum-type").numberOfArgs(1).argName("type").required(false).type(String.class).desc("Checksum type ("
+            + Arrays.stream(KojiChecksumType.values()).map(KojiChecksumType::getAlgorithm).collect(Collectors.joining(",")) + "). Default: "
+            + BuildFinderConfig.getDefaultValue("checksum-type") + ".").build());
+        options.addOption(Option.builder("a").longOpt("archive-type").numberOfArgs(1).argName("type").required(false).desc("Add a koji archive type to check. Default: ["
+            + Arrays.stream((String[]) BuildFinderConfig.getDefaultValue("archive-types")).collect(Collectors.joining(",")) + "].").build());
+        options.addOption(Option.builder("x").longOpt("exclude").numberOfArgs(1).argName("pattern").required(false).desc("Add a pattern to exclude files from source check. Default: ["
+            + Arrays.stream((String[]) BuildFinderConfig.getDefaultValue("excludes")).collect(Collectors.joining(",")) + "].").build());
         options.addOption(Option.builder().longOpt("koji-hub-url").numberOfArgs(1).argName("url").required(false).desc("Set the Koji hub URL.").build());
         options.addOption(Option.builder().longOpt("koji-web-url").numberOfArgs(1).argName("url").required(false).desc("Set the Koji web URL.").build());
         options.addOption(Option.builder().longOpt("krb-ccache").numberOfArgs(1).argName("ccache").required(false).desc("Set the location of Kerberos credential cache.").build());
