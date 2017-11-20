@@ -36,12 +36,12 @@ public class BuildConfigTest {
     public void verifyDefaults() {
         BuildConfig bc = new BuildConfig();
 
-        assertEquals(bc.getArchiveTypes(), ConfigDefaults.ARCHIVETYPES);
-        assertEquals(bc.getChecksumType(), ConfigDefaults.CHECKSUMTYPE);
-        assertEquals(bc.getChecksumOnly(), ConfigDefaults.CHECKSUMONLY);
+        assertEquals(bc.getArchiveTypes(), ConfigDefaults.ARCHIVE_TYPES);
+        assertEquals(bc.getChecksumType(), ConfigDefaults.CHECKSUM_TYPE);
+        assertEquals(bc.getChecksumOnly(), ConfigDefaults.CHECKSUM_ONLY);
         assertEquals(bc.getExcludes(), ConfigDefaults.EXCLUDES);
-        assertEquals(bc.getKojiHubURL(), ConfigDefaults.KOJIHUB);
-        assertEquals(bc.getKojiWebURL(), ConfigDefaults.KOJIWEB);
+        assertEquals(bc.getKojiHubURL(), ConfigDefaults.KOJIHUB_URL);
+        assertEquals(bc.getKojiWebURL(), ConfigDefaults.KOJIWEB_URL);
     }
 
     @Test

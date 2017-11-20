@@ -407,12 +407,12 @@ public final class BuildFinder {
         options.addOption(Option.builder("h").longOpt("help").desc("Show this help message.").build());
         options.addOption(Option.builder("d").longOpt("debug").desc("Enable debug logging.").build());
         options.addOption(Option.builder("k").longOpt("checksum-only").numberOfArgs(0).required(false).desc("Only checksum files and do not find sources. Default: "
-            + ConfigDefaults.CHECKSUMONLY + ".").build());
+            + ConfigDefaults.CHECKSUM_ONLY + ".").build());
         options.addOption(Option.builder("t").longOpt("checksum-type").numberOfArgs(1).required(false).type(String.class).desc("Checksum types ("
             + Arrays.stream(KojiChecksumType.values()).map(KojiChecksumType::getAlgorithm).collect(Collectors.joining(",")) + "). Default: "
-            + ConfigDefaults.CHECKSUMTYPE + ".").build());
+            + ConfigDefaults.CHECKSUM_TYPE + ".").build());
         options.addOption(Option.builder("a").longOpt("archive-type").numberOfArgs(1).required(false).desc("Add a koji archive type to check. Default: ["
-            + ConfigDefaults.ARCHIVETYPES.stream().collect(Collectors.joining(",")) + "].").type(List.class).build());
+            + ConfigDefaults.ARCHIVE_TYPES.stream().collect(Collectors.joining(",")) + "].").type(List.class).build());
         options
             .addOption(Option.builder("x").longOpt("exclude").numberOfArgs(1).argName("pattern").required(false).desc("Add a pattern to exclude files from source check. Default: ["
                 + ConfigDefaults.EXCLUDES.stream().collect(Collectors.joining(",")) + "].").build());
@@ -454,7 +454,6 @@ public final class BuildFinder {
             if (f.exists()) {
                 config = mapper.readValue(path.toFile(), BuildConfig.class);
             } else {
-                // TODO: Decide if we should write out the config file or throw exception for missing file.
                 LOGGER.debug("Configuration does not exist...implicitly creating with defaults...");
                 config = new BuildConfig();
             }
@@ -508,7 +507,7 @@ public final class BuildFinder {
             }
             LOGGER.debug("Configuration {} ", config);
             // TODO: Decide if we should write out the config file or throw exception for missing file.
-            JSONUtils.dumpFile(path.toFile(), config);
+            // JSONUtils.dumpFile(path.toFile(), config);
 
             for (String unparsedArg : unparsedArgs) {
                 File file = new File(unparsedArg);

@@ -52,7 +52,7 @@ public class BuildConfig {
 
     public boolean getChecksumOnly() {
         if (checksumOnly == null) {
-            checksumOnly = ConfigDefaults.CHECKSUMONLY;
+            checksumOnly = ConfigDefaults.CHECKSUM_ONLY;
         }
         return checksumOnly;
     }
@@ -63,7 +63,7 @@ public class BuildConfig {
 
     public KojiChecksumType getChecksumType() {
         if (checksumType == null) {
-            checksumType = ConfigDefaults.CHECKSUMTYPE;
+            checksumType = ConfigDefaults.CHECKSUM_TYPE;
         }
         return checksumType;
     }
@@ -74,7 +74,7 @@ public class BuildConfig {
 
     public List<String> getArchiveTypes() {
         if (archiveTypes == null) {
-            archiveTypes = ConfigDefaults.ARCHIVETYPES;
+            archiveTypes = ConfigDefaults.ARCHIVE_TYPES;
         }
         return archiveTypes;
     }
@@ -85,7 +85,7 @@ public class BuildConfig {
 
     public String getKojiHubURL() {
         if (kojiHubURL == null) {
-            kojiHubURL = ConfigDefaults.KOJIHUB;
+            kojiHubURL = ConfigDefaults.KOJIHUB_URL;
         }
         return kojiHubURL;
     }
@@ -96,7 +96,7 @@ public class BuildConfig {
 
     public String getKojiWebURL() {
         if (kojiWebURL == null) {
-            kojiWebURL = ConfigDefaults.KOJIWEB;
+            kojiWebURL = ConfigDefaults.KOJIWEB_URL;
         }
         return kojiWebURL;
     }
