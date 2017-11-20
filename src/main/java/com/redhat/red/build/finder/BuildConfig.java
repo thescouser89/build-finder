@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.redhat.red.build.finder.json;
+package com.redhat.red.build.finder;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.redhat.red.build.finder.ConfigDefaults;
 import com.redhat.red.build.koji.model.xmlrpc.KojiChecksumType;
 
 import java.util.List;
@@ -85,7 +84,7 @@ public class BuildConfig {
 
     public String getKojiHubURL() {
         if (kojiHubURL == null) {
-            kojiHubURL = ConfigDefaults.KOJIHUB_URL;
+            kojiHubURL = ConfigDefaults.KOJI_HUB_URL;
         }
         return kojiHubURL;
     }
@@ -96,7 +95,7 @@ public class BuildConfig {
 
     public String getKojiWebURL() {
         if (kojiWebURL == null) {
-            kojiWebURL = ConfigDefaults.KOJIWEB_URL;
+            kojiWebURL = ConfigDefaults.KOJI_WEB_URL;
         }
         return kojiWebURL;
     }

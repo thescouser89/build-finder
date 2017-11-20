@@ -17,7 +17,6 @@ package com.redhat.red.build.finder;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.redhat.red.build.finder.json.BuildConfig;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -40,8 +39,8 @@ public class BuildConfigTest {
         assertEquals(bc.getChecksumType(), ConfigDefaults.CHECKSUM_TYPE);
         assertEquals(bc.getChecksumOnly(), ConfigDefaults.CHECKSUM_ONLY);
         assertEquals(bc.getExcludes(), ConfigDefaults.EXCLUDES);
-        assertEquals(bc.getKojiHubURL(), ConfigDefaults.KOJIHUB_URL);
-        assertEquals(bc.getKojiWebURL(), ConfigDefaults.KOJIWEB_URL);
+        assertEquals(bc.getKojiHubURL(), ConfigDefaults.KOJI_HUB_URL);
+        assertEquals(bc.getKojiWebURL(), ConfigDefaults.KOJI_WEB_URL);
     }
 
     @Test
