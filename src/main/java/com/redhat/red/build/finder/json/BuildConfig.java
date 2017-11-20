@@ -1,0 +1,118 @@
+/**
+ * Copyright 2017 Red Hat, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.redhat.red.build.finder.json;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.redhat.red.build.finder.ConfigDefaults;
+import com.redhat.red.build.koji.model.xmlrpc.KojiChecksumType;
+
+import java.util.List;
+
+public class BuildConfig {
+    @JsonProperty("checksum-only")
+    private Boolean checksumOnly;
+
+    @JsonProperty("checksum-type")
+    private KojiChecksumType checksumType;
+
+    @JsonProperty("archive-types")
+    private List<String> archiveTypes;
+
+    private List<String> excludes;
+
+    @JsonProperty("koji-hub-url")
+    private String kojiHubURL;
+
+    @JsonProperty("koji-web-url")
+    private String kojiWebURL;
+
+    public List<String> getExcludes() {
+        if (excludes == null) {
+            excludes = ConfigDefaults.EXCLUDES;
+        }
+        return excludes;
+    }
+
+    public void setExcludes(List<String> excludes) {
+        this.excludes = excludes;
+    }
+
+    public boolean getChecksumOnly() {
+        if (checksumOnly == null) {
+            checksumOnly = ConfigDefaults.CHECKSUMONLY;
+        }
+        return checksumOnly;
+    }
+
+    public void setChecksumOnly(boolean checksumOnly) {
+        this.checksumOnly = checksumOnly;
+    }
+
+    public KojiChecksumType getChecksumType() {
+        if (checksumType == null) {
+            checksumType = ConfigDefaults.CHECKSUMTYPE;
+        }
+        return checksumType;
+    }
+
+    public void setChecksumType(KojiChecksumType checksumType) {
+        this.checksumType = checksumType;
+    }
+
+    public List<String> getArchiveTypes() {
+        if (archiveTypes == null) {
+            archiveTypes = ConfigDefaults.ARCHIVETYPES;
+        }
+        return archiveTypes;
+    }
+
+    public void setArchiveTypes(List<String> archiveTypes) {
+        this.archiveTypes = archiveTypes;
+    }
+
+    public String getKojiHubURL() {
+        if (kojiHubURL == null) {
+            kojiHubURL = ConfigDefaults.KOJIHUB;
+        }
+        return kojiHubURL;
+    }
+
+    public void setKojiHubURL(String kojiHubURL) {
+        this.kojiHubURL = kojiHubURL;
+    }
+
+    public String getKojiWebURL() {
+        if (kojiWebURL == null) {
+            kojiWebURL = ConfigDefaults.KOJIWEB;
+        }
+        return kojiWebURL;
+    }
+
+    public void setKojiWebURL(String kojiWebURL) {
+        this.kojiWebURL = kojiWebURL;
+    }
+
+    @Override public String toString() {
+        return "BuildConfig{"
+            + "\n\tchecksumOnly=" + getChecksumOnly()
+            + ", \n\tchecksumType=" + getChecksumType()
+            + ", \n\tarchiveTypes=" + getArchiveTypes()
+            + ", \n\texcludes=" + getExcludes()
+            + ", \n\tkojiHubURL='" + getKojiHubURL()
+            + '\'' + ", \n\tkojiWebURL='" + getKojiWebURL()
+            + '\'' + '}';
+    }
+}

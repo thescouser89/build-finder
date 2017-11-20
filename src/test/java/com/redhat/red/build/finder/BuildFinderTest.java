@@ -35,7 +35,7 @@ public class BuildFinderTest {
     @Test
     public void verifyDebug() throws IOException, InterruptedException {
         // Currently the configuration does not allow a full path to the configuration files to be set.
-        ProcessBuilder builder = new ProcessBuilder("java", "-cp", System.getProperty("java.class.path"), "com.redhat.red.build.finder.BuildFinder", "-d", "test").directory(temp.newFolder()).redirectErrorStream(true);
+        ProcessBuilder builder = new ProcessBuilder("java", "-cp", System.getProperty("java.class.path"), "com.redhat.red.build.finder.BuildFinder", "-d", "-k", "pom.xml").directory(temp.newFolder()).redirectErrorStream(true);
         Process p = builder.start();
 
         List<String> debug = new BufferedReader(new InputStreamReader(p.getInputStream())).lines().filter(s -> s.contains("DEBUG")).collect(Collectors.toList());

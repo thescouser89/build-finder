@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.redhat.red.build.finder;
+package com.redhat.red.build.finder.json;
 
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.redhat.red.build.finder.KojiLocalArchive;
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiBuildInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTagInfo;

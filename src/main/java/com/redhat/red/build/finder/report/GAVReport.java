@@ -18,7 +18,7 @@ package com.redhat.red.build.finder.report;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.redhat.red.build.finder.KojiBuild;
+import com.redhat.red.build.finder.json.KojiBuild;
 import com.redhat.red.build.koji.model.xmlrpc.KojiBuildInfo;
 
 public class GAVReport extends Report {
