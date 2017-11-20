@@ -15,16 +15,15 @@
  */
 package com.redhat.red.build.finder;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.contrib.java.lang.system.SystemOutRule;
-import org.junit.rules.TemporaryFolder;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.contrib.java.lang.system.SystemOutRule;
+import org.junit.rules.TemporaryFolder;
 
 public class BuildFinderTest {
     @Rule
@@ -48,7 +47,6 @@ public class BuildFinderTest {
 
         BuildFinder.main(new String[] {"-k", "-o", folder.getAbsolutePath(), target.getAbsolutePath()});
 
-        assertFalse(new File("config.json").exists());
         File[] f = folder.listFiles();
         assertTrue(f != null && f.length == 1);
         assertTrue(f[0].getName().equals("checksums-md5.json"));

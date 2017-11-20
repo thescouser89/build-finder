@@ -15,6 +15,25 @@
  */
 package com.redhat.red.build.finder;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.jar.Manifest;
+import java.util.stream.Collectors;
+
 import ch.qos.logback.classic.Level;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,25 +64,6 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.jar.Manifest;
-import java.util.stream.Collectors;
 
 public final class BuildFinder {
     private static final String NAME = "koji-build-finder";
@@ -562,19 +562,23 @@ public final class BuildFinder {
             }
 
             if (builds != null) {
-                LOGGER.info("Got a non-null set of builds");
+                LOGGER.info("Got a non-null set of builds {} ", builds);
                 List<KojiBuild> buildList = new ArrayList<>(builds.values());
-                Collections.sort(buildList, (b1, b2) -> Integer.compare(b1.getBuildInfo().getId(), b2.getBuildInfo().getId()));
-                buildList = Collections.unmodifiableList(buildList);
 
-                Report htmlReport = new HTMLReport(files, buildList, config.getKojiWebURL());
-                htmlReport.outputToFile(new File(outputDir + HTML_FILENAME));
+                if (buildList.size() > 0) {
+                    Collections.sort(buildList,
+                        (b1, b2) -> Integer.compare(b1.getBuildInfo().getId(), b2.getBuildInfo().getId()));
+                    buildList = Collections.unmodifiableList(buildList);
 
-                Report nvrReport = new NVRReport(buildList);
-                nvrReport.outputToFile(new File(outputDir + NVR_FILENAME));
+                    Report htmlReport = new HTMLReport(files, buildList, config.getKojiWebURL());
+                    htmlReport.outputToFile(new File(outputDir + HTML_FILENAME));
 
-                Report gavReport = new GAVReport(buildList);
-                gavReport.outputToFile(new File(outputDir + GAV_FILENAME));
+                    Report nvrReport = new NVRReport(buildList);
+                    nvrReport.outputToFile(new File(outputDir + NVR_FILENAME));
+
+                    Report gavReport = new GAVReport(buildList);
+                    gavReport.outputToFile(new File(outputDir + GAV_FILENAME));
+                }
             } else {
                 LOGGER.warn("Could not generate report since builds was null");
             }

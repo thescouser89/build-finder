@@ -15,10 +15,10 @@
  */
 package com.redhat.red.build.finder;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.redhat.red.build.koji.model.xmlrpc.KojiChecksumType;
-
-import java.util.List;
 
 public class BuildConfig {
     @JsonProperty("checksum-only")

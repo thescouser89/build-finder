@@ -15,10 +15,10 @@
  */
 package com.redhat.red.build.finder;
 
-import com.redhat.red.build.koji.model.xmlrpc.KojiChecksumType;
-
 import java.util.Arrays;
 import java.util.List;
+
+import com.redhat.red.build.koji.model.xmlrpc.KojiChecksumType;
 
 public abstract class ConfigDefaults {
     public static final List<String> ARCHIVE_TYPES = Arrays.asList("jar", "xml", "pom", "so", "dll", "dylib");
