@@ -17,32 +17,27 @@ package com.redhat.red.build.finder;
 
 import static org.junit.Assert.assertTrue;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.junit.rules.TemporaryFolder;
 
 public class BuildFinderTest {
     @Rule
     public TemporaryFolder temp = new TemporaryFolder();
 
+    @Rule
+    public final SystemOutRule systemOutRule = new SystemOutRule().enableLog();
+
     @Test
     public void verifyDebug() throws IOException, InterruptedException {
-        // Currently the configuration does not allow a full path to the configuration files to be set.
-        ProcessBuilder builder = new ProcessBuilder("java", "-cp", System.getProperty("java.class.path"), "com.redhat.red.build.finder.BuildFinder", "-d", "test").directory(temp.newFolder()).redirectErrorStream(true);
-        Process p = builder.start();
+        File target = new File(TestUtils.resolveFileResource("./", "").getParentFile().getParentFile(), "pom.xml");
+        BuildFinder.main(new String[] {"-d", "-k", target.getAbsolutePath()});
 
-        List<String> debug = new BufferedReader(new InputStreamReader(p.getInputStream())).lines().filter(s -> s.contains("DEBUG")).collect(Collectors.toList());
-        p.waitFor();
-
-        System.out.println("Found debug " + debug);
-        assertTrue(debug.size() > 0);
+        assertTrue(systemOutRule.getLog().contains("DEBUG"));
     }
 
     @Test
@@ -50,11 +45,7 @@ public class BuildFinderTest {
         File target = new File(TestUtils.resolveFileResource("./", "").getParentFile().getParentFile(), "pom.xml");
         File folder = temp.newFolder();
 
-        try {
-            BuildFinder.main(new String[] {"-k", "-o", folder.getAbsolutePath(), target.getAbsolutePath()});
-        } finally {
-            new File("config.json").delete();
-        }
+        BuildFinder.main(new String[] {"-k", "-o", folder.getAbsolutePath(), target.getAbsolutePath()});
 
         File[] f = folder.listFiles();
         assertTrue(f != null && f.length == 1);

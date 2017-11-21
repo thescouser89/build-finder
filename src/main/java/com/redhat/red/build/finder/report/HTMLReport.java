@@ -48,7 +48,6 @@ import java.util.Date;
 import java.util.List;
 
 import com.redhat.red.build.finder.KojiBuild;
-
 import j2html.attributes.Attr;
 import j2html.tags.ContainerTag;
 import j2html.tags.Tag;

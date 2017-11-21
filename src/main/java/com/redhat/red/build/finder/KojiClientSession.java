@@ -20,9 +20,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.commonjava.util.jhttpc.auth.MemoryPasswordManager;
-import org.commonjava.util.jhttpc.auth.PasswordManager;
-
 import com.redhat.red.build.koji.KojiClient;
 import com.redhat.red.build.koji.KojiClientException;
 import com.redhat.red.build.koji.config.KojiConfig;
@@ -42,6 +39,8 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiTaskInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTaskRequest;
 import com.redhat.red.build.koji.model.xmlrpc.KojiWinBuildInfo;
 import com.redhat.red.build.koji.model.xmlrpc.messages.GetArchiveTypeRequest;
+import org.commonjava.util.jhttpc.auth.MemoryPasswordManager;
+import org.commonjava.util.jhttpc.auth.PasswordManager;
 
 public class KojiClientSession extends KojiClient {
     private static final int DEFAULT_THREAD_COUNT = 1;
