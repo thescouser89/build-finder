@@ -561,26 +561,23 @@ public final class BuildFinder {
                 JSONUtils.dumpFile(buildsFile, builds);
             }
 
-            if (builds != null) {
-                LOGGER.info("Got a non-null set of builds {} ", builds);
+            if (builds != null && builds.size() > 0) {
+                LOGGER.info("Generating reports");
                 List<KojiBuild> buildList = new ArrayList<>(builds.values());
 
-                if (buildList.size() > 0) {
-                    Collections.sort(buildList,
-                        (b1, b2) -> Integer.compare(b1.getBuildInfo().getId(), b2.getBuildInfo().getId()));
-                    buildList = Collections.unmodifiableList(buildList);
+                Collections.sort(buildList, (b1, b2) -> Integer.compare(b1.getBuildInfo().getId(), b2.getBuildInfo().getId()));
+                buildList = Collections.unmodifiableList(buildList);
 
-                    Report htmlReport = new HTMLReport(files, buildList, config.getKojiWebURL());
-                    htmlReport.outputToFile(new File(outputDir + HTML_FILENAME));
+                Report htmlReport = new HTMLReport(files, buildList, config.getKojiWebURL());
+                htmlReport.outputToFile(new File(outputDir + HTML_FILENAME));
 
-                    Report nvrReport = new NVRReport(buildList);
-                    nvrReport.outputToFile(new File(outputDir + NVR_FILENAME));
+                Report nvrReport = new NVRReport(buildList);
+                nvrReport.outputToFile(new File(outputDir + NVR_FILENAME));
 
-                    Report gavReport = new GAVReport(buildList);
-                    gavReport.outputToFile(new File(outputDir + GAV_FILENAME));
-                }
+                Report gavReport = new GAVReport(buildList);
+                gavReport.outputToFile(new File(outputDir + GAV_FILENAME));
             } else {
-                LOGGER.warn("Could not generate report since builds was null");
+                LOGGER.warn("Could not generate reports since list of builds was empty");
             }
         } catch (IOException e) {
             e.printStackTrace();

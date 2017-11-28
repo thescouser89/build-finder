@@ -16,10 +16,12 @@
 package com.redhat.red.build.finder;
 
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiBuildInfo;
+import com.redhat.red.build.koji.model.xmlrpc.KojiBuildRequest;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTagInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTaskInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTaskRequest;
@@ -145,6 +147,72 @@ public class KojiBuild {
             String patchesZipFilename = buildInfo.getMavenArtifactId() + "-" + buildInfo.getMavenVersion() + "-patches.zip";
             patchesZip = remoteArchives.stream().filter(pArchive -> pArchive.getFilename().equals(patchesZipFilename)).findAny().orElse(null);
             return patchesZip;
+        }
+
+        return null;
+    }
+
+    @JsonIgnore
+    public boolean isImport() {
+        return !((buildInfo != null && buildInfo.getExtra() != null && buildInfo.getExtra().containsKey("build_system")) || (taskInfo != null));
+    }
+
+    @JsonIgnore
+    public boolean isMaven() {
+        return ((buildInfo != null && buildInfo.getExtra() != null && buildInfo.getExtra().containsKey("maven")) || (taskInfo != null && taskInfo.getMethod() != null && taskInfo.getMethod().equals("maven")));
+    }
+
+    @JsonIgnore
+    public String getSource() {
+        if (buildInfo != null) {
+            String source = buildInfo.getSource();
+
+            if (source != null) {
+                return source;
+            }
+        }
+
+        if (taskRequest != null) {
+            KojiBuildRequest buildRequest = taskRequest.asBuildRequest();
+
+            if (buildRequest != null) {
+                String source = buildRequest.getSource();
+
+                if (source != null) {
+                    return source;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    @JsonIgnore
+    public String getType() {
+        if (taskInfo != null) {
+            return taskInfo.getMethod();
+        }
+
+        if (buildInfo != null) {
+            Map<String, Object> extra = buildInfo.getExtra();
+
+            if (extra == null) {
+                return null;
+            }
+
+            if (extra.containsKey("build_system")) {
+                String buildSystem = (String) extra.get("build_system");
+
+                if (extra.containsKey("version")) {
+                    String version = (String) extra.get("version");
+
+                    if (version != null) {
+                         buildSystem += (" " + version);
+                    }
+                }
+
+                return buildSystem;
+            }
         }
 
         return null;

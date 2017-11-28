@@ -41,13 +41,13 @@ import static j2html.TagCreator.tr;
 import static j2html.TagCreator.ul;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
 import com.redhat.red.build.finder.KojiBuild;
+import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
+
 import j2html.attributes.Attr;
 import j2html.tags.ContainerTag;
 import j2html.tags.Tag;
@@ -83,7 +83,11 @@ public class HTMLReport extends Report {
         return a().withHref(kojiwebUrl + "/packageinfo?packageID=" + id).with(text(name));
     }
 
-    private Tag<?> linkArchive(int id, String name, boolean error) {
+    private Tag<?> linkArchive(KojiBuild build, KojiArchiveInfo archive) {
+        int id = archive.getArchiveId();
+        String name = archive.getFilename();
+        boolean error = build.isImport();
+
         if (id > 0) {
             return a().withHref(kojiwebUrl + "/archiveinfo?archiveID=" + id).with(error ? errorText(name) : text(name));
         } else {
@@ -96,30 +100,11 @@ public class HTMLReport extends Report {
     }
 
     private Tag<?> linkSource(String source) {
-        String newSource = source.replaceAll("^.*://", "http://");
-        URL url;
-
-        try {
-            url = new URL(newSource);
-        } catch (MalformedURLException e) {
-            return errorText("Malfomed URL: " + newSource);
-        }
-
-        String module = (url.getPath() != null ? url.getPath() : "").replaceAll("^/", "");
-
-        String commit =  url.getRef() != null ? url.getRef() : "";
-
-        if (!module.endsWith(".git")) {
-            module += ".git";
-        }
-
-        String newUrl = "https://" + url.getHost() + "/" + module + "/commit/" + commit;
-
-        return span().withAlt(newUrl);
+        return span(source);
     }
 
     public String render() {
-        double numImports = builds.stream().filter(p -> (p.getBuildInfo().getId() > 0 && p.getTaskInfo() == null)).count();
+        double numImports = builds.stream().filter(b -> b.getBuildInfo().getId() > 0 && b.isImport()).count();
         double percentImported = 0;
         int buildsSize = builds.size() - 1;
 
@@ -143,19 +128,20 @@ public class HTMLReport extends Report {
                             ),
                             main().with(
                               h2("Builds found in distribution"),
-                              table(thead(tr().with(th("#"), th("ID"), th("Name"), th("Version"), th("Artifacts"), th("Tags"), th("Type"), th("Sources"), th("Patches"), th("SCM URL"), th("Build options"))),
+                              table(thead(tr().with(th("#"), th("ID"), th("Name"), th("Version"), th("Artifacts"), th("Tags"), th("Type"), th("Sources"), th("Patches"), th("SCM URL"), th("Options"), th("Extra"))),
                                     tbody(each(builds, build ->
                                           tr(td().with(text(Integer.toString(builds.indexOf(build))),
                                           td().with(build.getBuildInfo().getId() > 0 ? linkBuild(build.getBuildInfo().getId()) : errorText(String.valueOf(build.getBuildInfo().getId()))),
                                           td().with(build.getBuildInfo().getId() > 0 ? linkPackage(build.getBuildInfo().getPackageId(), build.getBuildInfo().getName()) : text(""))),
                                           td().with(build.getBuildInfo().getId() > 0 ? text(build.getBuildInfo().getVersion().replace('_', '-')) : text("")),
-                                          td().with(build.getArchives() != null ? ol().with(each(build.getArchives(), archive -> li(linkArchive(archive.getArchive().getArchiveId(), archive.getArchive().getFilename(), build.getTaskInfo() == null || archive.getArchive().getArchiveId() <= 0 || build.containsDuplicateArchive(archive.getArchive())), text(": "), each(archive.getFiles(), file -> text(archive.getFiles().indexOf(file) != (archive.getFiles().size() - 1) ? file + ", " : file))))) : text("")),
+                                          td().with(build.getArchives() != null ? ol().with(each(build.getArchives(), archive -> li(linkArchive(build, archive.getArchive()), text(": "), each(archive.getFiles(), file -> text(archive.getFiles().indexOf(file) != (archive.getFiles().size() - 1) ? file + ", " : file))))) : text("")),
                                           td().with(build.getTags() != null ? ul().with(each(build.getTags(), tag -> li(linkTag(tag.getId(), tag.getName())))) : text("")),
-                                          td().with(build.getTaskInfo() != null ? text(build.getTaskInfo().getMethod()) : (build.getBuildInfo().getId() > 0 ? (build.getBuildInfo().getExtra() == null ? errorText("imported build") : (build.getBuildInfo().getExtra().containsKey("build_system") ? text((String) build.getBuildInfo().getExtra().get("build_system") + "-" + (String) build.getBuildInfo().getExtra().get("version")) : errorText("unknown"))) : errorText("not found"))),
-                                          td().with(build.getSourcesZip() != null ? linkArchive(build.getSourcesZip().getArchiveId(), build.getSourcesZip().getFilename(), build.containsDuplicateArchive(build.getSourcesZip())) : text("")),
-                                          td().with(build.getPatchesZip() != null ? linkArchive(build.getPatchesZip().getArchiveId(), build.getPatchesZip().getFilename(), build.containsDuplicateArchive(build.getPatchesZip())) : text("")),
-                                          td().with(build.getBuildInfo().getTaskId() != null && build.getTaskRequest().asBuildRequest() != null && build.getTaskRequest().asBuildRequest().getSource() != null ? linkSource(build.getTaskRequest().asBuildRequest().getSource()) : errorText("missing URL")),
-                                          td().with(build.getBuildInfo().getTaskId() != null ? each(build.getTaskRequest().asMavenBuildRequest().getProperties().entrySet(), entry -> text(entry.getKey() + (entry.getValue() != null ? ("=" + entry.getValue()) : ""))) : errorText("missing URL"))
+                                          td().with(build.getType() != null ? text(build.getType()) : (build.getBuildInfo().getId() > 0 ? errorText("imported build") : text(""))),
+                                          td().with(build.getSourcesZip() != null ? linkArchive(build, build.getSourcesZip()) : text("")),
+                                          td().with(build.getPatchesZip() != null ? linkArchive(build, build.getPatchesZip()) : text("")),
+                                          td().with(build.getSource() != null ? linkSource(build.getSource()) : (build.getBuildInfo().getId() == 0 ? text("") : errorText("missing URL"))),
+                                          td().with(build.getBuildInfo().getTaskId() != null ? each(build.getTaskRequest().asMavenBuildRequest().getProperties().entrySet(), entry -> text(entry.getKey() + (entry.getValue() != null ? ("=" + entry.getValue() + "; ") : "; "))) : text("")),
+                                          td().with(build.getBuildInfo().getExtra() != null ? each(build.getBuildInfo().getExtra().entrySet(), entry -> text(entry.getKey() + (entry.getValue() != null ? ("=" + entry.getValue() + "; ") : "; "))) : text(""))
                                        ))
                                    )
                                 )

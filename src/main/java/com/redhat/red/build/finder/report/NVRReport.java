@@ -31,7 +31,7 @@ public class NVRReport extends Report {
         this.nvrs.sort(String::compareToIgnoreCase);
     }
 
-     public String render() {
+    public String render() {
         return this.nvrs.stream().map(Object::toString).collect(Collectors.joining("\n"));
     }
 }
