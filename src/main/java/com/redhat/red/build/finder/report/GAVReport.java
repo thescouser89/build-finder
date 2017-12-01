@@ -25,7 +25,7 @@ public class GAVReport extends Report {
     private List<String> gavs;
 
     public GAVReport(List<KojiBuild> builds) {
-        List<KojiBuildInfo> buildInfos = builds.stream().filter(b -> b.isMaven()).map(KojiBuild::getBuildInfo).collect(Collectors.toList());
+        List<KojiBuildInfo> buildInfos = builds.stream().filter(b -> b.getType() != null && b.getType().contains("maven")).map(KojiBuild::getBuildInfo).collect(Collectors.toList());
         this.gavs = buildInfos.stream().map(b -> b.getMavenGroupId() + ":" + b.getMavenArtifactId() + ":" + b.getMavenVersion()).collect(Collectors.toList());
         this.gavs.sort(String::compareToIgnoreCase);
     }
