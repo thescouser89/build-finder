@@ -21,6 +21,7 @@ import java.net.FileNameMap;
 import java.net.URLConnection;
 import java.security.MessageDigest;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -28,7 +29,6 @@ import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.vfs2.FileContent;
-import org.apache.commons.vfs2.FileExtensionSelector;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileType;
 import org.apache.commons.vfs2.VFS;
@@ -40,20 +40,14 @@ public class DistributionAnalyzer {
 
     private final List<File> files;
 
-    private final String algorithm;
-
     private MultiValuedMap<String, String> map;
 
     private final MessageDigest md;
-    private final FileExtensionSelector fes;
 
-    public DistributionAnalyzer(List<File> files, String algorithm) {
+    public DistributionAnalyzer(List<File> files, String algorithm)  {
         this.files = files;
-        this.algorithm = algorithm;
         this.md = DigestUtils.getDigest(algorithm);
         this.map = new ArrayListValuedHashMap<>();
-        this.fes = new FileExtensionSelector("jar", "ear", "har", "jar", "par", "sar", "war", "gz", "tar", "zip", "xz", "bz2", "tgz");
-
         URLConnection.setFileNameMap(new NullFileNameMap());
     }
 
@@ -65,8 +59,6 @@ public class DistributionAnalyzer {
     }
 
     private void listChildren(FileObject fo) throws IOException {
-        // LOGGER.debug("#### FileObject::name {} ", fo.toString());
-        // LOGGER.debug("#### listKid exist {} and file {}  ", fo.exists(), fo.getContent().getFile().exists());
         FileContent fc = fo.getContent();
 
         if (fo.getType().getName().equals(FileType.FILE.getName())) {
@@ -82,27 +74,12 @@ public class DistributionAnalyzer {
                 listChildren(fileO);
             }
         } else {
-            FileObject[] archives = fo.findFiles(fes);
-            for (FileObject archiveFile : archives) {
-                LOGGER.debug("### Attempting to create file system for {} ", archiveFile);
+            if (Stream.of(VFS.getManager().getSchemes()).anyMatch(s -> s.equals(fo.getName().getExtension()) && !s.equals("tmp"))) {
+                LOGGER.debug("Attempting to create file system for {} ", fo.getName().getFriendlyURI());
                 FileObject zipRoot = VFS.getManager()
-                    .createFileSystem(remapExtension(archiveFile.getName().getExtension()), archiveFile);
+                    .createFileSystem(fo.getName().getExtension(), fo);
                 listChildren(zipRoot);
             }
-        }
-    }
-
-    private String remapExtension(String extension) {
-        // TODO: Complete normalise extension types into jar / gz / tar / zip etc.
-        switch (extension) {
-            case "war":
-            case "ear":
-            case "har":
-            case "par":
-            case "sar":
-                return "jar";
-            default:
-                return extension;
         }
     }
 

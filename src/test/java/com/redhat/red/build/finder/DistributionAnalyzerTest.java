@@ -15,22 +15,31 @@
  */
 package com.redhat.red.build.finder;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import com.redhat.red.build.koji.model.xmlrpc.KojiChecksumType;
+import org.apache.commons.lang.StringUtils;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.junit.rules.TemporaryFolder;
 
 public class DistributionAnalyzerTest {
     @Rule
     public TemporaryFolder temp = new TemporaryFolder();
 
+    @Rule
+    public final SystemOutRule systemOutRule = new SystemOutRule().enableLog();
+
     @Test
-    public void verifyDefaults() throws IOException {
+    public void verifySize() throws IOException {
         ArrayList<File> af = new ArrayList<>();
         File test = temp.newFile();
         af.add(test);
@@ -41,5 +50,31 @@ public class DistributionAnalyzerTest {
 
         DistributionAnalyzer da = new DistributionAnalyzer(af, KojiChecksumType.md5.getAlgorithm());
         da.checksumFiles();
+    }
+
+    @Test
+    public void loadNestedZIP() throws IOException {
+        ClassLoader classLoader = getClass().getClassLoader();
+        File file = new File(classLoader.getResource("nested.zip").getFile());
+
+        List<File> target = Collections.singletonList(file);
+        DistributionAnalyzer da = new DistributionAnalyzer(target, KojiChecksumType.md5.getAlgorithm());
+        da.checksumFiles();
+
+        int result = StringUtils.countMatches(systemOutRule.getLog(), "Checksum");
+        assertTrue(result == 23);
+    }
+
+    @Test
+    public void loadNestedWAR() throws IOException {
+        ClassLoader classLoader = getClass().getClassLoader();
+        File file = new File(classLoader.getResource("nested.war").getFile());
+
+        List<File> target = Collections.singletonList(file);
+        DistributionAnalyzer da = new DistributionAnalyzer(target, KojiChecksumType.md5.getAlgorithm());
+        da.checksumFiles();
+
+        int result = StringUtils.countMatches(systemOutRule.getLog(), "Checksum");
+        assertTrue(result == 7);
     }
 }
