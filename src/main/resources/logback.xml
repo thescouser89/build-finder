@@ -25,6 +25,7 @@
 
   <logger name="com.redhat.red.build.koji" level="WARN" />
   <logger name="org.apache.commons.beanutils" level="WARN" />
+  <logger name="org.apache.commons.vfs2" level="WARN" />
   <logger name="org.apache.http" level="WARN" />
   <logger name="org.apache.kerby" level="WARN" />
   <logger name="org.commonjava.util.jhttpc" level="WARN" />

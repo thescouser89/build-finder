@@ -15,97 +15,94 @@
  */
 package com.redhat.red.build.finder;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.FileNameMap;
+import java.net.URLConnection;
+import java.security.MessageDigest;
 import java.util.List;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
-import org.apache.commons.compress.archivers.ArchiveEntry;
-import org.apache.commons.compress.archivers.ArchiveException;
-import org.apache.commons.compress.archivers.ArchiveInputStream;
-import org.apache.commons.compress.archivers.ArchiveStreamFactory;
-import org.apache.commons.compress.compressors.CompressorException;
-import org.apache.commons.compress.compressors.CompressorInputStream;
-import org.apache.commons.compress.compressors.CompressorStreamFactory;
-import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.vfs2.FileContent;
+import org.apache.commons.vfs2.FileExtensionSelector;
+import org.apache.commons.vfs2.FileObject;
+import org.apache.commons.vfs2.FileType;
+import org.apache.commons.vfs2.VFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DistributionAnalyzer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributionAnalyzer.class);
 
-    private List<File> files;
+    private final List<File> files;
 
-    private String algorithm;
+    private final String algorithm;
 
     private MultiValuedMap<String, String> map;
+
+    private final MessageDigest md;
+    private final FileExtensionSelector fes;
 
     public DistributionAnalyzer(List<File> files, String algorithm) {
         this.files = files;
         this.algorithm = algorithm;
+        this.md = DigestUtils.getDigest(algorithm);
         this.map = new ArrayListValuedHashMap<>();
-    }
+        this.fes = new FileExtensionSelector("jar", "ear", "har", "jar", "par", "sar", "war", "gz", "tar", "zip", "xz", "bz2", "tgz");
 
-    public void checksumFile(byte[] bytes, String name) {
-        String checksum = Hex.encodeHexString(DigestUtils.getDigest(algorithm).digest(bytes));
-
-        map.put(checksum, name);
-
-        LOGGER.info("Checksum: {} {}", checksum, name);
-
-        ArchiveInputStream ainput = null;
-        byte[] toRead = null;
-
-        try {
-            CompressorInputStream cinput = null;
-
-            try {
-                cinput = new CompressorStreamFactory().createCompressorInputStream(new ByteArrayInputStream(bytes));
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                IOUtils.copy(cinput, bos);
-                toRead = bos.toByteArray();
-                String newName = name + "!/" + name;
-                checksumFile(bos.toByteArray(), newName);
-            } catch (CompressorException e) {
-                toRead = bytes;
-            } finally {
-                IOUtils.closeQuietly(cinput);
-            }
-
-            ainput = new ArchiveStreamFactory().createArchiveInputStream(new ByteArrayInputStream(toRead));
-            ArchiveEntry entry = null;
-
-            while ((entry = ainput.getNextEntry()) != null) {
-                if (!ainput.canReadEntryData(entry) || entry.isDirectory()) {
-                    continue;
-                }
-
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                IOUtils.copy(ainput, bos);
-                String newName = name + "!/" + entry.getName();
-                checksumFile(bos.toByteArray(), newName);
-            }
-        } catch (ArchiveException e) {
-
-        } catch (IOException e) {
-
-        } finally {
-            IOUtils.closeQuietly(ainput);
-        }
+        URLConnection.setFileNameMap(new NullFileNameMap());
     }
 
     public void checksumFiles() throws IOException {
         for (File file : files) {
-            byte[] b = FileUtils.readFileToByteArray(file);
-            String name = FilenameUtils.getName(file.getName());
-            checksumFile(b, name);
+            FileObject fo = VFS.getManager().resolveFile(file.getAbsolutePath());
+            listChildren(fo);
+        }
+    }
+
+    private void listChildren(FileObject fo) throws IOException {
+        // LOGGER.debug("#### FileObject::name {} ", fo.toString());
+        // LOGGER.debug("#### listKid exist {} and file {}  ", fo.exists(), fo.getContent().getFile().exists());
+        FileContent fc = fo.getContent();
+
+        if (fo.getType().getName().equals(FileType.FILE.getName())) {
+            byte[] digest = DigestUtils.digest(md, fc.getInputStream());
+            String checksum = Hex.encodeHexString(digest);
+            map.put(checksum, fo.getName().getFriendlyURI());
+            LOGGER.info("Checksum: {} {}", checksum, fo.getName().getFriendlyURI());
+        }
+
+        if (fo.getType().getName().equals(FileType.FOLDER.getName())
+            || fo.getType().getName().equals(FileType.FILE_OR_FOLDER.getName())) {
+            for (FileObject fileO : fo.getChildren()) {
+                listChildren(fileO);
+            }
+        } else {
+            FileObject[] archives = fo.findFiles(fes);
+            for (FileObject archiveFile : archives) {
+                LOGGER.debug("### Attempting to create file system for {} ", archiveFile);
+                FileObject zipRoot = VFS.getManager()
+                    .createFileSystem(remapExtension(archiveFile.getName().getExtension()), archiveFile);
+                listChildren(zipRoot);
+            }
+        }
+    }
+
+    private String remapExtension(String extension) {
+        // TODO: Complete normalise extension types into jar / gz / tar / zip etc.
+        switch (extension) {
+            case "war":
+            case "ear":
+            case "har":
+            case "par":
+            case "sar":
+                return "jar";
+            default:
+                return extension;
         }
     }
 
@@ -132,11 +129,20 @@ public class DistributionAnalyzer {
         this.map = map;
     }
 
-    public List<File> getFiles() {
-        return files;
-    }
+    // Following is from https://stackoverflow.com/questions/16427142/how-to-configure-commons-vfs-to-automatically-detect-gz-files
+    private static class NullFileNameMap implements FileNameMap {
+        private FileNameMap delegate = URLConnection.getFileNameMap();
 
-    public void setFiles(List<File> files) {
-        this.files = files;
+        @Override
+        public String getContentTypeFor(String fileName) {
+            String contentType = delegate.getContentTypeFor(fileName);
+            if ("application/octet-stream".equals(contentType)) {
+                // Sun's java classifies zip and gzip as application/octet-stream,
+                // which VFS then uses, instead of looking at its extension
+                // map for a more specific mime type
+                return null;
+            }
+            return contentType;
+        }
     }
 }
