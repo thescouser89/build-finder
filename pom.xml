@@ -94,7 +94,7 @@
       <dependency>
         <groupId>com.j2html</groupId>
         <artifactId>j2html</artifactId>
-        <version>1.2.0</version>
+        <version>1.2.1</version>
       </dependency>
       <dependency>
         <groupId>com.redhat.red.build</groupId>
@@ -311,7 +311,7 @@
             <dependency>
               <groupId>com.puppycrawl.tools</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>8.4</version>
+              <version>8.5</version>
             </dependency>
           </dependencies>
         </plugin>
