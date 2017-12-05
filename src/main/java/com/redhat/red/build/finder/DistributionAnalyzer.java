@@ -17,8 +17,6 @@ package com.redhat.red.build.finder;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.FileNameMap;
-import java.net.URLConnection;
 import java.security.MessageDigest;
 import java.util.List;
 import java.util.stream.Stream;
@@ -48,7 +46,6 @@ public class DistributionAnalyzer {
         this.files = files;
         this.md = DigestUtils.getDigest(algorithm);
         this.map = new ArrayListValuedHashMap<>();
-        URLConnection.setFileNameMap(new NullFileNameMap());
     }
 
     public void checksumFiles() throws IOException {
@@ -106,20 +103,4 @@ public class DistributionAnalyzer {
         this.map = map;
     }
 
-    // Following is from https://stackoverflow.com/questions/16427142/how-to-configure-commons-vfs-to-automatically-detect-gz-files
-    private static class NullFileNameMap implements FileNameMap {
-        private FileNameMap delegate = URLConnection.getFileNameMap();
-
-        @Override
-        public String getContentTypeFor(String fileName) {
-            String contentType = delegate.getContentTypeFor(fileName);
-            if ("application/octet-stream".equals(contentType)) {
-                // Sun's java classifies zip and gzip as application/octet-stream,
-                // which VFS then uses, instead of looking at its extension
-                // map for a more specific mime type
-                return null;
-            }
-            return contentType;
-        }
-    }
 }

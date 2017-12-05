@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.redhat.red.build.koji.model.xmlrpc.KojiChecksumType;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Rule;
 import org.junit.Test;
@@ -44,9 +45,8 @@ public class DistributionAnalyzerTest {
         File test = temp.newFile();
         af.add(test);
 
-        // https://stackoverflow.com/questions/245251/create-file-with-given-size-in-java
         RandomAccessFile f = new RandomAccessFile(test, "rw");
-        f.setLength(2048L * 1024L * 1024L);
+        f.setLength(FileUtils.ONE_GB * 2);
 
         DistributionAnalyzer da = new DistributionAnalyzer(af, KojiChecksumType.md5.getAlgorithm());
         da.checksumFiles();
@@ -62,7 +62,7 @@ public class DistributionAnalyzerTest {
         da.checksumFiles();
 
         int result = StringUtils.countMatches(systemOutRule.getLog(), "Checksum");
-        assertTrue(result == 23);
+        assertTrue(result == 25);
     }
 
     @Test
