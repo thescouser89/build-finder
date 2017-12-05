@@ -48,9 +48,12 @@ public class DistributionAnalyzer {
         this.map = new ArrayListValuedHashMap<>();
     }
 
+    private String rootString;
+
     public void checksumFiles() throws IOException {
         for (File file : files) {
             FileObject fo = VFS.getManager().resolveFile(file.getAbsolutePath());
+            rootString = fo.getName().getFriendlyURI().substring(0, fo.getName().getFriendlyURI().indexOf(fo.getName().getBaseName()));
             listChildren(fo);
         }
     }
@@ -58,11 +61,13 @@ public class DistributionAnalyzer {
     private void listChildren(FileObject fo) throws IOException {
         FileContent fc = fo.getContent();
 
+        String friendly = fo.getName().getFriendlyURI();
+        String found = friendly.substring(friendly.indexOf(rootString) + rootString.length());
         if (fo.getType().getName().equals(FileType.FILE.getName())) {
             byte[] digest = DigestUtils.digest(md, fc.getInputStream());
             String checksum = Hex.encodeHexString(digest);
-            map.put(checksum, fo.getName().getFriendlyURI());
-            LOGGER.info("Checksum: {} {}", checksum, fo.getName().getFriendlyURI());
+            map.put(checksum, found);
+            LOGGER.info("Checksum: {} {}", checksum, found);
         }
 
         if (fo.getType().getName().equals(FileType.FOLDER.getName())
@@ -72,7 +77,7 @@ public class DistributionAnalyzer {
             }
         } else {
             if (Stream.of(VFS.getManager().getSchemes()).anyMatch(s -> s.equals(fo.getName().getExtension()) && !s.equals("tmp"))) {
-                LOGGER.debug("Attempting to create file system for {} ", fo.getName().getFriendlyURI());
+                LOGGER.debug("Attempting to create file system for {} ", found);
                 FileObject zipRoot = VFS.getManager()
                     .createFileSystem(fo.getName().getExtension(), fo);
                 listChildren(zipRoot);

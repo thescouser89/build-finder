@@ -15,6 +15,7 @@
  */
 package com.redhat.red.build.finder;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -63,6 +64,8 @@ public class DistributionAnalyzerTest {
 
         int result = StringUtils.countMatches(systemOutRule.getLog(), "Checksum");
         assertTrue(result == 25);
+        assertFalse(systemOutRule.getLog().contains("zip:zip:file:"));
+        assertFalse(systemOutRule.getLog().contains("target/test-classes"));
     }
 
     @Test
