@@ -120,10 +120,16 @@
         <artifactId>commons-collections4</artifactId>
         <version>4.1</version>
       </dependency>
+      <!-- Required dependency for commons-vfs2 to unpack various types -->
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-compress</artifactId>
         <version>1.15</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-vfs2</artifactId>
+        <version>2.2</version>
       </dependency>
       <dependency>
         <groupId>org.bouncycastle</groupId>
@@ -267,6 +273,10 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-compress</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-vfs2</artifactId>
     </dependency>
     <dependency>
       <groupId>org.bouncycastle</groupId>

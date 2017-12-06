@@ -15,97 +15,77 @@
  */
 package com.redhat.red.build.finder;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
-import org.apache.commons.compress.archivers.ArchiveEntry;
-import org.apache.commons.compress.archivers.ArchiveException;
-import org.apache.commons.compress.archivers.ArchiveInputStream;
-import org.apache.commons.compress.archivers.ArchiveStreamFactory;
-import org.apache.commons.compress.compressors.CompressorException;
-import org.apache.commons.compress.compressors.CompressorInputStream;
-import org.apache.commons.compress.compressors.CompressorStreamFactory;
-import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.vfs2.FileContent;
+import org.apache.commons.vfs2.FileObject;
+import org.apache.commons.vfs2.FileType;
+import org.apache.commons.vfs2.VFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DistributionAnalyzer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributionAnalyzer.class);
 
-    private List<File> files;
+    private static final List<String> NON_ARCHIVE_SCHEMES = Arrays.asList("tmp", "res", "ram", "file");
 
-    private String algorithm;
+    private final List<File> files;
 
     private MultiValuedMap<String, String> map;
 
-    public DistributionAnalyzer(List<File> files, String algorithm) {
+    private final MessageDigest md;
+
+    public DistributionAnalyzer(List<File> files, String algorithm)  {
         this.files = files;
-        this.algorithm = algorithm;
+        this.md = DigestUtils.getDigest(algorithm);
         this.map = new ArrayListValuedHashMap<>();
     }
 
-    public void checksumFile(byte[] bytes, String name) {
-        String checksum = Hex.encodeHexString(DigestUtils.getDigest(algorithm).digest(bytes));
-
-        map.put(checksum, name);
-
-        LOGGER.info("Checksum: {} {}", checksum, name);
-
-        ArchiveInputStream ainput = null;
-        byte[] toRead = null;
-
-        try {
-            CompressorInputStream cinput = null;
-
-            try {
-                cinput = new CompressorStreamFactory().createCompressorInputStream(new ByteArrayInputStream(bytes));
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                IOUtils.copy(cinput, bos);
-                toRead = bos.toByteArray();
-                String newName = name + "!/" + name;
-                checksumFile(bos.toByteArray(), newName);
-            } catch (CompressorException e) {
-                toRead = bytes;
-            } finally {
-                IOUtils.closeQuietly(cinput);
-            }
-
-            ainput = new ArchiveStreamFactory().createArchiveInputStream(new ByteArrayInputStream(toRead));
-            ArchiveEntry entry = null;
-
-            while ((entry = ainput.getNextEntry()) != null) {
-                if (!ainput.canReadEntryData(entry) || entry.isDirectory()) {
-                    continue;
-                }
-
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                IOUtils.copy(ainput, bos);
-                String newName = name + "!/" + entry.getName();
-                checksumFile(bos.toByteArray(), newName);
-            }
-        } catch (ArchiveException e) {
-
-        } catch (IOException e) {
-
-        } finally {
-            IOUtils.closeQuietly(ainput);
-        }
-    }
+    private String rootString;
 
     public void checksumFiles() throws IOException {
         for (File file : files) {
-            byte[] b = FileUtils.readFileToByteArray(file);
-            String name = FilenameUtils.getName(file.getName());
-            checksumFile(b, name);
+            FileObject fo = VFS.getManager().resolveFile(file.getAbsolutePath());
+            rootString = fo.getName().getFriendlyURI().substring(0, fo.getName().getFriendlyURI().indexOf(fo.getName().getBaseName()));
+            listChildren(fo);
+        }
+    }
+
+    private void listChildren(FileObject fo) throws IOException {
+        FileContent fc = fo.getContent();
+
+        String friendly = fo.getName().getFriendlyURI();
+        String found = friendly.substring(friendly.indexOf(rootString) + rootString.length());
+        if (fo.getType().getName().equals(FileType.FILE.getName())) {
+            byte[] digest = DigestUtils.digest(md, fc.getInputStream());
+            String checksum = Hex.encodeHexString(digest);
+            map.put(checksum, found);
+            LOGGER.info("Checksum: {} {}", checksum, found);
+        }
+
+        if (fo.getType().getName().equals(FileType.FOLDER.getName())
+            || fo.getType().getName().equals(FileType.FILE_OR_FOLDER.getName())) {
+            for (FileObject fileO : fo.getChildren()) {
+                listChildren(fileO);
+            }
+        } else {
+            if (Stream.of(VFS.getManager().getSchemes()).anyMatch(s -> s.equals(fo.getName().getExtension()) && !NON_ARCHIVE_SCHEMES
+                .contains(fo.getName().getExtension()))) {
+                LOGGER.debug("Attempting to create file system for {} ", found);
+                FileObject zipRoot = VFS.getManager()
+                    .createFileSystem(fo.getName().getExtension(), fo);
+                listChildren(zipRoot);
+            }
         }
     }
 
@@ -132,11 +112,4 @@ public class DistributionAnalyzer {
         this.map = map;
     }
 
-    public List<File> getFiles() {
-        return files;
-    }
-
-    public void setFiles(List<File> files) {
-        this.files = files;
-    }
 }
