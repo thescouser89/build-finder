@@ -18,6 +18,7 @@ package com.redhat.red.build.finder;
 import java.io.File;
 import java.io.IOException;
 import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -35,6 +36,8 @@ import org.slf4j.LoggerFactory;
 
 public class DistributionAnalyzer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributionAnalyzer.class);
+
+    private static final List<String> NON_ARCHIVE_SCHEMES = Arrays.asList("tmp", "res", "ram", "file");
 
     private final List<File> files;
 
@@ -76,7 +79,8 @@ public class DistributionAnalyzer {
                 listChildren(fileO);
             }
         } else {
-            if (Stream.of(VFS.getManager().getSchemes()).anyMatch(s -> s.equals(fo.getName().getExtension()) && !s.equals("tmp"))) {
+            if (Stream.of(VFS.getManager().getSchemes()).anyMatch(s -> s.equals(fo.getName().getExtension()) && !NON_ARCHIVE_SCHEMES
+                .contains(fo.getName().getExtension()))) {
                 LOGGER.debug("Attempting to create file system for {} ", found);
                 FileObject zipRoot = VFS.getManager()
                     .createFileSystem(fo.getName().getExtension(), fo);
