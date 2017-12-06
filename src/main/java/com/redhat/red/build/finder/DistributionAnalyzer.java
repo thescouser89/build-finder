@@ -31,12 +31,19 @@ import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileType;
 import org.apache.commons.vfs2.VFS;
+import org.apache.commons.vfs2.impl.StandardFileSystemManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DistributionAnalyzer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributionAnalyzer.class);
 
+    /**
+     * Ideally we should be able to use FileSystemManager::canCreateFileSystem but that relies on
+     * an accurate extension map in providers.xml. Either fix that up manually or exclude non-viable
+     * archive schemes. Further without overriding the URLConnection.getFileNameMap the wrong results
+     * will be returned for zip/gz which is classified as application/octet-stream.
+     */
     private static final List<String> NON_ARCHIVE_SCHEMES = Arrays.asList("tmp", "res", "ram", "file");
 
     private final List<File> files;
@@ -44,6 +51,8 @@ public class DistributionAnalyzer {
     private MultiValuedMap<String, String> map;
 
     private final MessageDigest md;
+
+    private StandardFileSystemManager sfs;
 
     public DistributionAnalyzer(List<File> files, String algorithm)  {
         this.files = files;
@@ -54,10 +63,18 @@ public class DistributionAnalyzer {
     private String rootString;
 
     public void checksumFiles() throws IOException {
-        for (File file : files) {
-            FileObject fo = VFS.getManager().resolveFile(file.getAbsolutePath());
-            rootString = fo.getName().getFriendlyURI().substring(0, fo.getName().getFriendlyURI().indexOf(fo.getName().getBaseName()));
-            listChildren(fo);
+
+        sfs = new StandardFileSystemManager();
+        sfs.init();
+        try {
+            for (File file : files) {
+                try (FileObject fo = sfs.resolveFile(file.getAbsolutePath())) {
+                    rootString = fo.getName().getFriendlyURI().substring(0, fo.getName().getFriendlyURI().indexOf(fo.getName().getBaseName()));
+                    listChildren(fo);
+                }
+            }
+        } finally {
+            sfs.close();
         }
     }
 
@@ -66,6 +83,7 @@ public class DistributionAnalyzer {
 
         String friendly = fo.getName().getFriendlyURI();
         String found = friendly.substring(friendly.indexOf(rootString) + rootString.length());
+
         if (fo.getType().getName().equals(FileType.FILE.getName())) {
             byte[] digest = DigestUtils.digest(md, fc.getInputStream());
             String checksum = Hex.encodeHexString(digest);
@@ -76,15 +94,21 @@ public class DistributionAnalyzer {
         if (fo.getType().getName().equals(FileType.FOLDER.getName())
             || fo.getType().getName().equals(FileType.FILE_OR_FOLDER.getName())) {
             for (FileObject fileO : fo.getChildren()) {
-                listChildren(fileO);
+                try {
+                    listChildren(fileO);
+                } finally {
+                    fileO.close();
+                }
             }
         } else {
             if (Stream.of(VFS.getManager().getSchemes()).anyMatch(s -> s.equals(fo.getName().getExtension()) && !NON_ARCHIVE_SCHEMES
-                .contains(fo.getName().getExtension()))) {
-                LOGGER.debug("Attempting to create file system for {} ", found);
-                FileObject zipRoot = VFS.getManager()
-                    .createFileSystem(fo.getName().getExtension(), fo);
-                listChildren(zipRoot);
+                    .contains(fo.getName().getExtension()))) {
+
+                LOGGER.info("Attempting to create file system for {}", found);
+                try (FileObject layered = sfs.createFileSystem(fo.getName().getExtension(), fo)) {
+                    listChildren(layered);
+                    VFS.getManager().closeFileSystem(layered.getFileSystem());
+                }
             }
         }
     }
