@@ -4,6 +4,10 @@ Koji Build Finder iterates over any files or directories in the input, recursive
 
 Additionally, it can write various files required by other tools used as part of the productization process, including NVR (`name-version-release`) and GAV (`groupId:artifactId:version`) lists.
 
+### Development
+
+An example `codestyle-intellij.xml` code formatting style is supplied for IntelliJ. `mvn clean install` will compile and run all of the unit tests.
+
 ## Operation
 
 The support for various compressed archive types relies on [Apache Commons Compress](https://commons.apache.org/proper/commons-compress/) and the compressor and archive formats that Commons Compress can open *automatically*. If an exception occurs while trying to open a file, then the file is considered to be a normal file and recursive processing of the file is aborted.
