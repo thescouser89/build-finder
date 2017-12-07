@@ -33,4 +33,12 @@ public final class TestUtils {
 
         return new File(resource.getPath());
     }
+
+    public static File loadFile(String file) throws IOException {
+        URL urlFile = DistributionAnalyzerTest.class.getClassLoader().getResource(file);
+        if (urlFile == null) {
+            throw new IOException("Unable to resolve " + file);
+        }
+        return new File(urlFile.getFile());
+    }
 }

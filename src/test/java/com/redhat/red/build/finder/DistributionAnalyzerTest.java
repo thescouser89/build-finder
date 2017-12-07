@@ -21,7 +21,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -83,7 +82,7 @@ public class DistributionAnalyzerTest {
         Collection<File> ls = FileUtils.listFiles(cache, null, true);
         assertTrue(ls.size() == 0);
 
-        List<File> target = Collections.singletonList(loadFile("nested.zip"));
+        List<File> target = Collections.singletonList(TestUtils.loadFile("nested.zip"));
         DistributionAnalyzer da = new DistributionAnalyzer(target, KojiChecksumType.md5.getAlgorithm());
         da.checksumFiles();
 
@@ -93,7 +92,7 @@ public class DistributionAnalyzerTest {
 
     @Test
     public void loadNestedZIP() throws IOException {
-        List<File> target = Collections.singletonList(loadFile("nested.zip"));
+        List<File> target = Collections.singletonList(TestUtils.loadFile("nested.zip"));
         DistributionAnalyzer da = new DistributionAnalyzer(target, KojiChecksumType.md5.getAlgorithm());
         da.checksumFiles();
 
@@ -105,7 +104,7 @@ public class DistributionAnalyzerTest {
 
     @Test
     public void loadNestedWAR() throws IOException {
-        List<File> target = Collections.singletonList(loadFile("nested.war"));
+        List<File> target = Collections.singletonList(TestUtils.loadFile("nested.war"));
         DistributionAnalyzer da = new DistributionAnalyzer(target, KojiChecksumType.md5.getAlgorithm());
         da.checksumFiles();
 
@@ -113,11 +112,4 @@ public class DistributionAnalyzerTest {
         assertTrue(result == 7);
     }
 
-    private File loadFile(String file) throws IOException {
-        URL urlFile = getClass().getClassLoader().getResource(file);
-        if (urlFile == null) {
-            throw new IOException("Unable to resolve " + file);
-        }
-        return new File(urlFile.getFile());
-    }
 }

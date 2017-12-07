@@ -30,7 +30,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileType;
-import org.apache.commons.vfs2.VFS;
 import org.apache.commons.vfs2.impl.StandardFileSystemManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,7 +79,6 @@ public class DistributionAnalyzer {
 
     private void listChildren(FileObject fo) throws IOException {
         FileContent fc = fo.getContent();
-
         String friendly = fo.getName().getFriendlyURI();
         String found = friendly.substring(friendly.indexOf(rootString) + rootString.length());
 
@@ -101,13 +99,13 @@ public class DistributionAnalyzer {
                 }
             }
         } else {
-            if (Stream.of(VFS.getManager().getSchemes()).anyMatch(s -> s.equals(fo.getName().getExtension()) && !NON_ARCHIVE_SCHEMES
+            if (Stream.of(sfs.getSchemes()).anyMatch(s -> s.equals(fo.getName().getExtension()) && !NON_ARCHIVE_SCHEMES
                     .contains(fo.getName().getExtension()))) {
 
                 LOGGER.info("Attempting to create file system for {}", found);
                 try (FileObject layered = sfs.createFileSystem(fo.getName().getExtension(), fo)) {
                     listChildren(layered);
-                    VFS.getManager().closeFileSystem(layered.getFileSystem());
+                    sfs.closeFileSystem(layered.getFileSystem());
                 }
             }
         }
