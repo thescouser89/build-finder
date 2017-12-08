@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -30,8 +31,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.junit.rules.TemporaryFolder;
+import org.junit.rules.TestRule;
 
 public class DistributionAnalyzerTest {
     @Rule
@@ -40,25 +43,56 @@ public class DistributionAnalyzerTest {
     @Rule
     public final SystemOutRule systemOutRule = new SystemOutRule().enableLog();
 
+    @Rule
+    public final TestRule restoreSystemProperties = new RestoreSystemProperties();
+
     @Test
     public void verifySize() throws IOException {
         ArrayList<File> af = new ArrayList<>();
         File test = temp.newFile();
         af.add(test);
 
-        RandomAccessFile f = new RandomAccessFile(test, "rw");
-        f.setLength(FileUtils.ONE_GB * 2);
+        try (RandomAccessFile f = new RandomAccessFile(test, "rw")) {
+            f.setLength(FileUtils.ONE_GB * 2);
+
+            DistributionAnalyzer da = new DistributionAnalyzer(af, KojiChecksumType.md5.getAlgorithm());
+            da.checksumFiles();
+        }
+    }
+
+    @Test
+    public void verifyType() throws IOException {
+        ArrayList<File> af = new ArrayList<>();
+        String[] types = {"test.res", "test.ram", "test.tmp", "test.file"};
+
+        for (String s : types) {
+            File test = temp.newFile(s);
+            af.add(test);
+        }
 
         DistributionAnalyzer da = new DistributionAnalyzer(af, KojiChecksumType.md5.getAlgorithm());
         da.checksumFiles();
     }
 
     @Test
-    public void loadNestedZIP() throws IOException {
-        ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("nested.zip").getFile());
+    public void verifyCacheClearance() throws IOException {
+        File cache = temp.newFolder();
+        System.setProperty("java.io.tmpdir", cache.getAbsolutePath());
 
-        List<File> target = Collections.singletonList(file);
+        Collection<File> ls = FileUtils.listFiles(cache, null, true);
+        assertTrue(ls.size() == 0);
+
+        List<File> target = Collections.singletonList(TestUtils.loadFile("nested.zip"));
+        DistributionAnalyzer da = new DistributionAnalyzer(target, KojiChecksumType.md5.getAlgorithm());
+        da.checksumFiles();
+
+        ls = FileUtils.listFiles(cache, null, true);
+        assertTrue(ls.size() == 0);
+    }
+
+    @Test
+    public void loadNestedZIP() throws IOException {
+        List<File> target = Collections.singletonList(TestUtils.loadFile("nested.zip"));
         DistributionAnalyzer da = new DistributionAnalyzer(target, KojiChecksumType.md5.getAlgorithm());
         da.checksumFiles();
 
@@ -70,14 +104,12 @@ public class DistributionAnalyzerTest {
 
     @Test
     public void loadNestedWAR() throws IOException {
-        ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("nested.war").getFile());
-
-        List<File> target = Collections.singletonList(file);
+        List<File> target = Collections.singletonList(TestUtils.loadFile("nested.war"));
         DistributionAnalyzer da = new DistributionAnalyzer(target, KojiChecksumType.md5.getAlgorithm());
         da.checksumFiles();
 
         int result = StringUtils.countMatches(systemOutRule.getLog(), "Checksum");
         assertTrue(result == 7);
     }
+
 }
