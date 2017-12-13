@@ -15,10 +15,13 @@
  */
 package com.redhat.red.build.finder;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Map;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -50,5 +53,17 @@ public class BuildFinderTest {
         File[] f = folder.listFiles();
         assertTrue(f != null && f.length == 1);
         assertTrue(f[0].getName().equals("checksums-md5.json"));
+    }
+
+    @Test
+    public void verifyloadChecksumsFile() throws IOException {
+        File target = new File(TestUtils.resolveFileResource("./", "").getParentFile().getParentFile(), "pom.xml");
+        File folder = temp.newFolder();
+
+        BuildFinder.main(new String[] {"-k", "-o", folder.getAbsolutePath(), target.getAbsolutePath()});
+
+        Map<String, Collection<String>> checksums = JSONUtils.loadChecksumsFile(new File(folder, "checksums-md5.json"));
+
+        assertEquals(checksums.keySet().size(), 1);
     }
 }

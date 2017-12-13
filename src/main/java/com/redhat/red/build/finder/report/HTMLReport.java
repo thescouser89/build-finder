@@ -87,12 +87,7 @@ public class HTMLReport extends Report {
         int id = archive.getArchiveId();
         String name = archive.getFilename();
         boolean error = build.isImport();
-
-        if (id > 0) {
-            return a().withHref(kojiwebUrl + "/archiveinfo?archiveID=" + id).with(error ? errorText(name) : text(name));
-        } else {
-            return span().with(error ? errorText(name) : text(name));
-        }
+        return a().withHref(kojiwebUrl + "/archiveinfo?archiveID=" + id).with(error ? errorText(name) : text(name));
     }
 
     private Tag<?> linkTag(int id, String name) {
