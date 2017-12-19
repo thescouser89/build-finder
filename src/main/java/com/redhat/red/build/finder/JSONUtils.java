@@ -21,12 +21,17 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 public final class JSONUtils {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JSONUtils.class);
+
     private JSONUtils() {
         throw new AssertionError();
     }
@@ -40,7 +45,7 @@ public final class JSONUtils {
             String s = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
             return s;
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            LOGGER.error("JSON error", e);
         }
 
         return "";
@@ -55,9 +60,9 @@ public final class JSONUtils {
             mapper.writerWithDefaultPrettyPrinter().writeValue(file, obj);
             return true;
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            LOGGER.error("JSON error", e);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("JSON error", e);
         }
 
         return false;
@@ -73,8 +78,10 @@ public final class JSONUtils {
             Map<String, Collection<String>> obj = mapper.readValue(file, typeRef);
             return obj;
         } catch (IOException e) {
-            return null;
+            LOGGER.error("JSON error", e);
         }
+
+        return null;
     }
 
    public static Map<Integer, KojiBuild> loadBuildsFile(File file) {
@@ -87,7 +94,7 @@ public final class JSONUtils {
            Map<Integer, KojiBuild> obj = mapper.readValue(file, ref);
            return obj;
        } catch (IOException e) {
-           e.printStackTrace();
+           LOGGER.error("JSON error", e);
        }
 
        return null;

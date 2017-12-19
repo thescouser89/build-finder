@@ -34,7 +34,19 @@ import java.util.TreeSet;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
-import ch.qos.logback.classic.Level;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.redhat.red.build.finder.report.GAVReport;
@@ -51,21 +63,10 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiChecksumType;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTagInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTaskInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTaskRequest;
-import com.redhat.red.build.koji.model.xmlrpc.messages.GetArchiveTypeRequest;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.io.FileUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public final class BuildFinder {
+import ch.qos.logback.classic.Level;
+
+public class BuildFinder {
     private static final String NAME = "koji-build-finder";
 
     private static final String CONFIG_FILENAME = "config.json";
@@ -84,7 +85,7 @@ public final class BuildFinder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildFinder.class);
 
-    private static BuildConfig config;
+    private BuildConfig config;
 
     private static String krbCCache;
 
@@ -96,15 +97,16 @@ public final class BuildFinder {
 
     private static String krbPassword;
 
-    private static KojiClientSession session;
+    private ClientSession session;
 
     private static String outputDir = "";
 
-    private BuildFinder() {
-        throw new AssertionError();
+    public BuildFinder(ClientSession session, BuildConfig config) {
+        this.session = session;
+        this.config = config;
     }
 
-    private static Map<Integer, KojiBuild> findBuilds(Map<String, Collection<String>> checksumTable) {
+    public Map<Integer, KojiBuild> findBuilds(Map<String, Collection<String>> checksumTable) {
         LOGGER.info("Ready to find checksums of type {}", config.getChecksumType());
 
         if (checksumTable == null || checksumTable.size() == 0) {
@@ -123,13 +125,13 @@ public final class BuildFinder {
 
             for (String typeToCheck : config.getArchiveTypes()) {
                 if (types.containsKey(typeToCheck)) {
-                    KojiArchiveType archiveType = session.getArchiveType(new GetArchiveTypeRequest().withTypeName(typeToCheck));
+                    KojiArchiveType archiveType = types.get(typeToCheck);
                     LOGGER.info("Adding archive type to check: {}", archiveType);
                     extensionsToCheck.addAll(archiveType.getExtensions());
                 }
             }
-        } catch (KojiClientException e1) {
-            e1.printStackTrace();
+        } catch (KojiClientException e) {
+            LOGGER.error("Koji client error", e);
             session.close();
             return Collections.emptyMap();
         }
@@ -201,7 +203,7 @@ public final class BuildFinder {
                 LOGGER.info("Looking up archives for checksum {}", checksum);
                 archives = session.listArchives(new KojiArchiveQuery().withChecksum(checksum));
             } catch (KojiClientException e) {
-                e.printStackTrace();
+                LOGGER.error("Koji client error", e);
                 continue;
             }
 
@@ -237,7 +239,6 @@ public final class BuildFinder {
                 KojiTaskRequest taskRequest = null;
                 List<KojiArchiveInfo> allArchives = null;
                 List<KojiTagInfo> tags = null;
-                List<String> buildTypes = null;
 
                 try {
                     if (builds.containsKey(archive.getBuildId())) {
@@ -248,7 +249,6 @@ public final class BuildFinder {
                         taskRequest = build.getTaskRequest();
                         archiveList = build.getArchives();
                         tags = build.getTags();
-                        buildTypes = build.getTypes();
                         hits++;
 
                         if (!buildInfo.getBuildState().equals(KojiBuildState.COMPLETE)) {
@@ -345,17 +345,14 @@ public final class BuildFinder {
                             archiveList = new ArrayList<>();
                             archiveList.add(new KojiLocalArchive(archive, new ArrayList<>(filenames)));
 
-                            buildTypes = new ArrayList<>();
-                            buildTypes.add(buildInfo.getTypeName());
-
-                            build = new KojiBuild(buildInfo, taskInfo, taskRequest, archiveList, allArchives, tags, buildTypes);
+                            build = new KojiBuild(buildInfo, taskInfo, taskRequest, archiveList, allArchives, tags);
                             builds.put(archive.getBuildId(), build);
                         } else {
                             LOGGER.warn("Build not found for checksum {}. This is never supposed to happen", checksum);
                         }
                     }
                 } catch (KojiClientException e) {
-                    e.printStackTrace();
+                    LOGGER.error("Koji client error", e);
                     continue;
                 }
             }
@@ -443,8 +440,8 @@ public final class BuildFinder {
                 throw new ParseException("Must specify at least one file");
             }
 
-            final ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
             if (line.hasOption("debug")) {
+                final ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
                 root.setLevel(Level.DEBUG);
             }
 
@@ -453,32 +450,39 @@ public final class BuildFinder {
             mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
 
             File f = path.toFile();
+            BuildConfig config;
+
             if (f.exists()) {
                 config = mapper.readValue(path.toFile(), BuildConfig.class);
             } else {
-                LOGGER.debug("Configuration does not exist...implicitly creating with defaults...");
+                LOGGER.debug("Configuration does not exist. Implicitly creating with defaults.");
                 config = new BuildConfig();
             }
 
             if (line.hasOption("checksum-only")) {
                 config.setChecksumOnly(Boolean.TRUE);
             }
+
             if (line.hasOption("checksum-type")) {
                 config.setChecksumType(KojiChecksumType.valueOf(line.getOptionValue("checksum-type")));
             }
+
             if (line.hasOption("archive-type")) {
                 @SuppressWarnings("unchecked")
                 List<String> a = (List<String>) line.getParsedOptionValue("archive-types");
                 config.setArchiveTypes(a);
             }
+
             if (line.hasOption("exclude")) {
                 @SuppressWarnings("unchecked")
                 List<String> e = (List<String>) line.getParsedOptionValue("exclude");
                 config.setExcludes(e);
             }
+
             if (line.hasOption("koji-hub-url")) {
                 config.setKojiHubURL(line.getOptionValue("koji-hub-url"));
             }
+
             if (line.hasOption("koji-web-url")) {
                 config.setKojiWebURL(line.getOptionValue("koji-web-url"));
             }
@@ -487,26 +491,32 @@ public final class BuildFinder {
                 krbCCache = line.getOptionValue("krb-ccache");
                 LOGGER.info("Kerberos ccache: {}", krbCCache);
             }
+
             if (line.hasOption("krb-keytab")) {
                 krbKeytab = line.getOptionValue("krb-keytab");
                 LOGGER.info("Kerberos keytab {}", krbKeytab);
             }
+
             if (line.hasOption("krb-service")) {
                 krbService = line.getOptionValue("krb-service");
                 LOGGER.info("Kerberos service: {}", krbService);
             }
+
             if (line.hasOption("krb-principal")) {
                 krbPrincipal = line.getOptionValue("krb-principal");
                 LOGGER.info("Kerberos principal: {}", krbPrincipal);
             }
+
             if (line.hasOption("krb-password")) {
                 krbPassword = line.getOptionValue("krb-password");
                 LOGGER.info("Read Kerberos password");
             }
+
             if (line.hasOption("output-directory")) {
                 outputDir = line.getOptionValue("output-directory") + File.separatorChar;
                 LOGGER.info("Read output directory {} ", outputDir);
             }
+
             LOGGER.debug("Configuration {} ", config);
             // TODO: Decide if we should write out the config file or throw exception for missing file.
             // JSONUtils.dumpFile(path.toFile(), config);
@@ -532,11 +542,13 @@ public final class BuildFinder {
             Map<String, Collection<String>> checksums = null;
 
             if (!checksumFile.exists()) {
+                LOGGER.info("Scanning checksums for files: {}", files);
                 DistributionAnalyzer pda = new DistributionAnalyzer(files, config.getChecksumType().getAlgorithm());
                 pda.checksumFiles();
                 checksums = pda.getMap().asMap();
                 pda.outputToFile(checksumFile);
             } else {
+                LOGGER.info("Loading checksums from file: {}", checksumFile);
                 checksums = JSONUtils.loadChecksumsFile(checksumFile);
             }
 
@@ -546,6 +558,7 @@ public final class BuildFinder {
 
             File buildsFile = new File(outputDir + BUILDS_FILENAME);
             Map<Integer, KojiBuild> builds = null;
+            KojiClientSession session = null;
 
             try {
                 session = new KojiClientSession(config.getKojiHubURL(), krbService, krbPrincipal, krbPassword, krbCCache, krbKeytab);
@@ -562,7 +575,8 @@ public final class BuildFinder {
                 LOGGER.info("Attempting to load existing builds file {}", buildsFile.getAbsolutePath());
                 builds = JSONUtils.loadBuildsFile(buildsFile);
             } else {
-                builds = findBuilds(checksums);
+                BuildFinder bf = new BuildFinder(session, config);
+                builds = bf.findBuilds(checksums);
                 JSONUtils.dumpFile(buildsFile, builds);
             }
 

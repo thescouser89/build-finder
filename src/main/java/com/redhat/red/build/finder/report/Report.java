@@ -19,15 +19,19 @@ import java.io.File;
 import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class Report {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Report.class);
+
     public abstract String render();
 
     public boolean outputToFile(File file) {
         try {
             FileUtils.writeStringToFile(file, render(), "UTF-8", false);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("File output error", e);
             return false;
         }
 

@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -43,7 +44,7 @@ public class DistributionAnalyzer {
      * archive schemes. Further without overriding the URLConnection.getFileNameMap the wrong results
      * will be returned for zip/gz which is classified as application/octet-stream.
      */
-    private static final List<String> NON_ARCHIVE_SCHEMES = Arrays.asList("tmp", "res", "ram", "file");
+    private static final List<String> NON_ARCHIVE_SCHEMES = Collections.unmodifiableList(Arrays.asList("tmp", "res", "ram", "file"));
 
     private final List<File> files;
 
@@ -119,7 +120,7 @@ public class DistributionAnalyzer {
         try {
             FileUtils.writeStringToFile(file, toJSON(), "UTF-8", false);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("File output error", e);
             return false;
         }
 

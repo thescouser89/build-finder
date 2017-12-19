@@ -20,6 +20,9 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.commonjava.util.jhttpc.auth.MemoryPasswordManager;
+import org.commonjava.util.jhttpc.auth.PasswordManager;
+
 import com.redhat.red.build.koji.KojiClient;
 import com.redhat.red.build.koji.KojiClientException;
 import com.redhat.red.build.koji.config.KojiConfig;
@@ -29,94 +32,63 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveQuery;
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveType;
 import com.redhat.red.build.koji.model.xmlrpc.KojiBuildInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiBuildQuery;
-import com.redhat.red.build.koji.model.xmlrpc.KojiBuildType;
-import com.redhat.red.build.koji.model.xmlrpc.KojiBuildTypeInfo;
-import com.redhat.red.build.koji.model.xmlrpc.KojiBuildTypeQuery;
-import com.redhat.red.build.koji.model.xmlrpc.KojiImageBuildInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiSessionInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTagInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTaskInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTaskRequest;
-import com.redhat.red.build.koji.model.xmlrpc.KojiWinBuildInfo;
-import com.redhat.red.build.koji.model.xmlrpc.messages.GetArchiveTypeRequest;
-import org.commonjava.util.jhttpc.auth.MemoryPasswordManager;
-import org.commonjava.util.jhttpc.auth.PasswordManager;
 
-public class KojiClientSession extends KojiClient {
+public class KojiClientSession implements ClientSession {
     private static final int DEFAULT_THREAD_COUNT = 1;
+    private KojiClient client;
     private KojiSessionInfo session;
 
     public KojiClientSession(KojiConfig config, PasswordManager passwordManager, ExecutorService executorService) {
-        super(config, passwordManager, executorService);
+        client = new KojiClient(config, passwordManager, executorService);
     }
 
     public KojiClientSession(String url) throws KojiClientException {
-        super(new SimpleKojiConfigBuilder().withKojiURL(url).build(), new MemoryPasswordManager(), Executors.newFixedThreadPool(DEFAULT_THREAD_COUNT));
+        client = new KojiClient(new SimpleKojiConfigBuilder().withKojiURL(url).build(), new MemoryPasswordManager(), Executors.newFixedThreadPool(DEFAULT_THREAD_COUNT));
     }
 
     public KojiClientSession(String url, String krbService, String krbPrincipal, String krbPassword, String krbCCache, String krbKeytab) throws KojiClientException {
-        super(new SimpleKojiConfigBuilder().withKojiURL(url).withKrbService(krbService).withKrbCCache(krbCCache).withKrbKeytab(krbKeytab).withKrbPrincipal(krbPrincipal).withKrbPassword(krbPassword).build(), new MemoryPasswordManager(), Executors.newFixedThreadPool(DEFAULT_THREAD_COUNT));
+        client = new KojiClient(new SimpleKojiConfigBuilder().withKojiURL(url).withKrbService(krbService).withKrbCCache(krbCCache).withKrbKeytab(krbKeytab).withKrbPrincipal(krbPrincipal).withKrbPassword(krbPassword).build(), new MemoryPasswordManager(), Executors.newFixedThreadPool(DEFAULT_THREAD_COUNT));
 
         if (krbService != null) {
             if ((krbPrincipal != null && krbPassword != null) || krbCCache != null || krbKeytab != null) {
-                session = login();
+                session = client.login();
             }
         }
     }
 
     public List<KojiArchiveInfo> listArchives(KojiArchiveQuery query) throws KojiClientException {
-        return listArchives(query, session);
-    }
-
-    public KojiArchiveType getArchiveType(GetArchiveTypeRequest request) throws KojiClientException {
-        return getArchiveType(request, session);
+        return client.listArchives(query, session);
     }
 
     public Map<String, KojiArchiveType> getArchiveTypeMap() throws KojiClientException {
-        return getArchiveTypeMap(session);
+        return client.getArchiveTypeMap(session);
     }
 
     public KojiBuildInfo getBuild(Integer buildId) throws KojiClientException {
-        return getBuildInfo(buildId, session);
-    }
-
-    public KojiTaskInfo getTaskInfo(int taskId) throws KojiClientException {
-        return getTaskInfo(taskId, session);
+        return client.getBuildInfo(buildId, session);
     }
 
     public KojiTaskInfo getTaskInfo(int taskId, boolean request) throws KojiClientException {
-        return getTaskInfo(taskId, request, session);
+        return client.getTaskInfo(taskId, request, session);
     }
 
     public KojiTaskRequest getTaskRequest(int taskId) throws KojiClientException {
-        return getTaskRequest(taskId, session);
-    }
-
-    public KojiImageBuildInfo getImageBuild(int buildId) throws KojiClientException {
-        return getImageBuildInfo(buildId, session);
-    }
-
-    public KojiWinBuildInfo getWinBuild(int buildId) throws KojiClientException {
-        return getWinBuildInfo(buildId, session);
-    }
-
-    public List<KojiBuildType> listBTypes() throws KojiClientException {
-        return listBuildTypes(session);
-    }
-
-    public List<KojiBuildType> listBTypes(KojiBuildTypeQuery query) throws KojiClientException {
-        return listBuildTypes(query, session);
+        return client.getTaskRequest(taskId, session);
     }
 
     public List<KojiBuildInfo> listBuilds(KojiBuildQuery query) throws KojiClientException {
-        return listBuilds(query, session);
-    }
-
-    public KojiBuildTypeInfo getBuildType(int id) throws KojiClientException {
-        return getBuildTypeInfo(id, session);
+        return client.listBuilds(query, session);
     }
 
     public List<KojiTagInfo> listTags(int id) throws KojiClientException {
-        return listTags(id, session);
+        return client.listTags(id, session);
+    }
+
+    public void close() {
+        client.close();
     }
 }
