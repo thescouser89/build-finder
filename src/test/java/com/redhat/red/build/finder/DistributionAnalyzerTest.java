@@ -112,4 +112,15 @@ public class DistributionAnalyzerTest {
         assertTrue(result == 7);
     }
 
+    @Test
+    public void loadManPageZIP() throws IOException {
+        List<File> target = Collections.singletonList(TestUtils.loadFile("symbolic.zip"));
+        DistributionAnalyzer da = new DistributionAnalyzer(target, KojiChecksumType.md5.getAlgorithm());
+        da.checksumFiles();
+
+        int result = StringUtils.countMatches(systemOutRule.getLog(), "Checksum");
+        assertTrue(result == 4);
+        assertTrue(systemOutRule.getLog().contains("Unable to process archive/compressed file"));
+    }
+
 }
