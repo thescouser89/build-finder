@@ -28,20 +28,24 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiTaskRequest;
 
 public class KojiBuild {
     private KojiBuildInfo buildInfo;
+
     private KojiTaskInfo taskInfo;
+
     private KojiTaskRequest taskRequest;
+
     private List<KojiLocalArchive> archives;
+
     private List<KojiArchiveInfo> remoteArchives;
+
     private List<KojiTagInfo> tags;
+
     private List<KojiArchiveInfo> duplicateArchives;
 
     public KojiBuild() {
 
     }
 
-    public KojiBuild(KojiBuildInfo buildInfo, KojiTaskInfo taskInfo, KojiTaskRequest taskRequest,
-            List<KojiLocalArchive> archives, List<KojiArchiveInfo> remoteArchives,
-            List<KojiTagInfo> tags) {
+    public KojiBuild(KojiBuildInfo buildInfo, KojiTaskInfo taskInfo, KojiTaskRequest taskRequest, List<KojiLocalArchive> archives, List<KojiArchiveInfo> remoteArchives, List<KojiTagInfo> tags) {
         this.buildInfo = buildInfo;
         this.taskInfo = taskInfo;
         this.taskRequest = taskRequest;
@@ -126,16 +130,16 @@ public class KojiBuild {
 
     @JsonIgnore
     public KojiArchiveInfo getSourcesZip() {
-         String mavenVersion = buildInfo.getMavenVersion();
-         KojiArchiveInfo sourcesZip = null;
+        String mavenVersion = buildInfo.getMavenVersion();
+        KojiArchiveInfo sourcesZip = null;
 
-         if (remoteArchives != null && mavenVersion != null) {
-             String sourcesZipFilename = buildInfo.getMavenArtifactId() + "-" + buildInfo.getMavenVersion() + "-scm-sources.zip";
-             sourcesZip = remoteArchives.stream().filter(sArchive -> sArchive.getFilename().equals(sourcesZipFilename)).findAny().orElse(null);
-             return sourcesZip;
-         }
+        if (remoteArchives != null && mavenVersion != null) {
+            String sourcesZipFilename = buildInfo.getMavenArtifactId() + "-" + buildInfo.getMavenVersion() + "-scm-sources.zip";
+            sourcesZip = remoteArchives.stream().filter(sArchive -> sArchive.getFilename().equals(sourcesZipFilename)).findAny().orElse(null);
+            return sourcesZip;
+        }
 
-         return null;
+        return null;
     }
 
     @JsonIgnore
@@ -207,7 +211,7 @@ public class KojiBuild {
                     String version = (String) extra.get("version");
 
                     if (version != null) {
-                         buildSystem += (" " + version);
+                        buildSystem += (" " + version);
                     }
                 }
 

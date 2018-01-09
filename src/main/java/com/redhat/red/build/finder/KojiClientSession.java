@@ -39,7 +39,9 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiTaskRequest;
 
 public class KojiClientSession implements ClientSession {
     private static final int DEFAULT_THREAD_COUNT = 1;
+
     private KojiClient client;
+
     private KojiSessionInfo session;
 
     public KojiClientSession(KojiConfig config, PasswordManager passwordManager, ExecutorService executorService) {

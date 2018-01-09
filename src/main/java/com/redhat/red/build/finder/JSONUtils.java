@@ -68,7 +68,7 @@ public final class JSONUtils {
         return false;
     }
 
-    public static Map<String, Collection<String>> loadChecksumsFile(File file)  {
+    public static Map<String, Collection<String>> loadChecksumsFile(File file) {
         ObjectMapper mapper = new ObjectMapper();
         TypeReference<Map<String, List<String>>> typeRef = new TypeReference<Map<String, List<String>>>() {
 

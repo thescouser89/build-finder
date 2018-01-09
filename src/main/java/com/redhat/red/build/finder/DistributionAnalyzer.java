@@ -55,7 +55,7 @@ public class DistributionAnalyzer {
 
     private StandardFileSystemManager sfs;
 
-    public DistributionAnalyzer(List<File> files, String algorithm)  {
+    public DistributionAnalyzer(List<File> files, String algorithm) {
         this.files = files;
         this.md = DigestUtils.getDigest(algorithm);
         this.map = new ArrayListValuedHashMap<>();
@@ -91,8 +91,7 @@ public class DistributionAnalyzer {
             LOGGER.info("Checksum: {} {}", checksum, found);
         }
 
-        if (fo.getType().getName().equals(FileType.FOLDER.getName())
-            || fo.getType().getName().equals(FileType.FILE_OR_FOLDER.getName())) {
+        if (fo.getType().getName().equals(FileType.FOLDER.getName()) || fo.getType().getName().equals(FileType.FILE_OR_FOLDER.getName())) {
             for (FileObject fileO : fo.getChildren()) {
                 try {
                     listChildren(fileO);
@@ -101,8 +100,7 @@ public class DistributionAnalyzer {
                 }
             }
         } else {
-            if (Stream.of(sfs.getSchemes()).anyMatch(s -> s.equals(fo.getName().getExtension()) && !NON_ARCHIVE_SCHEMES
-                    .contains(fo.getName().getExtension()))) {
+            if (Stream.of(sfs.getSchemes()).anyMatch(s -> s.equals(fo.getName().getExtension()) && !NON_ARCHIVE_SCHEMES.contains(fo.getName().getExtension()))) {
 
                 LOGGER.info("Attempting to create file system for {}", found);
                 try (FileObject layered = sfs.createFileSystem(fo.getName().getExtension(), fo)) {

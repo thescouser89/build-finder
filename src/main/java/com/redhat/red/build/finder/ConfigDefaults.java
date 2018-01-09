@@ -23,9 +23,14 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiChecksumType;
 
 public abstract class ConfigDefaults {
     public static final List<String> ARCHIVE_TYPES = Collections.unmodifiableList(Arrays.asList("jar", "xml", "pom", "so", "dll", "dylib"));
+
     public static final Boolean CHECKSUM_ONLY = Boolean.FALSE;
+
     public static final KojiChecksumType CHECKSUM_TYPE = KojiChecksumType.md5;
+
     public static final String KOJI_HUB_URL = "http://kojihub.my.host/kojihub";
+
     public static final String KOJI_WEB_URL = "https://kojiweb.my.host/koji";
+
     public static final List<String> EXCLUDES = Collections.unmodifiableList(Arrays.asList("^(?!.*/pom\\.xml$).*/.*\\.xml$"));
 }
