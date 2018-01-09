@@ -106,6 +106,7 @@ public class FileObjectTrackingTest {
 
     /**
      * Byteman modifies this method to return the actual counter value.
+     *
      * @return Integer counter
      */
     private Object getAbstractFileObjectCounter() {
@@ -114,6 +115,7 @@ public class FileObjectTrackingTest {
 
     /**
      * Byteman modifies this method to return the actual counter value.
+     *
      * @return Integer counter
      */
     private Object getFileSystemCounter() {

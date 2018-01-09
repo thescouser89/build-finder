@@ -405,16 +405,10 @@ public class BuildFinder {
         Options options = new Options();
         options.addOption(Option.builder("h").longOpt("help").desc("Show this help message.").build());
         options.addOption(Option.builder("d").longOpt("debug").desc("Enable debug logging.").build());
-        options.addOption(Option.builder("k").longOpt("checksum-only").numberOfArgs(0).required(false).desc("Only checksum files and do not find sources. Default: "
-            + ConfigDefaults.CHECKSUM_ONLY + ".").build());
-        options.addOption(Option.builder("t").longOpt("checksum-type").numberOfArgs(1).required(false).type(String.class).desc("Checksum types ("
-            + Arrays.stream(KojiChecksumType.values()).map(KojiChecksumType::getAlgorithm).collect(Collectors.joining(",")) + "). Default: "
-            + ConfigDefaults.CHECKSUM_TYPE + ".").build());
-        options.addOption(Option.builder("a").longOpt("archive-type").numberOfArgs(1).required(false).desc("Add a koji archive type to check. Default: ["
-            + ConfigDefaults.ARCHIVE_TYPES.stream().collect(Collectors.joining(",")) + "].").type(List.class).build());
-        options
-            .addOption(Option.builder("x").longOpt("exclude").numberOfArgs(1).argName("pattern").required(false).desc("Add a pattern to exclude files from source check. Default: ["
-                + ConfigDefaults.EXCLUDES.stream().collect(Collectors.joining(",")) + "].").build());
+        options.addOption(Option.builder("k").longOpt("checksum-only").numberOfArgs(0).required(false).desc("Only checksum files and do not find sources. Default: " + ConfigDefaults.CHECKSUM_ONLY + ".").build());
+        options.addOption(Option.builder("t").longOpt("checksum-type").numberOfArgs(1).required(false).type(String.class).desc("Checksum types (" + Arrays.stream(KojiChecksumType.values()).map(KojiChecksumType::getAlgorithm).collect(Collectors.joining(",")) + "). Default: " + ConfigDefaults.CHECKSUM_TYPE + ".").build());
+        options.addOption(Option.builder("a").longOpt("archive-type").numberOfArgs(1).required(false).desc("Add a koji archive type to check. Default: [" + ConfigDefaults.ARCHIVE_TYPES.stream().collect(Collectors.joining(",")) + "].").type(List.class).build());
+        options.addOption(Option.builder("x").longOpt("exclude").numberOfArgs(1).argName("pattern").required(false).desc("Add a pattern to exclude files from source check. Default: [" + ConfigDefaults.EXCLUDES.stream().collect(Collectors.joining(",")) + "].").build());
         options.addOption(Option.builder().longOpt("koji-hub-url").numberOfArgs(1).argName("url").required(false).desc("Set the Koji hub URL.").build());
         options.addOption(Option.builder().longOpt("koji-web-url").numberOfArgs(1).argName("url").required(false).desc("Set the Koji web URL.").build());
         options.addOption(Option.builder().longOpt("krb-ccache").numberOfArgs(1).argName("ccache").required(false).desc("Set the location of Kerberos credential cache.").build());
@@ -422,8 +416,7 @@ public class BuildFinder {
         options.addOption(Option.builder().longOpt("krb-service").numberOfArgs(1).argName("service").required(false).desc("Set Kerberos client service.").build());
         options.addOption(Option.builder().longOpt("krb-principal").numberOfArgs(1).argName("principal").required(false).desc("Set Kerberos client principal.").build());
         options.addOption(Option.builder().longOpt("krb-password").numberOfArgs(1).argName("password").required(false).desc("Set Kerberos password.").build());
-        options.addOption(
-            Option.builder("o").longOpt("output-directory").numberOfArgs(1).argName("outputDirectory").required(false).desc("Configure a base outputDir directory.").build());
+        options.addOption(Option.builder("o").longOpt("output-directory").numberOfArgs(1).argName("outputDirectory").required(false).desc("Configure a base outputDir directory.").build());
 
         Path path = Paths.get(CONFIG_FILENAME);
         String[] unparsedArgs;
@@ -606,7 +599,6 @@ public class BuildFinder {
         }
     }
 
-
     private static void usage(Options options) {
         HelpFormatter formatter = new HelpFormatter();
         formatter.setSyntaxPrefix("Usage: ");
@@ -625,20 +617,16 @@ public class BuildFinder {
 
         try {
             final Enumeration<URL> resources;
-            resources = BuildFinder.class.getClassLoader()
-                .getResources("META-INF/MANIFEST.MF");
+            resources = BuildFinder.class.getClassLoader().getResources("META-INF/MANIFEST.MF");
 
             while (resources.hasMoreElements()) {
                 final URL jarUrl = resources.nextElement();
 
-                if (jarUrl.getFile()
-                    .contains("koji-build-finder")) {
+                if (jarUrl.getFile().contains("koji-build-finder")) {
                     final Manifest manifest = new Manifest(jarUrl.openStream());
 
-                    result = manifest.getMainAttributes()
-                        .getValue("Implementation-Version");
-                    result += " ( SHA: " + manifest.getMainAttributes()
-                        .getValue("Scm-Revision") + " ) ";
+                    result = manifest.getMainAttributes().getValue("Implementation-Version");
+                    result += " (SHA: " + manifest.getMainAttributes().getValue("Scm-Revision") + ")";
                     break;
                 }
             }

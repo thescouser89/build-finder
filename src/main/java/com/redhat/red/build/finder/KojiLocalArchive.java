@@ -21,6 +21,7 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 
 public class KojiLocalArchive {
     private KojiArchiveInfo archive;
+
     private List<String> files;
 
     public KojiLocalArchive() {
