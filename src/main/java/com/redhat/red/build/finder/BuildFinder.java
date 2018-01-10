@@ -161,10 +161,11 @@ public class BuildFinder {
         LOGGER.info("Checking up to {} different checksums", total);
 
         for (Entry<String, Collection<String>> entry : checksumTable.entrySet()) {
-            String checksum = entry.getKey();
-            LOGGER.info("Progress: {} / {} = {}%", checked, total, (checked / (double) total) * 100);
+            LOGGER.info("Progress: {} / {} = {}%", checked, total, String.format("%.3f", (checked / (double) total) * 100));
 
             checked++;
+
+            String checksum = entry.getKey();
 
             if (checksum.equals(EMPTY_MD5)) {
                 LOGGER.debug("Found empty file for checksum", checksum);
