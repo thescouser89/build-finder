@@ -192,7 +192,7 @@ public class KojiBuild {
     }
 
     @JsonIgnore
-    public String getType() {
+    public String getMethod() {
         if (taskInfo != null) {
             return taskInfo.getMethod();
         }
