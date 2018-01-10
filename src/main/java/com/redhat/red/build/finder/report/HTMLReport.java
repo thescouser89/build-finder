@@ -132,7 +132,7 @@ public class HTMLReport extends Report {
                                           td(build.getBuildInfo().getId() > 0 ? text(build.getBuildInfo().getVersion().replace('_', '-')) : text("")),
                                           td(build.getArchives() != null ? ol().with(each(build.getArchives(), archive -> li(linkArchive(build, archive.getArchive()), text(": "), each(archive.getFiles(), file -> text(archive.getFiles().indexOf(file) != (archive.getFiles().size() - 1) ? file + ", " : file))))) : text("")),
                                           td(build.getTags() != null ? ul().with(each(build.getTags(), tag -> li(linkTag(tag.getId(), tag.getName())))) : text("")),
-                                          td(build.getType() != null ? text(build.getType()) : (build.getBuildInfo().getId() > 0 ? errorText("imported build") : text(""))),
+                                          td(build.getMethod() != null ? text(build.getMethod()) : (build.getBuildInfo().getId() > 0 ? errorText("imported build") : text(""))),
                                           td(build.getSourcesZip() != null ? linkArchive(build, build.getSourcesZip()) : text("")),
                                           td(build.getPatchesZip() != null ? linkArchive(build, build.getPatchesZip()) : text("")),
                                           td(build.getSource() != null ? linkSource(build.getSource()) : (build.getBuildInfo().getId() == 0 ? text("") : errorText("missing URL"))),
