@@ -39,19 +39,22 @@ public class KojiBuild {
 
     private List<KojiTagInfo> tags;
 
+    private List<String> types;
+
     private List<KojiArchiveInfo> duplicateArchives;
 
     public KojiBuild() {
 
     }
 
-    public KojiBuild(KojiBuildInfo buildInfo, KojiTaskInfo taskInfo, KojiTaskRequest taskRequest, List<KojiLocalArchive> archives, List<KojiArchiveInfo> remoteArchives, List<KojiTagInfo> tags) {
+    public KojiBuild(KojiBuildInfo buildInfo, KojiTaskInfo taskInfo, KojiTaskRequest taskRequest, List<KojiLocalArchive> archives, List<KojiArchiveInfo> remoteArchives, List<KojiTagInfo> tags, List<String> types) {
         this.buildInfo = buildInfo;
         this.taskInfo = taskInfo;
         this.taskRequest = taskRequest;
         this.archives = archives;
         this.remoteArchives = remoteArchives;
         this.tags = tags;
+        this.types = types;
     }
 
     public KojiBuildInfo getBuildInfo() {
@@ -100,6 +103,14 @@ public class KojiBuild {
 
     public void setTags(List<KojiTagInfo> tags) {
         this.tags = tags;
+    }
+
+    public List<String> getTypes() {
+        return types;
+    }
+
+    public void setTypes(List<String> types) {
+        this.types = types;
     }
 
     public List<KojiArchiveInfo> getDuplicateArchives() {
