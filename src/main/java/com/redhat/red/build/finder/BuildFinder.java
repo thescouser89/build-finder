@@ -410,7 +410,7 @@ public class BuildFinder {
         List<File> files = new ArrayList<>();
         Options options = new Options();
         options.addOption(Option.builder("h").longOpt("help").desc("Show this help message.").build());
-        options.addOption(Option.builder("c").longOpt("config").numberOfArgs(1).argName("file").required(false).desc("Specify configuration file to use. Default: [" + ConfigDefaults.CONFIG + "].").build());
+        options.addOption(Option.builder("c").longOpt("config").numberOfArgs(1).argName("file").required(false).desc("Specify configuration file to use. Default: " + ConfigDefaults.CONFIG + ".").build());
         options.addOption(Option.builder("d").longOpt("debug").desc("Enable debug logging.").build());
         options.addOption(Option.builder("k").longOpt("checksum-only").numberOfArgs(0).required(false).desc("Only checksum files and do not find sources. Default: " + ConfigDefaults.CHECKSUM_ONLY + ".").build());
         options.addOption(Option.builder("t").longOpt("checksum-type").numberOfArgs(1).required(false).type(String.class).desc("Checksum types (" + Arrays.stream(KojiChecksumType.values()).map(KojiChecksumType::getAlgorithm).collect(Collectors.joining(",")) + "). Default: " + ConfigDefaults.CHECKSUM_TYPE + ".").build());
