@@ -240,6 +240,7 @@ public class BuildFinder {
                 KojiTaskRequest taskRequest = null;
                 List<KojiArchiveInfo> allArchives = null;
                 List<KojiTagInfo> tags = null;
+                List<String> buildTypes = null;
 
                 try {
                     if (builds.containsKey(archive.getBuildId())) {
@@ -250,6 +251,7 @@ public class BuildFinder {
                         taskRequest = build.getTaskRequest();
                         archiveList = build.getArchives();
                         tags = build.getTags();
+                        buildTypes = build.getTypes();
                         hits++;
 
                         if (!buildInfo.getBuildState().equals(KojiBuildState.COMPLETE)) {
@@ -346,7 +348,12 @@ public class BuildFinder {
                             archiveList = new ArrayList<>();
                             archiveList.add(new KojiLocalArchive(archive, new ArrayList<>(filenames)));
 
-                            build = new KojiBuild(buildInfo, taskInfo, taskRequest, archiveList, allArchives, tags);
+                            if (buildInfo.getTypeNames() != null) {
+                                buildTypes = new ArrayList<>();
+                                buildTypes.addAll(buildInfo.getTypeNames());
+                            }
+
+                            build = new KojiBuild(buildInfo, taskInfo, taskRequest, archiveList, allArchives, tags, buildTypes);
                             builds.put(archive.getBuildId(), build);
                         } else {
                             LOGGER.warn("Build not found for checksum {}. This is never supposed to happen", checksum);
