@@ -69,8 +69,6 @@ import ch.qos.logback.classic.Level;
 public class BuildFinder {
     private static final String NAME = "koji-build-finder";
 
-    private static final String CONFIG_FILENAME = "config.json";
-
     private static final String CHECKSUMS_FILENAME_BASENAME = "checksums-";
 
     private static final String BUILDS_FILENAME = "builds.json";
@@ -412,6 +410,7 @@ public class BuildFinder {
         List<File> files = new ArrayList<>();
         Options options = new Options();
         options.addOption(Option.builder("h").longOpt("help").desc("Show this help message.").build());
+        options.addOption(Option.builder("c").longOpt("config").numberOfArgs(1).argName("file").required(false).desc("Specify configuration file to use. Default: [" + ConfigDefaults.CONFIG + "].").build());
         options.addOption(Option.builder("d").longOpt("debug").desc("Enable debug logging.").build());
         options.addOption(Option.builder("k").longOpt("checksum-only").numberOfArgs(0).required(false).desc("Only checksum files and do not find sources. Default: " + ConfigDefaults.CHECKSUM_ONLY + ".").build());
         options.addOption(Option.builder("t").longOpt("checksum-type").numberOfArgs(1).required(false).type(String.class).desc("Checksum types (" + Arrays.stream(KojiChecksumType.values()).map(KojiChecksumType::getAlgorithm).collect(Collectors.joining(",")) + "). Default: " + ConfigDefaults.CHECKSUM_TYPE + ".").build());
@@ -426,7 +425,6 @@ public class BuildFinder {
         options.addOption(Option.builder().longOpt("krb-password").numberOfArgs(1).argName("password").required(false).desc("Set Kerberos password.").build());
         options.addOption(Option.builder("o").longOpt("output-directory").numberOfArgs(1).argName("outputDirectory").required(false).desc("Configure a base outputDir directory.").build());
 
-        Path path = Paths.get(CONFIG_FILENAME);
         String[] unparsedArgs;
 
         try {
@@ -441,23 +439,31 @@ public class BuildFinder {
                 throw new ParseException("Must specify at least one file");
             }
 
-            if (line.hasOption("debug")) {
-                final ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-                root.setLevel(Level.DEBUG);
-            }
-
             // Initial value taken from configuration value and then allow command line to override.
             ObjectMapper mapper = new ObjectMapper();
             mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
 
-            File f = path.toFile();
+            Path configPath = null;
+
+            if (line.hasOption("config")) {
+                configPath = Paths.get(line.getOptionValue("config"));
+            } else {
+                configPath = Paths.get(ConfigDefaults.CONFIG);
+            }
+
+            File configFile = configPath.toFile();
             BuildConfig config;
 
-            if (f.exists()) {
-                config = mapper.readValue(path.toFile(), BuildConfig.class);
+            if (configFile.exists()) {
+                config = mapper.readValue(configPath.toFile(), BuildConfig.class);
             } else {
                 LOGGER.debug("Configuration does not exist. Implicitly creating with defaults.");
                 config = new BuildConfig();
+            }
+
+            if (line.hasOption("debug")) {
+                final ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+                root.setLevel(Level.DEBUG);
             }
 
             if (line.hasOption("checksum-only")) {
@@ -519,8 +525,16 @@ public class BuildFinder {
             }
 
             LOGGER.debug("Configuration {} ", config);
-            // TODO: Decide if we should write out the config file or throw exception for missing file.
-            // JSONUtils.dumpFile(path.toFile(), config);
+
+            if (!configFile.exists()) {
+                File configDir = configPath.toFile().getParentFile();
+
+                if (configDir != null && !configDir.exists()) {
+                    configDir.mkdirs();
+                }
+
+                JSONUtils.dumpFile(configPath.toFile(), config);
+            }
 
             for (String unparsedArg : unparsedArgs) {
                 File file = new File(unparsedArg);
