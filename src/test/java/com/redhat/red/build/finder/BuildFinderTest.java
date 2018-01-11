@@ -37,8 +37,10 @@ public class BuildFinderTest {
 
     @Test
     public void verifyDebug() throws IOException, InterruptedException {
+        File folder = temp.newFolder();
+
         File target = new File(TestUtils.resolveFileResource("./", "").getParentFile().getParentFile(), "pom.xml");
-        BuildFinder.main(new String[] {"-d", "-k", target.getAbsolutePath()});
+        BuildFinder.main(new String[] {"-d", "-k", "-o", folder.getAbsolutePath(), target.getAbsolutePath()});
 
         assertTrue(systemOutRule.getLog().contains("DEBUG"));
     }
