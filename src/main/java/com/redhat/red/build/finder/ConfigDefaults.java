@@ -15,9 +15,12 @@
  */
 package com.redhat.red.build.finder;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import org.apache.commons.io.FileUtils;
 
 import com.redhat.red.build.koji.model.xmlrpc.KojiChecksumType;
 
@@ -28,9 +31,11 @@ public abstract class ConfigDefaults {
 
     public static final KojiChecksumType CHECKSUM_TYPE = KojiChecksumType.md5;
 
+    public static final String CONFIG = FileUtils.getUserDirectoryPath() + File.separator + ".koji-build-finder" + File.separator + "config.json";
+
+    public static final List<String> EXCLUDES = Collections.unmodifiableList(Arrays.asList("^(?!.*/pom\\.xml$).*/.*\\.xml$"));
+
     public static final String KOJI_HUB_URL = "http://kojihub.my.host/kojihub";
 
     public static final String KOJI_WEB_URL = "https://kojiweb.my.host/koji";
-
-    public static final List<String> EXCLUDES = Collections.unmodifiableList(Arrays.asList("^(?!.*/pom\\.xml$).*/.*\\.xml$"));
 }

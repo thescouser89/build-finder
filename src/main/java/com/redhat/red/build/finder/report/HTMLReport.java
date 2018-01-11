@@ -142,7 +142,7 @@ public class HTMLReport extends Report {
                                    )
                                 )
                             ),
-                              footer().attr(Attr.CLASS, "footer").attr(Attr.ID, "footer").withText("Created: " + new Date())
+                            footer().attr(Attr.CLASS, "footer").attr(Attr.ID, "footer").withText("Created: " + new Date())
                         )
                     ).renderFormatted();
     }
