@@ -33,16 +33,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.junit.rules.TemporaryFolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.redhat.red.build.finder.report.GAVReport;
 import com.redhat.red.build.finder.report.HTMLReport;
 import com.redhat.red.build.finder.report.NVRReport;
 
 public class ReportTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ReportTest.class);
-
     @Rule
     public TemporaryFolder temp = new TemporaryFolder();
 
@@ -60,8 +56,8 @@ public class ReportTest {
         File newBuildsFile = new File(folder, "builds.json");
         JSONUtils.dumpFile(newBuildsFile, builds);
 
-        String buildsString = FileUtils.readFileToString(buildsFile).replaceAll("\\s", "");
-        String newBuildsString = FileUtils.readFileToString(newBuildsFile).replaceAll("\\s", "");
+        String buildsString = FileUtils.readFileToString(buildsFile, "UTF-8").replaceAll("\\s", "");
+        String newBuildsString = FileUtils.readFileToString(newBuildsFile, "UTF-8").replaceAll("\\s", "");
 
         assertEquals(newBuildsString, buildsString);
 
