@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <!--
-    Copyright 2017 Red Hat, Inc.
+
+    Copyright (C) 2017 Red Hat, Inc.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -13,6 +14,7 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
+
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
@@ -20,7 +22,7 @@
   <parent>
     <groupId>com.redhat.rcm</groupId>
     <artifactId>redhat-releng-tools</artifactId>
-    <version>4</version>
+    <version>5</version>
   </parent>
 
   <groupId>com.redhat.red.build</groupId>
@@ -293,6 +295,16 @@
   <build>
     <pluginManagement>
       <plugins>
+        <plugin>
+          <groupId>com.mycila</groupId>
+          <artifactId>license-maven-plugin</artifactId>
+          <configuration>
+            <header>APACHE-2-SIMPLIFIED-COPYRIGHT.txt</header>
+            <excludes combine.children="append">
+              <exclude>.editorconfig</exclude>
+            </excludes>
+          </configuration>
+        </plugin>
         <plugin>
           <groupId>com.github.hazendaz.spotbugs</groupId>
           <artifactId>spotbugs-maven-plugin</artifactId>
