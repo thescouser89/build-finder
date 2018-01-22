@@ -60,8 +60,6 @@ public final class JSONUtils {
         try {
             mapper.writerWithDefaultPrettyPrinter().writeValue(file, obj);
             return true;
-        } catch (JsonProcessingException e) {
-            LOGGER.error("JSON error", e);
         } catch (IOException e) {
             LOGGER.error("JSON error", e);
         }
