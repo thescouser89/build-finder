@@ -83,8 +83,6 @@ public class BuildFinder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildFinder.class);
 
-    private BuildConfig config;
-
     private static String krbCCache;
 
     private static String krbKeytab;
@@ -95,9 +93,11 @@ public class BuildFinder {
 
     private static String krbPassword;
 
+    private static String outputDir = "";
+
     private ClientSession session;
 
-    private static String outputDir = "";
+    private BuildConfig config;
 
     public BuildFinder(ClientSession session, BuildConfig config) {
         this.session = session;
