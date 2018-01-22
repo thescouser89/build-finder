@@ -80,14 +80,14 @@ public class DistributionAnalyzerTest {
         System.setProperty("java.io.tmpdir", cache.getAbsolutePath());
 
         Collection<File> ls = FileUtils.listFiles(cache, null, true);
-        assertTrue(ls.size() == 0);
+        assertTrue(ls.isEmpty());
 
         List<File> target = Collections.singletonList(TestUtils.loadFile("nested.zip"));
         DistributionAnalyzer da = new DistributionAnalyzer(target, KojiChecksumType.md5.getAlgorithm());
         da.checksumFiles();
 
         ls = FileUtils.listFiles(cache, null, true);
-        assertTrue(ls.size() == 0);
+        assertTrue(ls.isEmpty());
     }
 
     @Test
