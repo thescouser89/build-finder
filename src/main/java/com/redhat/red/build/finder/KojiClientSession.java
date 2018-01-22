@@ -62,34 +62,37 @@ public class KojiClientSession implements ClientSession {
         }
     }
 
+    @Override
     public List<KojiArchiveInfo> listArchives(KojiArchiveQuery query) throws KojiClientException {
         return client.listArchives(query, session);
     }
 
+    @Override
     public Map<String, KojiArchiveType> getArchiveTypeMap() throws KojiClientException {
         return client.getArchiveTypeMap(session);
     }
 
+    @Override
     public KojiBuildInfo getBuild(Integer buildId) throws KojiClientException {
         return client.getBuildInfo(buildId, session);
     }
 
+    @Override
     public KojiTaskInfo getTaskInfo(int taskId, boolean request) throws KojiClientException {
         return client.getTaskInfo(taskId, request, session);
     }
 
+    @Override
     public KojiTaskRequest getTaskRequest(int taskId) throws KojiClientException {
         return client.getTaskRequest(taskId, session);
     }
 
-    public List<KojiBuildInfo> listBuilds(KojiBuildQuery query) throws KojiClientException {
-        return client.listBuilds(query, session);
-    }
-
+    @Override
     public List<KojiTagInfo> listTags(int id) throws KojiClientException {
         return client.listTags(id, session);
     }
 
+    @Override
     public void close() {
         client.close();
     }

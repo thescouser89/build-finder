@@ -98,6 +98,7 @@ public class HTMLReport extends Report {
         return span(source);
     }
 
+    @Override
     public String render() {
         double numImports = builds.stream().filter(b -> b.getBuildInfo().getId() > 0 && b.isImport()).count();
         double percentImported = 0;
