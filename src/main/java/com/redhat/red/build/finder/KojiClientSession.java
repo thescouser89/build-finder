@@ -31,7 +31,6 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveQuery;
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveType;
 import com.redhat.red.build.koji.model.xmlrpc.KojiBuildInfo;
-import com.redhat.red.build.koji.model.xmlrpc.KojiBuildQuery;
 import com.redhat.red.build.koji.model.xmlrpc.KojiSessionInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTagInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTaskInfo;
