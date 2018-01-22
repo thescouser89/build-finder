@@ -225,10 +225,10 @@ public class BuildFinder {
 
             List<KojiArchiveInfo> archivesToRemove = new ArrayList<>();
 
-            LOGGER.info("Found {} archives for checskum {}", archives.size(), checksum);
+            LOGGER.info("Found {} archives for checksum {}", archives.size(), checksum);
 
             for (KojiArchiveInfo archive : archives) {
-                if (!archive.getChecksumType().equals(config.getChecksumType())) {
+                if (archive.getChecksumType() != config.getChecksumType()) {
                     LOGGER.warn("Skipping archive id {} as checksum is not {}, but is {}", config.getChecksumType(), archive.getArchiveId(), archive.getChecksumType());
                     archivesToRemove.add(archive);
                     continue;
@@ -238,7 +238,6 @@ public class BuildFinder {
                 KojiTaskRequest taskRequest = null;
                 List<KojiArchiveInfo> allArchives = null;
                 List<KojiTagInfo> tags = null;
-                List<String> buildTypes = null;
 
                 try {
                     if (builds.containsKey(archive.getBuildId())) {
@@ -249,10 +248,9 @@ public class BuildFinder {
                         taskRequest = build.getTaskRequest();
                         archiveList = build.getArchives();
                         tags = build.getTags();
-                        buildTypes = build.getTypes();
                         hits++;
 
-                        if (!buildInfo.getBuildState().equals(KojiBuildState.COMPLETE)) {
+                        if (buildInfo.getBuildState() != KojiBuildState.COMPLETE) {
                             LOGGER.warn("Skipping incomplete build id {}", buildInfo.getId());
                             archivesToRemove.add(archive);
                             continue;
@@ -288,7 +286,7 @@ public class BuildFinder {
                         buildInfo = session.getBuild(archive.getBuildId());
 
                         if (buildInfo != null) {
-                            if (!buildInfo.getBuildState().equals(KojiBuildState.COMPLETE)) {
+                            if (buildInfo.getBuildState() != KojiBuildState.COMPLETE) {
                                 LOGGER.warn("Found incomplete build id {}, nvr {} archive file {} with checksum {}, skipping", buildInfo.getId(), buildInfo.getNvr(), archive.getFilename(), checksum);
 
                                 archivesToRemove.add(archive);
@@ -346,6 +344,8 @@ public class BuildFinder {
                             archiveList = new ArrayList<>();
                             archiveList.add(new KojiLocalArchive(archive, new ArrayList<>(filenames)));
 
+                            List<String> buildTypes = null;
+
                             if (buildInfo.getTypeNames() != null) {
                                 buildTypes = new ArrayList<>();
                                 buildTypes.addAll(buildInfo.getTypeNames());
@@ -397,7 +397,7 @@ public class BuildFinder {
 
         LOGGER.info("Found {} total builds in this distribution", builds.keySet().size() - 1);
 
-        builds.values().removeIf(b -> !b.getBuildInfo().getBuildState().equals(KojiBuildState.COMPLETE));
+        builds.values().removeIf(b -> b.getBuildInfo().getBuildState() != KojiBuildState.COMPLETE);
 
         LOGGER.info("Found {} completed builds in this distribution", builds.keySet().size() - 1);
 
