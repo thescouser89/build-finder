@@ -107,27 +107,37 @@ public class BuildFinder {
     public Map<Integer, KojiBuild> findBuilds(Map<String, Collection<String>> checksumTable) {
         LOGGER.info("Ready to find checksums of type {}", config.getChecksumType());
 
-        if (checksumTable == null || checksumTable.size() == 0) {
+        if (checksumTable == null || checksumTable.isEmpty()) {
             LOGGER.warn("Checksum table is empty");
             return Collections.emptyMap();
         }
 
+        Set<String> extensionsToCheck = new TreeSet<>();
         final long startTime = System.nanoTime();
 
-        Map<String, KojiArchiveType> types;
-        Set<String> extensionsToCheck = new TreeSet<>();
-
         try {
-            types = session.getArchiveTypeMap();
-            LOGGER.info("Koji archive types: {}", types.keySet());
+            Map<String, KojiArchiveType> allTypesMap = session.getArchiveTypeMap();
+            Set<String> allTypes = allTypesMap.values().stream().map(a -> a.getName()).collect(Collectors.toSet());
 
-            for (String typeToCheck : config.getArchiveTypes()) {
-                if (types.containsKey(typeToCheck)) {
-                    KojiArchiveType archiveType = types.get(typeToCheck);
-                    LOGGER.info("Adding archive type to check: {}", archiveType);
-                    extensionsToCheck.addAll(archiveType.getExtensions());
-                }
+            LOGGER.info("There are {} known Koji archive types: {}", allTypes.size(), allTypes);
+
+            List<String> archiveTypes = config.getArchiveTypes();
+            Set<String> typesToCheck = null;
+
+            if (archiveTypes != null && !archiveTypes.isEmpty()) {
+                typesToCheck = archiveTypes.stream().collect(Collectors.toSet());
+            } else {
+                LOGGER.warn("Supplied archive types list is empty; defaulting to all known archive types");
+                typesToCheck = allTypes;
             }
+
+            LOGGER.info("There are {} Koji archive types to check: {}", typesToCheck.size(), typesToCheck);
+
+            typesToCheck.stream().filter(allTypesMap::containsKey).map(allTypesMap::get).forEach(archiveType -> {
+                LOGGER.info("Adding archive type to check: {}", archiveType);
+                List<String> extensions = archiveType.getExtensions();
+                extensionsToCheck.addAll(extensions);
+            });
         } catch (KojiClientException e) {
             LOGGER.error("Koji client error", e);
             session.close();
@@ -172,10 +182,16 @@ public class BuildFinder {
 
             Collection<String> filenames = checksumTable.get(checksum);
             boolean foundExt = false;
+            List<String> excludes = config.getExcludes();
 
             for (String filename : filenames) {
                 LOGGER.debug("Checking checksum {} and filename {}", checksum, filename);
-                boolean exclude = config.getExcludes().stream().anyMatch(x -> filename.matches(x));
+
+                boolean exclude = false;
+
+                if (excludes != null && !excludes.isEmpty()) {
+                    exclude = excludes.stream().anyMatch(x -> filename.matches(x));
+                }
 
                 if (exclude) {
                     LOGGER.info("Skipping filename {} because it matches the excludes list", filename);
@@ -256,7 +272,7 @@ public class BuildFinder {
                             continue;
                         }
 
-                        if (tags.size() == 0) {
+                        if (tags.isEmpty()) {
                             LOGGER.warn("Skipping build id {} due to no tags", buildInfo.getId());
                             archivesToRemove.add(archive);
                             continue;
@@ -300,7 +316,7 @@ public class BuildFinder {
 
                             tags = session.listTags(buildInfo.getId());
 
-                            if (tags.size() == 0) {
+                            if (tags.isEmpty()) {
                                 LOGGER.warn("Skipping build id {} due to no tags", buildInfo.getId());
                                 archivesToRemove.add(archive);
                                 continue;
@@ -368,7 +384,7 @@ public class BuildFinder {
             if (archives.size() != 1) {
                 LOGGER.warn("More than one archive ({}) with checksum {}", archives.size(), checksum);
 
-                for (KojiArchiveInfo archive : archives) {
+                archives.forEach(archive -> {
                     KojiBuild duplicateBuild = builds.get(archive.getBuildId());
 
                     if (duplicateBuild != null) {
@@ -382,7 +398,7 @@ public class BuildFinder {
                             }
                         }
                     }
-                }
+                });
             }
         }
 
@@ -655,6 +671,7 @@ public class BuildFinder {
         } catch (IOException e) {
             throw new RuntimeException("Unexpected exception processing jar file.", e);
         }
+
         return result;
     }
 }
