@@ -55,18 +55,19 @@ public class DistributionAnalyzer {
 
     private StandardFileSystemManager sfs;
 
+    private String rootString;
+
     public DistributionAnalyzer(List<File> files, String algorithm) {
         this.files = files;
         this.md = DigestUtils.getDigest(algorithm);
         this.map = new ArrayListValuedHashMap<>();
     }
 
-    private String rootString;
-
     public void checksumFiles() throws IOException {
-
         sfs = new StandardFileSystemManager();
+
         sfs.init();
+
         try {
             for (File file : files) {
                 try (FileObject fo = sfs.resolveFile(file.getAbsolutePath())) {
@@ -101,8 +102,8 @@ public class DistributionAnalyzer {
             }
         } else {
             if (Stream.of(sfs.getSchemes()).anyMatch(s -> s.equals(fo.getName().getExtension()) && !NON_ARCHIVE_SCHEMES.contains(fo.getName().getExtension()))) {
-
                 LOGGER.info("Attempting to create file system for {}", found);
+
                 try (FileObject layered = sfs.createFileSystem(fo.getName().getExtension(), fo)) {
                     listChildren(layered);
                     sfs.closeFileSystem(layered.getFileSystem());
@@ -136,5 +137,4 @@ public class DistributionAnalyzer {
     public void setMap(MultiValuedMap<String, String> map) {
         this.map = map;
     }
-
 }

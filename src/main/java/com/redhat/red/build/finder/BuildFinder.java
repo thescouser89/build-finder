@@ -117,7 +117,7 @@ public class BuildFinder {
 
         try {
             Map<String, KojiArchiveType> allTypesMap = session.getArchiveTypeMap();
-            Set<String> allTypes = allTypesMap.values().stream().map(a -> a.getName()).collect(Collectors.toSet());
+            Set<String> allTypes = allTypesMap.values().stream().map(KojiArchiveType::getName).collect(Collectors.toSet());
 
             LOGGER.info("There are {} known Koji archive types: {}", allTypes.size(), allTypes);
 
@@ -133,11 +133,10 @@ public class BuildFinder {
 
             LOGGER.info("There are {} Koji archive types to check: {}", typesToCheck.size(), typesToCheck);
 
-            typesToCheck.stream().filter(allTypesMap::containsKey).map(allTypesMap::get).forEach(archiveType -> {
+            typesToCheck.stream().filter(allTypesMap::containsKey).map(allTypesMap::get).map(archiveType -> {
                 LOGGER.info("Adding archive type to check: {}", archiveType);
-                List<String> extensions = archiveType.getExtensions();
-                extensionsToCheck.addAll(extensions);
-            });
+                return archiveType.getExtensions();
+            }).forEach(extensionsToCheck::addAll);
         } catch (KojiClientException e) {
             LOGGER.error("Koji client error", e);
             session.close();
@@ -190,7 +189,7 @@ public class BuildFinder {
                 boolean exclude = false;
 
                 if (excludes != null && !excludes.isEmpty()) {
-                    exclude = excludes.stream().anyMatch(x -> filename.matches(x));
+                    exclude = excludes.stream().anyMatch(filename::matches);
                 }
 
                 if (exclude) {
