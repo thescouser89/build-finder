@@ -545,7 +545,11 @@ public class BuildFinder {
                 File configDir = configPath.toFile().getParentFile();
 
                 if (configDir != null && !configDir.exists()) {
-                    configDir.mkdirs();
+                    boolean created = configDir.mkdirs();
+
+                    if (!created) {
+                        LOGGER.warn("Failed to create directory {}", configDir);
+                    }
                 }
 
                 JSONUtils.dumpFile(configPath.toFile(), config);
