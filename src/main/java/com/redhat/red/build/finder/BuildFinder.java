@@ -559,7 +559,7 @@ public class BuildFinder {
                 File file = new File(unparsedArg);
 
                 if (!file.canRead()) {
-                    System.err.printf("WARNING: Cannot read file %s", file.getPath());
+                    LOGGER.warn("Could not read file {}", file.getPath());
                     continue;
                 }
 
