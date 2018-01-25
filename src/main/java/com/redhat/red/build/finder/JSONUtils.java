@@ -83,19 +83,19 @@ public final class JSONUtils {
         return null;
     }
 
-   public static Map<Integer, KojiBuild> loadBuildsFile(File file) {
-       ObjectMapper mapper = new KojiObjectMapper();
-       TypeReference<Map<Integer, KojiBuild>> ref = new TypeReference<Map<Integer, KojiBuild>>() {
+    public static Map<Integer, KojiBuild> loadBuildsFile(File file) {
+        ObjectMapper mapper = new KojiObjectMapper();
+        TypeReference<Map<Integer, KojiBuild>> ref = new TypeReference<Map<Integer, KojiBuild>>() {
 
-       };
+        };
 
-       try {
-           Map<Integer, KojiBuild> obj = mapper.readValue(file, ref);
-           return obj;
-       } catch (IOException e) {
-           LOGGER.error("JSON error", e);
-       }
+        try {
+            Map<Integer, KojiBuild> obj = mapper.readValue(file, ref);
+            return obj;
+        } catch (IOException e) {
+            LOGGER.error("JSON error", e);
+        }
 
-       return null;
-   }
+        return null;
+    }
 }
