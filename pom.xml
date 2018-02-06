@@ -304,9 +304,6 @@
           <artifactId>license-maven-plugin</artifactId>
           <configuration>
             <header>APACHE-2-SIMPLIFIED-COPYRIGHT.txt</header>
-            <excludes combine.children="append">
-              <exclude>.editorconfig</exclude>
-            </excludes>
           </configuration>
         </plugin>
         <plugin>
