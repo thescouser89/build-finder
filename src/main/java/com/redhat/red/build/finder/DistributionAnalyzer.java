@@ -27,7 +27,6 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
@@ -108,26 +107,15 @@ public class DistributionAnalyzer {
                     listChildren(layered);
                     sfs.closeFileSystem(layered.getFileSystem());
                 } catch (FileSystemException e) {
-                    LOGGER.error("Unable to process archive/compressed file {} ", found);
+                    LOGGER.warn("Unable to process archive/compressed file: {}", found);
                     LOGGER.debug("Caught file system exception", e);
                 }
             }
         }
     }
 
-    public String toJSON() {
-        return JSONUtils.dumpString(map.asMap());
-    }
-
     public boolean outputToFile(File file) {
-        try {
-            FileUtils.writeStringToFile(file, toJSON(), "UTF-8", false);
-        } catch (IOException e) {
-            LOGGER.error("File output error", e);
-            return false;
-        }
-
-        return true;
+        return JSONUtils.dumpObjectToFile(map.asMap(), file);
     }
 
     public MultiValuedMap<String, String> getMap() {

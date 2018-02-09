@@ -552,7 +552,7 @@ public class BuildFinder {
                     }
                 }
 
-                JSONUtils.dumpFile(configPath.toFile(), config);
+                JSONUtils.dumpObjectToFile(config, configPath.toFile());
             }
 
             for (String unparsedArg : unparsedArgs) {
@@ -611,7 +611,7 @@ public class BuildFinder {
             } else {
                 BuildFinder bf = new BuildFinder(session, config);
                 builds = bf.findBuilds(checksums);
-                JSONUtils.dumpFile(buildsFile, builds);
+                JSONUtils.dumpObjectToFile(builds, buildsFile);
             }
 
             if (builds != null && builds.size() > 0) {

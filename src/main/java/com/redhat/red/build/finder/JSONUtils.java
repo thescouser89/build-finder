@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,16 +50,17 @@ public final class JSONUtils {
             LOGGER.error("JSON error", e);
         }
 
-        return "";
+        return null;
     }
 
-    public static boolean dumpFile(File file, Object obj) {
+    public static boolean dumpObjectToFile(Object object, File file) {
         ObjectMapper mapper = new KojiObjectMapper();
 
         mapper.enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
 
         try {
-            mapper.writerWithDefaultPrettyPrinter().writeValue(file, obj);
+            FileUtils.forceMkdirParent(file);
+            mapper.writerWithDefaultPrettyPrinter().writeValue(file, object);
             return true;
         } catch (IOException e) {
             LOGGER.error("JSON error", e);

@@ -54,7 +54,7 @@ public class ReportTest {
         Map<Integer, KojiBuild> builds = JSONUtils.loadBuildsFile(buildsFile);
 
         File newBuildsFile = new File(folder, "builds.json");
-        JSONUtils.dumpFile(newBuildsFile, builds);
+        JSONUtils.dumpObjectToFile(builds, newBuildsFile);
 
         String buildsString = FileUtils.readFileToString(buildsFile, "UTF-8").replaceAll("\\s", "");
         String newBuildsString = FileUtils.readFileToString(newBuildsFile, "UTF-8").replaceAll("\\s", "");
