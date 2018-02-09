@@ -192,6 +192,11 @@
         </exclusions>
       </dependency>
       <dependency>
+        <groupId>org.fusesource.jansi</groupId>
+        <artifactId>jansi</artifactId>
+        <version>1.17</version>
+      </dependency>
+      <dependency>
         <groupId>org.jboss.byteman</groupId>
         <artifactId>byteman-bmunit</artifactId>
         <version>4.0.0</version>
@@ -283,6 +288,10 @@
     <dependency>
       <groupId>org.commonjava.util</groupId>
       <artifactId>jhttpc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.fusesource.jansi</groupId>
+      <artifactId>jansi</artifactId>
     </dependency>
     <dependency>
       <groupId>org.jboss.byteman</groupId>
