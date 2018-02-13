@@ -23,10 +23,12 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
+import ch.qos.logback.classic.Level;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.junit.rules.TemporaryFolder;
+import org.slf4j.LoggerFactory;
 
 public class BuildFinderTest {
     @Rule
@@ -36,13 +38,19 @@ public class BuildFinderTest {
     public final SystemOutRule systemOutRule = new SystemOutRule().enableLog();
 
     @Test
-    public void verifyDebug() throws IOException, InterruptedException {
-        File folder = temp.newFolder();
+    public void verifyDebug() throws IOException {
+        try {
+            File folder = temp.newFolder();
 
-        File target = new File(TestUtils.resolveFileResource("./", "").getParentFile().getParentFile(), "pom.xml");
-        BuildFinder.main(new String[] {"-d", "-k", "-o", folder.getAbsolutePath(), target.getAbsolutePath()});
+            File target = new File(TestUtils.resolveFileResource("./", "").getParentFile().getParentFile(), "pom.xml");
+            BuildFinder.main(new String[] {"-d", "-k", "-o", folder.getAbsolutePath(), target.getAbsolutePath()});
 
-        assertTrue(systemOutRule.getLog().contains("DEBUG"));
+            assertTrue(systemOutRule.getLog().contains("DEBUG"));
+        } finally {
+            final ch.qos.logback.classic.Logger root =
+                (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+            root.setLevel(Level.INFO);
+        }
     }
 
     @Test
