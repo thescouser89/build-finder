@@ -23,8 +23,9 @@
 
   <logger name="com.redhat.red.build.koji" level="WARN" />
   <logger name="org.apache.commons.beanutils" level="WARN" />
+  <logger name="org.apache.commons.vfs2" level="WARN" />
   <!-- Set to OFF due to <https://issues.apache.org/jira/browse/VFS-634> -->
-  <logger name="org.apache.commons.vfs2" level="OFF" />
+  <logger name="org.apache.commons.vfs2.impl" level="OFF" />
   <logger name="org.apache.http" level="WARN" />
   <logger name="org.apache.kerby" level="WARN" />
   <logger name="org.commonjava.util.jhttpc" level="WARN" />
