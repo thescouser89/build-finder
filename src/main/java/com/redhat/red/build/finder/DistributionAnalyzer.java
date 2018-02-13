@@ -107,7 +107,7 @@ public class DistributionAnalyzer {
                     listChildren(layered);
                     sfs.closeFileSystem(layered.getFileSystem());
                 } catch (FileSystemException e) {
-                    LOGGER.warn("Unable to process archive/compressed file: @|red {}|@", found);
+                    LOGGER.warn("Unable to process archive/compressed file: {}", found);
                     LOGGER.debug("Caught file system exception", e);
                 }
             }
