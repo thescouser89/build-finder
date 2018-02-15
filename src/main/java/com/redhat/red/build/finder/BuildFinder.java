@@ -22,7 +22,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -150,7 +149,7 @@ public class BuildFinder {
             return Collections.emptyMap();
         }
 
-        LOGGER.info(Ansi.ansi().render("Looking up files with extensions matching: @|green {}|@").toString(), extensionsToCheck);
+        LOGGER.info("Looking up files with extensions matching: {}", green(extensionsToCheck));
 
         Map<Integer, KojiBuild> builds = new HashMap<>();
         KojiBuildInfo buildInfo = new KojiBuildInfo();
@@ -172,7 +171,7 @@ public class BuildFinder {
 
         final String EMPTY_MD5 = Hex.encodeHexString(DigestUtils.getDigest(config.getChecksumType().getAlgorithm()).digest());
 
-        LOGGER.info(Ansi.ansi().render("Number of checksums: @|green {}|@").toString(), total);
+        LOGGER.info("Number of checksums: {}", green(total));
 
         for (Entry<String, Collection<String>> entry : checksumTable.entrySet()) {
             checked++;
@@ -269,7 +268,7 @@ public class BuildFinder {
                         tags = build.getTags();
                         hits++;
 
-                        LOGGER.info(Ansi.ansi().render("Found build: id: @|green {}|@ nvr: @|green {}|@ checksum: @|green {}|@ archive: @|green {}|@ @|cyan [{} / {} = {}%]|@").toString(), buildInfo.getId(), buildInfo.getNvr(), checksum, archive.getFilename(), checked, total, String.format("%.3f", (checked / (double) total) * 100));
+                        LOGGER.info("Found build: id: (} nvr: {} checksum: {} archive: {} [{} / {} = {}%]", green(buildInfo.getId()), green(buildInfo.getNvr()), green(checksum), green(archive.getFilename()), cyan(checked), cyan(total), cyan(String.format("%.3f", (checked / (double) total) * 100)));
 
                         if (buildInfo.getBuildState() != KojiBuildState.COMPLETE) {
                             LOGGER.debug("Skipping incomplete build id {}", buildInfo.getId());
@@ -357,7 +356,7 @@ public class BuildFinder {
                                     LOGGER.warn("Task info not found for build id {}", buildInfo.getId());
                                 }
                             } else {
-                                LOGGER.warn(Ansi.ansi().render("Found import for build id @|red {}|@ with checksum @|red {}|@ and files @|red {}|@").toString(), buildInfo.getId(), checksum, checksumTable.get(checksum));
+                                LOGGER.warn("Found import for build id {} with checksum {} and files {}", red(buildInfo.getId()), red(checksum), red(checksumTable.get(checksum)));
                             }
 
                             archiveList = new ArrayList<>();
@@ -372,7 +371,7 @@ public class BuildFinder {
 
                             build = new KojiBuild(buildInfo, taskInfo, taskRequest, archiveList, allArchives, tags, buildTypes);
                             builds.put(archive.getBuildId(), build);
-                            LOGGER.info(Ansi.ansi().render("Found build: id: @|green {}|@ nvr: @|green {}|@ checksum: @|green {}|@ archive: @|green {}|@ @|cyan [{} / {} = {}%]|@").toString(), buildInfo.getId(), buildInfo.getNvr(), checksum, archive.getFilename(), checked, total, String.format("%.3f", (checked / (double) total) * 100));
+                            LOGGER.info("Found build: id: {} nvr: {} checksum: {} archive: {} [{} / {} = {}%]", green(buildInfo.getId()), green(buildInfo.getNvr()), green(checksum), green(archive.getFilename()), cyan(checked), cyan(total), cyan(String.format("%.3f", (checked / (double) total) * 100)));
                         } else {
                             LOGGER.warn("Build not found for checksum {}. This is never supposed to happen", checksum);
                         }
@@ -386,7 +385,7 @@ public class BuildFinder {
             archives.removeAll(archivesToRemove);
 
             if (archives.size() != 1) {
-                LOGGER.warn(Ansi.ansi().render("Found @|red {}|@ archives with checksum @|red {}|@").toString(), archives.size(), checksum);
+                LOGGER.warn("Found {} archives with checksum {}", red(archives.size()), red(checksum));
 
                 archives.forEach(archive -> {
                     KojiBuild duplicateBuild = builds.get(archive.getBuildId());
@@ -412,7 +411,7 @@ public class BuildFinder {
         final Duration duration = Duration.between(startTime, endTime).abs();
         long numBuilds = builds.keySet().stream().count() - 1L;
 
-        LOGGER.info(Ansi.ansi().render("Total number of files: @|green {}|@, checked: @|green {}|@, skipped: @|green {}|@, hits: @|green {}|@, time: @|green {}|@, average: @|green {}|@").toString(), checksumTable.keySet().size(), numBuilds, checksumTable.size() - numBuilds, hits, duration,  duration.dividedBy(numBuilds));
+        LOGGER.info("Total number of files: {}, checked: {}, skipped: {}, hits: {}, time: {}, average: {}", green(checksumTable.keySet().size()), green(numBuilds), green(checksumTable.size() - numBuilds), green(hits), green(duration), green(duration.dividedBy(numBuilds)));
 
         LOGGER.debug("Found {} total builds", numBuilds);
 
@@ -420,7 +419,7 @@ public class BuildFinder {
 
         numBuilds = builds.keySet().stream().count() - 1L;
 
-        LOGGER.info(Ansi.ansi().render("Found @|green {}|@ builds").toString(), numBuilds);
+        LOGGER.info("Found {} builds", green(numBuilds));
 
         return builds;
     }
@@ -493,7 +492,7 @@ public class BuildFinder {
                 rootLogger.addAppender(appender);
             }
 
-            LOGGER.info(Ansi.ansi().render("@|yellow,bold {} {}|@ @|cyan (SHA: {})|@").toString(), NAME, getVersion(), getScmRevision());
+            LOGGER.info("{} {} (SHA: {})", boldYellow(NAME), boldYellow(getVersion()), cyan(getScmRevision()));
 
             // Initial value taken from configuration value and then allow command line to override.
             ObjectMapper mapper = new ObjectMapper();
@@ -572,7 +571,7 @@ public class BuildFinder {
 
             if (line.hasOption("output-directory")) {
                 outputDir = new File(line.getOptionValue("output-directory"));
-                LOGGER.info(Ansi.ansi().render("Output will be stored in directory: @|green {}|@").toString(), outputDir);
+                LOGGER.info("Output will be stored in directory: {}", green(outputDir));
             }
 
             LOGGER.debug("Configuration {} ", config);
@@ -611,16 +610,16 @@ public class BuildFinder {
             File checksumFile = new File(outputDir, CHECKSUMS_FILENAME_BASENAME + config.getChecksumType() + ".json");
             Map<String, Collection<String>> checksums = null;
 
-            LOGGER.info(Ansi.ansi().render("Checksum type: @|green {}|@").toString(), config.getChecksumType());
+            LOGGER.info("Checksum type: {}", green(config.getChecksumType()));
 
             if (!checksumFile.exists()) {
-                LOGGER.info(Ansi.ansi().render("Calculating checksums for files: @|green {}|@").toString(), files);
+                LOGGER.info("Calculating checksums for files: {}", green(files));
                 DistributionAnalyzer pda = new DistributionAnalyzer(files, config.getChecksumType().getAlgorithm());
                 pda.checksumFiles();
                 checksums = pda.getMap().asMap();
                 pda.outputToFile(checksumFile);
             } else {
-                LOGGER.info(Ansi.ansi().render("Loading checksums from file: @|green {}|@").toString(), checksumFile);
+                LOGGER.info("Loading checksums from file: {}", green(checksumFile));
                 checksums = JSONUtils.loadChecksumsFile(checksumFile);
             }
 
@@ -644,7 +643,7 @@ public class BuildFinder {
             }
 
             if (buildsFile.exists()) {
-                LOGGER.info(Ansi.ansi().render("Loading builds from file: @|green {}|@").toString(), buildsFile.getPath());
+                LOGGER.info("Loading builds from file: {}", green(buildsFile.getPath()));
                 builds = JSONUtils.loadBuildsFile(buildsFile);
             } else {
                 BuildFinder bf = new BuildFinder(session, config);
@@ -667,7 +666,7 @@ public class BuildFinder {
 
                 Report gavReport = new GAVReport(buildList);
                 gavReport.outputToFile(new File(outputDir, GAV_FILENAME));
-                LOGGER.info(Ansi.ansi().render("@|yellow,bold DONE|@").toString());
+                LOGGER.info("{}", boldYellow("DONE"));
             } else {
                 LOGGER.warn("Could not generate reports since list of builds was empty");
             }
@@ -719,5 +718,21 @@ public class BuildFinder {
         }
 
         return "unknown";
+    }
+
+    private static Object cyan(Object o) {
+        return Ansi.ansi().fgCyan().a(o).reset();
+    }
+
+    private static Ansi green(Object o) {
+        return Ansi.ansi().fgGreen().a(o).reset();
+    }
+
+    private static Ansi red(Object o) {
+        return Ansi.ansi().fgRed().a(o).reset();
+    }
+
+    private static Ansi boldYellow(Object o) {
+        return Ansi.ansi().fgYellow().bold().a(o).reset();
     }
 }
