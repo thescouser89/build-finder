@@ -48,7 +48,7 @@ public class BuildFinderTest {
 
             BuildFinder.main(new String[] {"-d", "-k", "-o", folder.getAbsolutePath(), target.getAbsolutePath()});
 
-            assertTrue(systemOutRule.getLog().contains("DEBUG"));
+            assertTrue(systemOutRule.getLog().contains(" DEBUG "));
         } finally {
             root.setLevel(level);
         }
