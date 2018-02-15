@@ -721,18 +721,40 @@ public class BuildFinder {
     }
 
     private static Object cyan(Object o) {
-        return Ansi.ansi().fgCyan().a(o).reset();
+        return new Object() {
+            @Override
+            public String toString() {
+                return Ansi.ansi().fgCyan().a(o).reset().toString();
+            }
+        };
     }
 
-    private static Ansi green(Object o) {
-        return Ansi.ansi().fgGreen().a(o).reset();
+    private static Object green(Object o) {
+        return new Object() {
+            @Override
+            public String toString() {
+                return Ansi.ansi().fgGreen().a(o).reset().toString();
+            }
+        };
     }
 
-    private static Ansi red(Object o) {
-        return Ansi.ansi().fgRed().a(o).reset();
+    private static Object red(Object o) {
+        return new Object() {
+            @Override
+            public String toString() {
+                return Ansi.ansi().fgRed().a(o).reset().toString();
+            }
+        };
+
     }
 
-    private static Ansi boldYellow(Object o) {
-        return Ansi.ansi().fgYellow().bold().a(o).reset();
+    private static Object boldYellow(Object o) {
+        return new Object() {
+            @Override
+            public String toString() {
+                return Ansi.ansi().fgYellow().bold().a(o).reset().toString();
+            }
+        };
+
     }
 }
