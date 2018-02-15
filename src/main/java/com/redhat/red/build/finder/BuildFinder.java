@@ -70,6 +70,10 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiTaskInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTaskRequest;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.ConsoleAppender;
 
 public class BuildFinder {
     private static final String NAME = "koji-build-finder";
@@ -443,8 +447,6 @@ public class BuildFinder {
         try {
             AnsiConsole.systemInstall();
 
-            LOGGER.info(Ansi.ansi().render("@|yellow,bold {} {}|@ @|cyan (SHA: {})|@").toString(), NAME, getVersion(), getScmRevision());
-
             List<File> files = new ArrayList<>();
 
             String[] unparsedArgs;
@@ -460,6 +462,38 @@ public class BuildFinder {
             } else if (unparsedArgs.length == 0) {
                 throw new ParseException("Must specify at least one file");
             }
+
+            if (line.hasOption("debug")) {
+                ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+                rootLogger.setLevel(Level.DEBUG);
+
+                LoggerContext loggerContext = rootLogger.getLoggerContext();
+                loggerContext.reset();
+
+                ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("com.redhat.red.build.koji")).setLevel(Level.WARN);
+                ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("org.apache.commons.beanutils")).setLevel(Level.WARN);
+                ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("org.apache.commons.vfs2")).setLevel(Level.WARN);
+                // XXX: Set to OFF due to <https://issues.apache.org/jira/browse/VFS-634>
+                ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("org.apache.commons.vfs2.impl")).setLevel(Level.OFF);
+                ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("org.apache.http")).setLevel(Level.WARN);
+                ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("org.apache.kerby")).setLevel(Level.WARN);
+                ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("org.commonjava.util.jhttpc")).setLevel(Level.WARN);
+                ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("org.commonjava.rwx")).setLevel(Level.WARN);
+
+                PatternLayoutEncoder encoder = new PatternLayoutEncoder();
+                encoder.setContext(loggerContext);
+                encoder.setPattern("%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n");
+                encoder.start();
+
+                ConsoleAppender<ILoggingEvent> appender = new ConsoleAppender<ILoggingEvent>();
+                appender.setContext(loggerContext);
+                appender.setEncoder(encoder);
+                appender.start();
+
+                rootLogger.addAppender(appender);
+            }
+
+            LOGGER.info(Ansi.ansi().render("@|yellow,bold {} {}|@ @|cyan (SHA: {})|@").toString(), NAME, getVersion(), getScmRevision());
 
             // Initial value taken from configuration value and then allow command line to override.
             ObjectMapper mapper = new ObjectMapper();
@@ -481,11 +515,6 @@ public class BuildFinder {
             } else {
                 LOGGER.debug("Configuration does not exist. Implicitly creating with defaults.");
                 config = new BuildConfig();
-            }
-
-            if (line.hasOption("debug")) {
-                final ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-                root.setLevel(Level.DEBUG);
             }
 
             if (line.hasOption("checksum-only")) {
