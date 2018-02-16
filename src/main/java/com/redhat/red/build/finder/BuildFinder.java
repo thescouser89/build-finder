@@ -268,7 +268,7 @@ public class BuildFinder {
                         tags = build.getTags();
                         hits++;
 
-                        LOGGER.info("Found build: id: (} nvr: {} checksum: {} archive: {} [{} / {} = {}%]", green(buildInfo.getId()), green(buildInfo.getNvr()), green(checksum), green(archive.getFilename()), cyan(checked), cyan(total), cyan(String.format("%.3f", (checked / (double) total) * 100)));
+                        LOGGER.info("Found build: id: {} nvr: {} checksum: {} archive: {} [{} / {} = {}%]", green(buildInfo.getId()), green(buildInfo.getNvr()), green(checksum), green(archive.getFilename()), cyan(checked), cyan(total), cyan(String.format("%.3f", (checked / (double) total) * 100)));
 
                         if (buildInfo.getBuildState() != KojiBuildState.COMPLETE) {
                             LOGGER.debug("Skipping incomplete build id {}", buildInfo.getId());
