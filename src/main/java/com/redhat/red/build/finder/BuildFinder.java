@@ -467,29 +467,19 @@ public class BuildFinder {
                 rootLogger.setLevel(Level.DEBUG);
 
                 LoggerContext loggerContext = rootLogger.getLoggerContext();
-                loggerContext.reset();
-
-                ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("com.redhat.red.build.koji")).setLevel(Level.WARN);
-                ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("org.apache.commons.beanutils")).setLevel(Level.WARN);
-                ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("org.apache.commons.vfs2")).setLevel(Level.WARN);
-                // XXX: Set to OFF due to <https://issues.apache.org/jira/browse/VFS-634>
-                ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("org.apache.commons.vfs2.impl")).setLevel(Level.OFF);
-                ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("org.apache.http")).setLevel(Level.WARN);
-                ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("org.apache.kerby")).setLevel(Level.WARN);
-                ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("org.commonjava.util.jhttpc")).setLevel(Level.WARN);
-                ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("org.commonjava.rwx")).setLevel(Level.WARN);
 
                 PatternLayoutEncoder encoder = new PatternLayoutEncoder();
                 encoder.setContext(loggerContext);
                 encoder.setPattern("%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n");
                 encoder.start();
 
-                ConsoleAppender<ILoggingEvent> appender = new ConsoleAppender<ILoggingEvent>();
-                appender.setContext(loggerContext);
-                appender.setEncoder(encoder);
-                appender.start();
+                ConsoleAppender<ILoggingEvent> appender = (ConsoleAppender<ILoggingEvent>) rootLogger.getAppender("STDOUT");
 
-                rootLogger.addAppender(appender);
+                if (appender != null) {
+                    appender.setContext(loggerContext);
+                    appender.setEncoder(encoder);
+                    appender.start();
+                }
             }
 
             LOGGER.info("{} {} (SHA: {})", boldYellow(NAME), boldYellow(getVersion()), cyan(getScmRevision()));
