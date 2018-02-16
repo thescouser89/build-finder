@@ -88,7 +88,7 @@ public class DistributionAnalyzer {
             byte[] digest = DigestUtils.digest(md, fc.getInputStream());
             String checksum = Hex.encodeHexString(digest);
             map.put(checksum, found);
-            LOGGER.info("Checksum: {} {}", checksum, found);
+            LOGGER.debug("Checksum: {} {}", checksum, found);
         }
 
         if (fo.getType().getName().equals(FileType.FOLDER.getName()) || fo.getType().getName().equals(FileType.FILE_OR_FOLDER.getName())) {
@@ -101,7 +101,7 @@ public class DistributionAnalyzer {
             }
         } else {
             if (Stream.of(sfs.getSchemes()).anyMatch(s -> s.equals(fo.getName().getExtension()) && !NON_ARCHIVE_SCHEMES.contains(fo.getName().getExtension()))) {
-                LOGGER.info("Attempting to create file system for {}", found);
+                LOGGER.debug("Creating file system for: {}", found);
 
                 try (FileObject layered = sfs.createFileSystem(fo.getName().getExtension(), fo)) {
                     listChildren(layered);

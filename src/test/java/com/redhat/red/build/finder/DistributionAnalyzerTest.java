@@ -15,6 +15,7 @@
  */
 package com.redhat.red.build.finder;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -26,15 +27,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import com.redhat.red.build.koji.model.xmlrpc.KojiChecksumType;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.junit.rules.TemporaryFolder;
 import org.junit.rules.TestRule;
+
+import com.redhat.red.build.koji.model.xmlrpc.KojiChecksumType;
 
 public class DistributionAnalyzerTest {
     @Rule
@@ -96,8 +97,7 @@ public class DistributionAnalyzerTest {
         DistributionAnalyzer da = new DistributionAnalyzer(target, KojiChecksumType.md5.getAlgorithm());
         da.checksumFiles();
 
-        int result = StringUtils.countMatches(systemOutRule.getLog(), "Checksum");
-        assertTrue(result == 25);
+        assertEquals(25, da.getMap().size());
         assertFalse(systemOutRule.getLog().contains("zip:zip:file:"));
         assertFalse(systemOutRule.getLog().contains("target/test-classes"));
     }
@@ -108,8 +108,7 @@ public class DistributionAnalyzerTest {
         DistributionAnalyzer da = new DistributionAnalyzer(target, KojiChecksumType.md5.getAlgorithm());
         da.checksumFiles();
 
-        int result = StringUtils.countMatches(systemOutRule.getLog(), "Checksum");
-        assertTrue(result == 7);
+        assertEquals(7, da.getMap().size());
     }
 
     @Test
@@ -118,8 +117,7 @@ public class DistributionAnalyzerTest {
         DistributionAnalyzer da = new DistributionAnalyzer(target, KojiChecksumType.md5.getAlgorithm());
         da.checksumFiles();
 
-        int result = StringUtils.countMatches(systemOutRule.getLog(), "Checksum");
-        assertTrue(result == 4);
+        assertEquals(4, da.getMap().size());
         assertTrue(systemOutRule.getLog().contains("Unable to process archive/compressed file"));
     }
 

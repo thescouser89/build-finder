@@ -39,17 +39,18 @@ public class BuildFinderTest {
 
     @Test
     public void verifyDebug() throws IOException {
+        ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+        Level level = root.getLevel();
+
         try {
             File folder = temp.newFolder();
-
             File target = new File(TestUtils.resolveFileResource("./", "").getParentFile().getParentFile(), "pom.xml");
+
             BuildFinder.main(new String[] {"-d", "-k", "-o", folder.getAbsolutePath(), target.getAbsolutePath()});
 
-            assertTrue(systemOutRule.getLog().contains("DEBUG"));
+            assertTrue(systemOutRule.getLog().contains(" DEBUG "));
         } finally {
-            final ch.qos.logback.classic.Logger root =
-                (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-            root.setLevel(Level.INFO);
+            root.setLevel(level);
         }
     }
 
