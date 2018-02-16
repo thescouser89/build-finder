@@ -34,6 +34,7 @@ import org.junit.Test;
 import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.junit.rules.TemporaryFolder;
 
+import com.redhat.red.build.finder.report.BuildStatisticsReport;
 import com.redhat.red.build.finder.report.GAVReport;
 import com.redhat.red.build.finder.report.HTMLReport;
 import com.redhat.red.build.finder.report.NVRReport;
@@ -68,20 +69,23 @@ public class ReportTest {
         assertEquals(builds.size(), buildList.size());
 
         final String nvrExpected = "artemis-native-linux-2.3.0.amq_710003-1.redhat_1.el6\ncommons-beanutils-commons-beanutils-1.9.2.redhat_1-1\ncommons-lang-commons-lang-2.6-1\ncommons-lang-commons-lang-2.6-2\norg.wildfly.swarm-config-api-parent-1.1.0.Final_redhat_14-1";
-        NVRReport nvrReport = new NVRReport(buildList);
-        assertEquals(nvrReport.render(), nvrExpected);
-        nvrReport.outputToFile(new File(folder, "nvr.txt"));
-        assertEquals(FileUtils.readFileToString(new File(folder, "nvr.txt"), "UTF-8"), nvrExpected);
+        NVRReport nvrReport = new NVRReport(folder, buildList);
+        assertEquals(nvrReport.renderText(), nvrExpected);
+        nvrReport.outputText();
+        assertEquals(FileUtils.readFileToString(new File(folder, nvrReport.getBaseName() + ".txt"), "UTF-8"), nvrExpected);
 
         final String gavExpected = "artemis-native-linux:artemis-native-linux-repolib:2.3.0.amq_710003-1.redhat_1.el6\ncommons-beanutils:commons-beanutils:1.9.2.redhat-1\ncommons-lang:commons-lang:2.6\ncommons-lang:commons-lang:2.6\norg.wildfly.swarm:config-api-parent:1.1.0.Final-redhat-14";
-        GAVReport gavReport = new GAVReport(buildList);
-        assertEquals(gavReport.render(), gavExpected);
-        gavReport.outputToFile(new File(folder, "gav.txt"));
-        assertEquals(FileUtils.readFileToString(new File(folder, "gav.txt"), "UTF-8"), gavExpected);
+        GAVReport gavReport = new GAVReport(folder, buildList);
+        assertEquals(gavReport.renderText(), gavExpected);
+        gavReport.outputText();
+        assertEquals(FileUtils.readFileToString(new File(folder, gavReport.getBaseName() + ".txt"), "UTF-8"), gavExpected);
 
-        HTMLReport htmlReport = new HTMLReport(files, buildList, ConfigDefaults.KOJI_WEB_URL);
-        htmlReport.outputToFile(new File(folder, "builds.html"));
-        assertTrue(FileUtils.readFileToString(new File(folder, "builds.html"), "UTF-8").contains("<html>"));
+        BuildStatisticsReport buildStatisticsReport = new BuildStatisticsReport(folder, buildList);
+        buildStatisticsReport.outputText();
+
+        HTMLReport htmlReport = new HTMLReport(folder, files, buildList, ConfigDefaults.KOJI_WEB_URL, new ArrayList<>());
+        htmlReport.outputHTML();
+        assertTrue(FileUtils.readFileToString(new File(folder, htmlReport.getBaseName() + ".html"), "UTF-8").contains("<html>"));
 
         assertTrue(buildList.get(0).isImport());
         assertNull(buildList.get(0).getSourcesZip());
@@ -132,5 +136,12 @@ public class ReportTest {
         assertNull(buildList.get(5).getProjectSourcesTgz());
         assertNull(buildList.get(5).getDuplicateArchives());
         assertNotNull(buildList.get(5).toString());
+
+        assertEquals(buildList.size() - 1, buildStatisticsReport.getBuildStatistics().getNumberOfBuilds());
+        assertEquals(2, buildStatisticsReport.getBuildStatistics().getNumberOfImportedBuilds());
+        assertEquals(5, buildStatisticsReport.getBuildStatistics().getNumberOfArchives());
+        assertEquals(2, buildStatisticsReport.getBuildStatistics().getNumberOfImportedArchives());
+        assertEquals(((double) 2 / (double) 5) * 100.00, buildStatisticsReport.getBuildStatistics().getPercentOfBuildsImported(), 0);
+        assertEquals(((double) 2 / (double) 5) * 100.00, buildStatisticsReport.getBuildStatistics().getPercentOfArchivesImported(), 0);
     }
 }

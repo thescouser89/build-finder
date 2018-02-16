@@ -16,9 +16,12 @@
 package com.redhat.red.build.finder.report;
 
 import static j2html.TagCreator.a;
+import static j2html.TagCreator.attrs;
 import static j2html.TagCreator.body;
+import static j2html.TagCreator.div;
 import static j2html.TagCreator.document;
 import static j2html.TagCreator.each;
+import static j2html.TagCreator.filter;
 import static j2html.TagCreator.footer;
 import static j2html.TagCreator.h1;
 import static j2html.TagCreator.h2;
@@ -44,6 +47,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.redhat.red.build.finder.KojiBuild;
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
@@ -63,12 +67,16 @@ public class HTMLReport extends Report {
 
     private List<KojiBuild> builds;
 
-    private Collection<File> files;
+    private List<Report> reports;
 
-    public HTMLReport(Collection<File> files, List<KojiBuild> builds, String kojiwebUrl) {
-        this.files = files;
+    public HTMLReport(File outputDirectory, Collection<File> files, List<KojiBuild> builds, String kojiwebUrl, List<Report> reports) {
+        setDescription("Build Report for " + String.join(", ", files.stream().map(File::getName).collect(Collectors.toList())));
+        setBaseName("output");
+        setOutputDirectory(outputDirectory);
+
         this.builds = builds;
         this.kojiwebUrl = kojiwebUrl;
+        this.reports = reports;
     }
 
     private static ContainerTag errorText(String text) {
@@ -99,40 +107,27 @@ public class HTMLReport extends Report {
     }
 
     @Override
-    public String render() {
-        double numImports = builds.stream().filter(b -> b.getBuildInfo().getId() > 0 && b.isImport()).count();
-        double percentImported = 0;
-        int buildsSize = builds.size() - 1;
-
-        if (buildsSize > 0) {
-            percentImported = (numImports / buildsSize) * 100;
-        }
-
-        String percentBuiltStr = String.format("%.1f", (100.00 - percentImported));
-
+    public String renderText() {
         return document().render()
-                     + html().with(
-                        head().with(style().withText(HTML_STYLE)).with(
+                     + html(
+                        head(style().withText(HTML_STYLE)).with(
                             title().withText("Build Report")
                         ),
                         body().with(
-                            header().with(
-                                h1().with(
-                                    text("Build Report for "), each(files, file -> text(file.getName() + " ")),
-                                    text("(" + buildsSize + " builds, " + percentBuiltStr + "% built from source)")
-                                )
+                            header(
+                                h1(getDescription())
                             ),
-                            main().with(
-                              h2("Builds found in distribution"),
-                              table(thead(tr().with(th("#"), th("ID"), th("Name"), th("Version"), th("Artifacts"), th("Tags"), th("Type"), th("Sources"), th("Patches"), th("SCM URL"), th("Options"), th("Extra"))),
-                                    tbody(each(builds, build ->
+                            main(
+                              div(h2("Builds in distribution"),
+                              table(thead(tr(th("#"), th("ID"), th("Name"), th("Version"), th("Artifacts"), th("Tags"), th("Type"), th("Sources"), th("Patches"), th("SCM URL"), th("Options"), th("Extra"))),
+                                    tbody(each(filter(builds, build -> build.getBuildInfo().getId() > 0 || (build.getBuildInfo().getId() == 0 && build.getArchives() != null)), build ->
                                           tr(
-                                          td().with(text(Integer.toString(builds.indexOf(build))),
+                                          td(text(Integer.toString(builds.indexOf(build))),
                                           td(build.getBuildInfo().getId() > 0 ? linkBuild(build.getBuildInfo().getId()) : errorText(String.valueOf(build.getBuildInfo().getId()))),
                                           td(build.getBuildInfo().getId() > 0 ? linkPackage(build.getBuildInfo().getPackageId(), build.getBuildInfo().getName()) : text(""))),
                                           td(build.getBuildInfo().getId() > 0 ? text(build.getBuildInfo().getVersion().replace('_', '-')) : text("")),
-                                          td(build.getArchives() != null ? ol().with(each(build.getArchives(), archive -> li(linkArchive(build, archive.getArchive()), text(": "), each(archive.getFiles(), file -> text(archive.getFiles().indexOf(file) != (archive.getFiles().size() - 1) ? file + ", " : file))))) : text("")),
-                                          td(build.getTags() != null ? ul().with(each(build.getTags(), tag -> li(linkTag(tag.getId(), tag.getName())))) : text("")),
+                                          td(build.getArchives() != null ? ol(each(build.getArchives(), archive -> li(linkArchive(build, archive.getArchive()), text(": "), each(archive.getFiles(), file -> text(archive.getFiles().indexOf(file) != (archive.getFiles().size() - 1) ? file + ", " : file))))) : text("")),
+                                          td(build.getTags() != null ? ul(each(build.getTags(), tag -> li(linkTag(tag.getId(), tag.getName())))) : text("")),
                                           td(build.getMethod() != null ? text(build.getMethod()) : (build.getBuildInfo().getId() > 0 ? errorText("imported build") : text(""))),
                                           td(build.getSourcesZip() != null ? linkArchive(build, build.getSourcesZip()) : text("")),
                                           td(build.getPatchesZip() != null ? linkArchive(build, build.getPatchesZip()) : text("")),
@@ -141,7 +136,9 @@ public class HTMLReport extends Report {
                                           td(build.getBuildInfo().getExtra() != null ? each(build.getBuildInfo().getExtra().entrySet(), entry -> text(entry.getKey() + (entry.getValue() != null ? ("=" + entry.getValue() + "; ") : "; "))) : text(""))
                                        ))
                                    )
-                                )
+                                )), each(reports, report ->
+                                    div(attrs("#div-" + report.getBaseName()), h2(report.getDescription()),
+                                            report.toHTML()))
                             ),
                             footer().attr(Attr.CLASS, "footer").attr(Attr.ID, "footer").withText("Created: " + new Date())
                         )

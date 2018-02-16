@@ -53,6 +53,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.redhat.red.build.finder.report.BuildStatisticsReport;
 import com.redhat.red.build.finder.report.GAVReport;
 import com.redhat.red.build.finder.report.HTMLReport;
 import com.redhat.red.build.finder.report.NVRReport;
@@ -81,12 +82,6 @@ public class BuildFinder {
 
     private static final String BUILDS_FILENAME = "builds.json";
 
-    private static final String HTML_FILENAME = "output.html";
-
-    private static final String GAV_FILENAME = "gav.txt";
-
-    private static final String NVR_FILENAME = "nvr.txt";
-
     private static final int TERM_WIDTH = 80;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildFinder.class);
@@ -101,7 +96,7 @@ public class BuildFinder {
 
     private static String krbPassword;
 
-    private static File outputDir;
+    private static File outputDirectory;
 
     private ClientSession session;
 
@@ -560,8 +555,8 @@ public class BuildFinder {
             }
 
             if (line.hasOption("output-directory")) {
-                outputDir = new File(line.getOptionValue("output-directory"));
-                LOGGER.info("Output will be stored in directory: {}", green(outputDir));
+                outputDirectory = new File(line.getOptionValue("output-directory"));
+                LOGGER.info("Output will be stored in directory: {}", green(outputDirectory));
             }
 
             LOGGER.debug("Configuration {} ", config);
@@ -597,7 +592,7 @@ public class BuildFinder {
                 }
             }
 
-            File checksumFile = new File(outputDir, CHECKSUMS_FILENAME_BASENAME + config.getChecksumType() + ".json");
+            File checksumFile = new File(outputDirectory, CHECKSUMS_FILENAME_BASENAME + config.getChecksumType() + ".json");
             Map<String, Collection<String>> checksums = null;
 
             LOGGER.info("Checksum type: {}", green(config.getChecksumType()));
@@ -617,7 +612,7 @@ public class BuildFinder {
                 return;
             }
 
-            File buildsFile = new File(outputDir, BUILDS_FILENAME);
+            File buildsFile = new File(outputDirectory, BUILDS_FILENAME);
             Map<Integer, KojiBuild> builds = null;
             KojiClientSession session = null;
 
@@ -648,14 +643,14 @@ public class BuildFinder {
                 Collections.sort(buildList, (b1, b2) -> Integer.compare(b1.getBuildInfo().getId(), b2.getBuildInfo().getId()));
                 buildList = Collections.unmodifiableList(buildList);
 
-                Report htmlReport = new HTMLReport(files, buildList, config.getKojiWebURL());
-                htmlReport.outputToFile(new File(outputDir, HTML_FILENAME));
+                List<Report> reports = new ArrayList<>();
+                reports.add(new BuildStatisticsReport(outputDirectory, buildList));
+                reports.add(new NVRReport(outputDirectory, buildList));
+                reports.add(new GAVReport(outputDirectory, buildList));
+                reports.forEach(report -> report.outputText());
 
-                Report nvrReport = new NVRReport(buildList);
-                nvrReport.outputToFile(new File(outputDir, NVR_FILENAME));
+                new HTMLReport(outputDirectory, files, buildList, config.getKojiWebURL(), Collections.unmodifiableList(reports)).outputHTML();
 
-                Report gavReport = new GAVReport(buildList);
-                gavReport.outputToFile(new File(outputDir, GAV_FILENAME));
                 LOGGER.info("{}", boldYellow("DONE"));
             } else {
                 LOGGER.warn("Could not generate reports since list of builds was empty");
