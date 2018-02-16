@@ -67,21 +67,13 @@ public class ReportTest {
 
         assertEquals(builds.size(), buildList.size());
 
-        final String nvrExpected = "artemis-native-linux-2.3.0.amq_710003-1.redhat_1.el6\n" +
-                "commons-beanutils-commons-beanutils-1.9.2.redhat_1-1\n" +
-                "commons-lang-commons-lang-2.6-1\n" +
-                "commons-lang-commons-lang-2.6-2\n" +
-                "org.wildfly.swarm-config-api-parent-1.1.0.Final_redhat_14-1";
+        final String nvrExpected = "artemis-native-linux-2.3.0.amq_710003-1.redhat_1.el6\ncommons-beanutils-commons-beanutils-1.9.2.redhat_1-1\ncommons-lang-commons-lang-2.6-1\ncommons-lang-commons-lang-2.6-2\norg.wildfly.swarm-config-api-parent-1.1.0.Final_redhat_14-1";
         NVRReport nvrReport = new NVRReport(buildList);
         assertEquals(nvrReport.render(), nvrExpected);
         nvrReport.outputToFile(new File(folder, "nvr.txt"));
         assertEquals(FileUtils.readFileToString(new File(folder, "nvr.txt"), "UTF-8"), nvrExpected);
 
-        final String gavExpected = "artemis-native-linux:artemis-native-linux-repolib:2.3.0.amq_710003-1.redhat_1.el6\n" +
-                "commons-beanutils:commons-beanutils:1.9.2.redhat-1\n" +
-                "commons-lang:commons-lang:2.6\n" +
-                "commons-lang:commons-lang:2.6\n" +
-                "org.wildfly.swarm:config-api-parent:1.1.0.Final-redhat-14";
+        final String gavExpected = "artemis-native-linux:artemis-native-linux-repolib:2.3.0.amq_710003-1.redhat_1.el6\ncommons-beanutils:commons-beanutils:1.9.2.redhat-1\ncommons-lang:commons-lang:2.6\ncommons-lang:commons-lang:2.6\norg.wildfly.swarm:config-api-parent:1.1.0.Final-redhat-14";
         GAVReport gavReport = new GAVReport(buildList);
         assertEquals(gavReport.render(), gavExpected);
         gavReport.outputToFile(new File(folder, "gav.txt"));
