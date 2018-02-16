@@ -65,15 +65,31 @@ public class ReportTest {
         Collections.sort(buildList, (b1, b2) -> Integer.compare(b1.getBuildInfo().getId(), b2.getBuildInfo().getId()));
         buildList = Collections.unmodifiableList(buildList);
 
-        assertTrue(buildList.size() > 0);
+        assertEquals(builds.size(), buildList.size());
+
+        final String nvrExpected = "artemis-native-linux-2.3.0.amq_710003-1.redhat_1.el6\n" +
+                "commons-beanutils-commons-beanutils-1.9.2.redhat_1-1\n" +
+                "commons-lang-commons-lang-2.6-1\n" +
+                "commons-lang-commons-lang-2.6-2\n" +
+                "org.wildfly.swarm-config-api-parent-1.1.0.Final_redhat_14-1";
+        NVRReport nvrReport = new NVRReport(buildList);
+        assertEquals(nvrReport.render(), nvrExpected);
+        nvrReport.outputToFile(new File(folder, "nvr.txt"));
+        assertEquals(FileUtils.readFileToString(new File(folder, "nvr.txt"), "UTF-8"), nvrExpected);
+
+        final String gavExpected = "artemis-native-linux:artemis-native-linux-repolib:2.3.0.amq_710003-1.redhat_1.el6\n" +
+                "commons-beanutils:commons-beanutils:1.9.2.redhat-1\n" +
+                "commons-lang:commons-lang:2.6\n" +
+                "commons-lang:commons-lang:2.6\n" +
+                "org.wildfly.swarm:config-api-parent:1.1.0.Final-redhat-14";
+        GAVReport gavReport = new GAVReport(buildList);
+        assertEquals(gavReport.render(), gavExpected);
+        gavReport.outputToFile(new File(folder, "gav.txt"));
+        assertEquals(FileUtils.readFileToString(new File(folder, "gav.txt"), "UTF-8"), gavExpected);
 
         HTMLReport htmlReport = new HTMLReport(files, buildList, ConfigDefaults.KOJI_WEB_URL);
-        NVRReport nvrReport = new NVRReport(buildList);
-        GAVReport gavReport = new GAVReport(buildList);
-
         htmlReport.outputToFile(new File(folder, "builds.html"));
-        nvrReport.outputToFile(new File(folder, "nvr.txt"));
-        gavReport.outputToFile(new File(folder, "gav.txt"));
+        assertTrue(FileUtils.readFileToString(new File(folder, "builds.html"), "UTF-8").contains("<html>"));
 
         assertTrue(buildList.get(0).isImport());
         assertNull(buildList.get(0).getSourcesZip());
