@@ -690,7 +690,7 @@ public class BuildFinder {
      *
      * @return the GIT sha of this codebase.
      */
-    private static String getScmRevision() {
+    public static String getScmRevision() {
         try {
             final Enumeration<URL> resources = BuildFinder.class.getClassLoader().getResources("META-INF/MANIFEST.MF");
 
