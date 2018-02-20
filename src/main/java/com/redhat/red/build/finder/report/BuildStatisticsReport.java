@@ -50,11 +50,6 @@ public class BuildStatisticsReport extends Report {
     }
 
     @Override
-    public String renderText() {
-        return String.format("%d %d %f %d %d %f\n", buildStatistics.getNumberOfBuilds(), buildStatistics.getNumberOfImportedBuilds(), buildStatistics.getPercentOfBuildsImported(), buildStatistics.getNumberOfArchives(), buildStatistics.getNumberOfImportedArchives(), buildStatistics.getPercentOfArchivesImported());
-    }
-
-    @Override
     public ContainerTag toHTML() {
         return table(attrs("#table-" + getBaseName()),
                 caption(text(getDescription())),
