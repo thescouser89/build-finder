@@ -675,6 +675,10 @@ public class BuildFinder {
         System.exit(1);
     }
 
+    public static String getName() {
+        return NAME;
+    }
+
     public static String getVersion() {
         Package p = BuildFinder.class.getPackage();
 

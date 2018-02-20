@@ -16,12 +16,14 @@
 package com.redhat.red.build.finder.report;
 
 import static j2html.TagCreator.attrs;
+import static j2html.TagCreator.caption;
 import static j2html.TagCreator.each;
 import static j2html.TagCreator.table;
 import static j2html.TagCreator.tbody;
 import static j2html.TagCreator.td;
 import static j2html.TagCreator.text;
 import static j2html.TagCreator.th;
+import static j2html.TagCreator.thead;
 import static j2html.TagCreator.tr;
 
 import java.io.File;
@@ -54,6 +56,6 @@ public class NVRReport extends Report {
 
     @Override
     public ContainerTag toHTML() {
-        return table(attrs("#table-" + getBaseName()), tbody(tr(th(text("<name>-<version>-<release>")))), each(nvrs, i -> tr(td(i))));
+        return table(attrs("#table-" + getBaseName()), caption(text(getDescription())), thead(tr(th(text("<name>-<version>-<release>")))), tbody(each(nvrs, i -> tr(td(i)))));
     }
 }

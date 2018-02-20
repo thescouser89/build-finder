@@ -16,12 +16,14 @@
 package com.redhat.red.build.finder.report;
 
 import static j2html.TagCreator.attrs;
+import static j2html.TagCreator.caption;
 import static j2html.TagCreator.each;
 import static j2html.TagCreator.table;
 import static j2html.TagCreator.tbody;
 import static j2html.TagCreator.td;
 import static j2html.TagCreator.text;
 import static j2html.TagCreator.th;
+import static j2html.TagCreator.thead;
 import static j2html.TagCreator.tr;
 
 import java.io.File;
@@ -37,7 +39,7 @@ public class GAVReport extends Report {
     private List<String> gavs;
 
     public GAVReport(File outputDirectory, List<KojiBuild> builds) {
-        setDescription("Maven Artifacts");
+        setDescription("Maven artifacts");
         setBaseName("gav");
         setOutputDirectory(outputDirectory);
 
@@ -53,6 +55,6 @@ public class GAVReport extends Report {
 
     @Override
     public ContainerTag toHTML() {
-        return table(attrs("#table-" + getBaseName()), tbody(tr(th(text("<groupId>-<artifactId>-<version>")))), each(gavs, i -> tr(td(i))));
+        return table(attrs("#table-" + getBaseName()), caption(text(getDescription())), thead(tr(th(text("<groupId>-<artifactId>-<version>")))), tbody(each(gavs, i -> tr(td(i)))));
     }
 }

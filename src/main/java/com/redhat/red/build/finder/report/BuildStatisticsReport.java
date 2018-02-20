@@ -16,11 +16,14 @@
 package com.redhat.red.build.finder.report;
 
 import static j2html.TagCreator.attrs;
+import static j2html.TagCreator.caption;
 import static j2html.TagCreator.strong;
 import static j2html.TagCreator.table;
 import static j2html.TagCreator.tbody;
 import static j2html.TagCreator.td;
+import static j2html.TagCreator.text;
 import static j2html.TagCreator.th;
+import static j2html.TagCreator.thead;
 import static j2html.TagCreator.tr;
 
 import java.io.File;
@@ -53,9 +56,10 @@ public class BuildStatisticsReport extends Report {
 
     @Override
     public ContainerTag toHTML() {
-        return table(attrs("#table-" + getBaseName()), tbody(
-                tr(th(), th("Built"), th("Imported"), th("Total"), th("Percent built from source"), th("Percent imported")),
-                tr(td(strong("Builds")), td(String.valueOf(buildStatistics.getNumberOfBuilds() - buildStatistics.getNumberOfImportedBuilds())), td(String.valueOf(buildStatistics.getNumberOfImportedBuilds())), td(String.valueOf(buildStatistics.getNumberOfBuilds())), td(String.valueOf(100.00 - buildStatistics.getPercentOfBuildsImported()) + "%"), td(String.valueOf(buildStatistics.getPercentOfBuildsImported()) + "%")),
-                tr(td(strong("Archives")), td(String.valueOf(buildStatistics.getNumberOfArchives() - buildStatistics.getNumberOfImportedArchives())), td(String.valueOf(buildStatistics.getNumberOfImportedArchives())), td(String.valueOf(buildStatistics.getNumberOfArchives())), td(String.valueOf(100.00 - buildStatistics.getPercentOfArchivesImported()) + "%"), td(String.valueOf(buildStatistics.getPercentOfArchivesImported()) + "%"))));
+        return table(attrs("#table-" + getBaseName()),
+                caption(text(getDescription())),
+                thead(tr(th(), th("Built"), th("Imported"), th("Total"), th("Percent built from source"), th("Percent imported"))),
+                tbody(tr(td(strong("Builds")), td(String.valueOf(buildStatistics.getNumberOfBuilds() - buildStatistics.getNumberOfImportedBuilds())), td(String.valueOf(buildStatistics.getNumberOfImportedBuilds())), td(String.valueOf(buildStatistics.getNumberOfBuilds())), td(String.valueOf(100.00 - buildStatistics.getPercentOfBuildsImported()) + "%"), td(String.valueOf(buildStatistics.getPercentOfBuildsImported()) + "%")),
+                      tr(td(strong("Archives")), td(String.valueOf(buildStatistics.getNumberOfArchives() - buildStatistics.getNumberOfImportedArchives())), td(String.valueOf(buildStatistics.getNumberOfImportedArchives())), td(String.valueOf(buildStatistics.getNumberOfArchives())), td(String.valueOf(100.00 - buildStatistics.getPercentOfArchivesImported()) + "%"), td(String.valueOf(buildStatistics.getPercentOfArchivesImported()) + "%"))));
     }
 }

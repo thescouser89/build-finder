@@ -18,13 +18,13 @@ package com.redhat.red.build.finder.report;
 import static j2html.TagCreator.a;
 import static j2html.TagCreator.attrs;
 import static j2html.TagCreator.body;
+import static j2html.TagCreator.caption;
 import static j2html.TagCreator.div;
 import static j2html.TagCreator.document;
 import static j2html.TagCreator.each;
 import static j2html.TagCreator.filter;
 import static j2html.TagCreator.footer;
 import static j2html.TagCreator.h1;
-import static j2html.TagCreator.h2;
 import static j2html.TagCreator.head;
 import static j2html.TagCreator.header;
 import static j2html.TagCreator.html;
@@ -49,6 +49,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.redhat.red.build.finder.BuildFinder;
 import com.redhat.red.build.finder.KojiBuild;
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 
@@ -59,6 +60,7 @@ import j2html.tags.Tag;
 public class HTMLReport extends Report {
     private static final String HTML_STYLE = "html { font-family: sans-serif; } "
             + "table { width: 100%; border-style: solid; border-width: 1px; border-collapse: collapse; } "
+            + "caption { background: lightyellow; caption-side: top; font-weight: bold; font-size: 105%; text-align: left; margin-top: 50px; } "
             + "tr:nth-child(even) { background-color: lightgrey; } td { text-align: left; vertical-align: top; } "
             + "th { border-style: solid; border-width: 1px; background-color: darkgrey; text-align: left; font-weight: bold; } "
             + "tr, td { border-style: solid; border-width: 1px; font-size: small; }";
@@ -94,8 +96,8 @@ public class HTMLReport extends Report {
     private Tag<?> linkArchive(KojiBuild build, KojiArchiveInfo archive) {
         int id = archive.getArchiveId();
         String name = archive.getFilename();
-        boolean error = build.isImport();
-        return a().withHref(kojiwebUrl + "/archiveinfo?archiveID=" + id).with(error ? errorText(name) : text(name));
+        boolean error = (build.isImport() || id <= 0);
+        return error ? errorText(name) : a().withHref(kojiwebUrl + "/archiveinfo?archiveID=" + id).with(text(name));
     }
 
     private Tag<?> linkTag(int id, String name) {
@@ -111,20 +113,21 @@ public class HTMLReport extends Report {
         return document().render()
                      + html(
                         head(style().withText(HTML_STYLE)).with(
-                            title().withText("Build Report")
+                            title().withText(getDescription())
                         ),
                         body().with(
                             header(
                                 h1(getDescription())
                             ),
                             main(
-                              div(h2("Builds in distribution"),
-                              table(thead(tr(th("#"), th("ID"), th("Name"), th("Version"), th("Artifacts"), th("Tags"), th("Type"), th("Sources"), th("Patches"), th("SCM URL"), th("Options"), th("Extra"))),
+                              div(table(caption("Overview"), thead(tr(th("Report"))), tbody(tr(td(a().withHref("#div-" + getBaseName()).with(text("Build report")))), each(reports, report -> tr(td(a().withHref("#div-" + report.getBaseName()).with(text(report.getDescription())))))))),
+                              div(attrs("#div-" + getBaseName()),
+                              table(caption(text("Builds")), thead(tr(th("#"), th("ID"), th("Name"), th("Version"), th("Artifacts"), th("Tags"), th("Type"), th("Sources"), th("Patches"), th("SCM URL"), th("Options"), th("Extra"))),
                                     tbody(each(filter(builds, build -> build.getBuildInfo().getId() > 0 || (build.getBuildInfo().getId() == 0 && build.getArchives() != null)), build ->
                                           tr(
-                                          td(text(Integer.toString(builds.indexOf(build))),
+                                          td(text(Integer.toString(builds.indexOf(build)))),
                                           td(build.getBuildInfo().getId() > 0 ? linkBuild(build.getBuildInfo().getId()) : errorText(String.valueOf(build.getBuildInfo().getId()))),
-                                          td(build.getBuildInfo().getId() > 0 ? linkPackage(build.getBuildInfo().getPackageId(), build.getBuildInfo().getName()) : text(""))),
+                                          td(build.getBuildInfo().getId() > 0 ? linkPackage(build.getBuildInfo().getPackageId(), build.getBuildInfo().getName()) : text("")),
                                           td(build.getBuildInfo().getId() > 0 ? text(build.getBuildInfo().getVersion().replace('_', '-')) : text("")),
                                           td(build.getArchives() != null ? ol(each(build.getArchives(), archive -> li(linkArchive(build, archive.getArchive()), text(": "), each(archive.getFiles(), file -> text(archive.getFiles().indexOf(file) != (archive.getFiles().size() - 1) ? file + ", " : file))))) : text("")),
                                           td(build.getTags() != null ? ul(each(build.getTags(), tag -> li(linkTag(tag.getId(), tag.getName())))) : text("")),
@@ -137,10 +140,9 @@ public class HTMLReport extends Report {
                                        ))
                                    )
                                 )), each(reports, report ->
-                                    div(attrs("#div-" + report.getBaseName()), h2(report.getDescription()),
-                                            report.toHTML()))
+                                    div(attrs("#div-" + report.getBaseName()), report.toHTML()))
                             ),
-                            footer().attr(Attr.CLASS, "footer").attr(Attr.ID, "footer").withText("Created: " + new Date())
+                            footer().attr(Attr.CLASS, "footer").attr(Attr.ID, "footer").with(text("Created: " + new Date() + " by "), a().withHref("https://github.com/release-engineering/koji-build-finder/").with(text(BuildFinder.getName() + " " + BuildFinder.getVersion())))
                         )
                     ).renderFormatted();
     }
