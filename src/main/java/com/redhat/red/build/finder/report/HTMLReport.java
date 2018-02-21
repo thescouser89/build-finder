@@ -16,12 +16,15 @@
 package com.redhat.red.build.finder.report;
 
 import static j2html.TagCreator.a;
+import static j2html.TagCreator.attrs;
 import static j2html.TagCreator.body;
+import static j2html.TagCreator.caption;
+import static j2html.TagCreator.div;
 import static j2html.TagCreator.document;
 import static j2html.TagCreator.each;
+import static j2html.TagCreator.filter;
 import static j2html.TagCreator.footer;
 import static j2html.TagCreator.h1;
-import static j2html.TagCreator.h2;
 import static j2html.TagCreator.head;
 import static j2html.TagCreator.header;
 import static j2html.TagCreator.html;
@@ -44,7 +47,9 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import com.redhat.red.build.finder.BuildFinder;
 import com.redhat.red.build.finder.KojiBuild;
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 
@@ -55,6 +60,7 @@ import j2html.tags.Tag;
 public class HTMLReport extends Report {
     private static final String HTML_STYLE = "html { font-family: sans-serif; } "
             + "table { width: 100%; border-style: solid; border-width: 1px; border-collapse: collapse; } "
+            + "caption { background: lightyellow; caption-side: top; font-weight: bold; font-size: 105%; text-align: left; margin-top: 50px; } "
             + "tr:nth-child(even) { background-color: lightgrey; } td { text-align: left; vertical-align: top; } "
             + "th { border-style: solid; border-width: 1px; background-color: darkgrey; text-align: left; font-weight: bold; } "
             + "tr, td { border-style: solid; border-width: 1px; font-size: small; }";
@@ -63,12 +69,16 @@ public class HTMLReport extends Report {
 
     private List<KojiBuild> builds;
 
-    private Collection<File> files;
+    private List<Report> reports;
 
-    public HTMLReport(Collection<File> files, List<KojiBuild> builds, String kojiwebUrl) {
-        this.files = files;
+    public HTMLReport(File outputDirectory, Collection<File> files, List<KojiBuild> builds, String kojiwebUrl, List<Report> reports) {
+        setDescription("Build Report for " + String.join(", ", files.stream().map(File::getName).collect(Collectors.toList())));
+        setBaseName("output");
+        setOutputDirectory(outputDirectory);
+
         this.builds = builds;
         this.kojiwebUrl = kojiwebUrl;
+        this.reports = reports;
     }
 
     private static ContainerTag errorText(String text) {
@@ -86,8 +96,8 @@ public class HTMLReport extends Report {
     private Tag<?> linkArchive(KojiBuild build, KojiArchiveInfo archive) {
         int id = archive.getArchiveId();
         String name = archive.getFilename();
-        boolean error = build.isImport();
-        return a().withHref(kojiwebUrl + "/archiveinfo?archiveID=" + id).with(error ? errorText(name) : text(name));
+        boolean error = (build.isImport() || id <= 0);
+        return error ? errorText(name) : a().withHref(kojiwebUrl + "/archiveinfo?archiveID=" + id).with(text(name));
     }
 
     private Tag<?> linkTag(int id, String name) {
@@ -99,40 +109,28 @@ public class HTMLReport extends Report {
     }
 
     @Override
-    public String render() {
-        double numImports = builds.stream().filter(b -> b.getBuildInfo().getId() > 0 && b.isImport()).count();
-        double percentImported = 0;
-        int buildsSize = builds.size() - 1;
-
-        if (buildsSize > 0) {
-            percentImported = (numImports / buildsSize) * 100;
-        }
-
-        String percentBuiltStr = String.format("%.1f", (100.00 - percentImported));
-
+    public String renderText() {
         return document().render()
-                     + html().with(
-                        head().with(style().withText(HTML_STYLE)).with(
-                            title().withText("Build Report")
+                     + html(
+                        head(style().withText(HTML_STYLE)).with(
+                            title().withText(getDescription())
                         ),
                         body().with(
-                            header().with(
-                                h1().with(
-                                    text("Build Report for "), each(files, file -> text(file.getName() + " ")),
-                                    text("(" + buildsSize + " builds, " + percentBuiltStr + "% built from source)")
-                                )
+                            header(
+                                h1(getDescription())
                             ),
-                            main().with(
-                              h2("Builds found in distribution"),
-                              table(thead(tr().with(th("#"), th("ID"), th("Name"), th("Version"), th("Artifacts"), th("Tags"), th("Type"), th("Sources"), th("Patches"), th("SCM URL"), th("Options"), th("Extra"))),
-                                    tbody(each(builds, build ->
+                            main(
+                              div(table(caption("Overview"), thead(tr(th("Report"))), tbody(tr(td(a().withHref("#div-" + getBaseName()).with(text("Build report")))), each(reports, report -> tr(td(a().withHref("#div-" + report.getBaseName()).with(text(report.getDescription())))))))),
+                              div(attrs("#div-" + getBaseName()),
+                              table(caption(text("Builds")), thead(tr(th("#"), th("ID"), th("Name"), th("Version"), th("Artifacts"), th("Tags"), th("Type"), th("Sources"), th("Patches"), th("SCM URL"), th("Options"), th("Extra"))),
+                                    tbody(each(filter(builds, build -> build.getBuildInfo().getId() > 0 || (build.getBuildInfo().getId() == 0 && build.getArchives() != null)), build ->
                                           tr(
-                                          td().with(text(Integer.toString(builds.indexOf(build))),
+                                          td(text(Integer.toString(builds.indexOf(build)))),
                                           td(build.getBuildInfo().getId() > 0 ? linkBuild(build.getBuildInfo().getId()) : errorText(String.valueOf(build.getBuildInfo().getId()))),
-                                          td(build.getBuildInfo().getId() > 0 ? linkPackage(build.getBuildInfo().getPackageId(), build.getBuildInfo().getName()) : text(""))),
+                                          td(build.getBuildInfo().getId() > 0 ? linkPackage(build.getBuildInfo().getPackageId(), build.getBuildInfo().getName()) : text("")),
                                           td(build.getBuildInfo().getId() > 0 ? text(build.getBuildInfo().getVersion().replace('_', '-')) : text("")),
-                                          td(build.getArchives() != null ? ol().with(each(build.getArchives(), archive -> li(linkArchive(build, archive.getArchive()), text(": "), each(archive.getFiles(), file -> text(archive.getFiles().indexOf(file) != (archive.getFiles().size() - 1) ? file + ", " : file))))) : text("")),
-                                          td(build.getTags() != null ? ul().with(each(build.getTags(), tag -> li(linkTag(tag.getId(), tag.getName())))) : text("")),
+                                          td(build.getArchives() != null ? ol(each(build.getArchives(), archive -> li(linkArchive(build, archive.getArchive()), text(": "), each(archive.getFiles(), file -> text(archive.getFiles().indexOf(file) != (archive.getFiles().size() - 1) ? file + ", " : file))))) : text("")),
+                                          td(build.getTags() != null ? ul(each(build.getTags(), tag -> li(linkTag(tag.getId(), tag.getName())))) : text("")),
                                           td(build.getMethod() != null ? text(build.getMethod()) : (build.getBuildInfo().getId() > 0 ? errorText("imported build") : text(""))),
                                           td(build.getSourcesZip() != null ? linkArchive(build, build.getSourcesZip()) : text("")),
                                           td(build.getPatchesZip() != null ? linkArchive(build, build.getPatchesZip()) : text("")),
@@ -141,9 +139,10 @@ public class HTMLReport extends Report {
                                           td(build.getBuildInfo().getExtra() != null ? each(build.getBuildInfo().getExtra().entrySet(), entry -> text(entry.getKey() + (entry.getValue() != null ? ("=" + entry.getValue() + "; ") : "; "))) : text(""))
                                        ))
                                    )
-                                )
+                                )), each(reports, report ->
+                                    div(attrs("#div-" + report.getBaseName()), report.toHTML()))
                             ),
-                            footer().attr(Attr.CLASS, "footer").attr(Attr.ID, "footer").withText("Created: " + new Date())
+                            footer().attr(Attr.CLASS, "footer").attr(Attr.ID, "footer").with(text("Created: " + new Date() + " by "), a().withHref("https://github.com/release-engineering/koji-build-finder/").with(text(BuildFinder.getName())), text(" " + BuildFinder.getVersion() + " (SHA: "), a().withHref("https://github.com/release-engineering/koji-build-finder/commit/" + BuildFinder.getScmRevision()).with(text(BuildFinder.getScmRevision()), text(")")))
                         )
                     ).renderFormatted();
     }

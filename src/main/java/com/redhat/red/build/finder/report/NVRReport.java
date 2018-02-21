@@ -15,16 +15,34 @@
  */
 package com.redhat.red.build.finder.report;
 
+import static j2html.TagCreator.attrs;
+import static j2html.TagCreator.caption;
+import static j2html.TagCreator.each;
+import static j2html.TagCreator.table;
+import static j2html.TagCreator.tbody;
+import static j2html.TagCreator.td;
+import static j2html.TagCreator.text;
+import static j2html.TagCreator.th;
+import static j2html.TagCreator.thead;
+import static j2html.TagCreator.tr;
+
+import java.io.File;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.redhat.red.build.finder.KojiBuild;
 import com.redhat.red.build.koji.model.xmlrpc.KojiBuildInfo;
 
+import j2html.tags.ContainerTag;
+
 public class NVRReport extends Report {
     private List<String> nvrs;
 
-    public NVRReport(List<KojiBuild> builds) {
+    public NVRReport(File outputDirectory, List<KojiBuild> builds) {
+        setDescription("Koji builds");
+        setBaseName("nvr");
+        setOutputDirectory(outputDirectory);
+
         List<KojiBuildInfo> buildInfos = builds.stream().map(KojiBuild::getBuildInfo).collect(Collectors.toList());
         buildInfos.remove(0);
         this.nvrs = buildInfos.stream().map(KojiBuildInfo::getNvr).collect(Collectors.toList());
@@ -32,7 +50,12 @@ public class NVRReport extends Report {
     }
 
     @Override
-    public String render() {
+    public String renderText() {
         return this.nvrs.stream().map(Object::toString).collect(Collectors.joining("\n"));
+    }
+
+    @Override
+    public ContainerTag toHTML() {
+        return table(attrs("#table-" + getBaseName()), caption(text(getDescription())), thead(tr(th(text("<name>-<version>-<release>")))), tbody(each(nvrs, i -> tr(td(i)))));
     }
 }

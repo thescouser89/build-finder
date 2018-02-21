@@ -15,23 +15,46 @@
  */
 package com.redhat.red.build.finder.report;
 
+import static j2html.TagCreator.attrs;
+import static j2html.TagCreator.caption;
+import static j2html.TagCreator.each;
+import static j2html.TagCreator.table;
+import static j2html.TagCreator.tbody;
+import static j2html.TagCreator.td;
+import static j2html.TagCreator.text;
+import static j2html.TagCreator.th;
+import static j2html.TagCreator.thead;
+import static j2html.TagCreator.tr;
+
+import java.io.File;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.redhat.red.build.finder.KojiBuild;
 import com.redhat.red.build.koji.model.xmlrpc.KojiBuildInfo;
 
+import j2html.tags.ContainerTag;
+
 public class GAVReport extends Report {
     private List<String> gavs;
 
-    public GAVReport(List<KojiBuild> builds) {
+    public GAVReport(File outputDirectory, List<KojiBuild> builds) {
+        setDescription("Maven artifacts");
+        setBaseName("gav");
+        setOutputDirectory(outputDirectory);
+
         List<KojiBuildInfo> buildInfos = builds.stream().filter(b -> b.getBuildInfo() != null && b.getTypes() != null && b.getTypes().contains("maven")).map(KojiBuild::getBuildInfo).collect(Collectors.toList());
         this.gavs = buildInfos.stream().map(b -> b.getMavenGroupId() + ":" + b.getMavenArtifactId() + ":" + b.getMavenVersion()).collect(Collectors.toList());
         this.gavs.sort(String::compareToIgnoreCase);
     }
 
     @Override
-    public String render() {
+    public String renderText() {
         return this.gavs.stream().map(Object::toString).collect(Collectors.joining("\n"));
+    }
+
+    @Override
+    public ContainerTag toHTML() {
+        return table(attrs("#table-" + getBaseName()), caption(text(getDescription())), thead(tr(th(text("<groupId>-<artifactId>-<version>")))), tbody(each(gavs, i -> tr(td(i)))));
     }
 }
