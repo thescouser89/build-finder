@@ -44,6 +44,25 @@ The executable jar takes the following options.
                                       md5.
      -x,--exclude <pattern>           Add a pattern to exclude files from source
                                       check. Default: [null].
+
+### Via linux containers
+
+There is a Dockerfile and a Makefile supplied in this repo. If you are
+unfamiliar with java-based projects, you can easily create a container image
+and run koji-build-finder in a container:
+
+1. Build the container image:
+  ```
+  $ make build
+  ```
+
+2. And now just invoke shell in the container so you can try the tool out:
+  ```
+  $ make shell
+  [root@bd9c05062b1a src]# java -jar target/koji-build-finder-1.0.0-SNAPSHOT-jar-with-dependencies.jar
+  ```
+
+
 ## Getting Started
 
 On the first run, it will write a starter configuration file. You may optionally edit this file by hand. You do not need to create it ahead of time as the first run should create a default configuration file if none exists.
