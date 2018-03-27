@@ -124,12 +124,10 @@ public class BuildFinder {
         builds.put(0, build);
 
         int checked = 0;
-        int total = checksumTable.keySet().size();
+        int numChecksums = checksumTable.size();
         int hits = 0;
 
         final String EMPTY_MD5 = Hex.encodeHexString(DigestUtils.getDigest(config.getChecksumType().getAlgorithm()).digest());
-
-        LOGGER.info("Number of checksums: {}", green(total));
 
         for (Entry<String, Collection<String>> entry : checksumTable.entrySet()) {
             checked++;
@@ -228,7 +226,7 @@ public class BuildFinder {
                         tags = build.getTags();
                         hits++;
 
-                        LOGGER.info("Found build: id: {} nvr: {} checksum: {} archive: {} [{} / {} = {}%]", green(buildInfo.getId()), green(buildInfo.getNvr()), green(checksum), green(archive.getFilename()), cyan(checked), cyan(total), cyan(String.format("%.3f", (checked / (double) total) * 100)));
+                        LOGGER.info("Found build: id: {} nvr: {} checksum: {} archive: {} [{} / {} = {}%]", green(buildInfo.getId()), green(buildInfo.getNvr()), green(checksum), green(archive.getFilename()), cyan(checked), cyan(numChecksums), cyan(String.format("%.3f", (checked / (double) numChecksums) * 100)));
 
                         if (buildInfo.getBuildState() != KojiBuildState.COMPLETE) {
                             LOGGER.debug("Skipping incomplete build id {}", buildInfo.getId());
@@ -346,7 +344,7 @@ public class BuildFinder {
 
                                 build = new KojiBuild(buildInfo, taskInfo, taskRequest, archiveList, allArchives, tags, buildTypes);
                                 builds.put(archive.getBuildId(), build);
-                                LOGGER.info("Found build: id: {} nvr: {} checksum: {} archive: {} [{} / {} = {}%]", green(buildInfo.getId()), green(buildInfo.getNvr()), green(checksum), green(archive.getFilename()), cyan(checked), cyan(total), cyan(String.format("%.3f", (checked / (double) total) * 100)));
+                                LOGGER.info("Found build: id: {} nvr: {} checksum: {} archive: {} [{} / {} = {}%]", green(buildInfo.getId()), green(buildInfo.getNvr()), green(checksum), green(archive.getFilename()), cyan(checked), cyan(numChecksums), cyan(String.format("%.3f", (checked / (double) numChecksums) * 100)));
                             }
                         } else {
                             LOGGER.warn("Build not found for checksum {}. This is never supposed to happen", checksum);
@@ -385,15 +383,15 @@ public class BuildFinder {
 
         final Instant endTime = Instant.now();
         final Duration duration = Duration.between(startTime, endTime).abs();
-        long numBuilds = builds.keySet().stream().count() - 1L;
+        int numBuilds = builds.size() - 1;
 
-        LOGGER.info("Total number of files: {}, checked: {}, skipped: {}, hits: {}, time: {}, average: {}", green(checksumTable.keySet().size()), green(numBuilds), green(checksumTable.size() - numBuilds), green(hits), green(duration), green(duration.dividedBy(numBuilds)));
+        LOGGER.info("Total number of files: {}, checked: {}, skipped: {}, hits: {}, time: {}, average: {}", green(numChecksums), green(numChecksums - numBuilds), green(numBuilds), green(hits), green(duration), green(numBuilds > 0 ? duration.dividedBy(numBuilds) : 0));
 
         LOGGER.debug("Found {} total builds", numBuilds);
 
         builds.values().removeIf(b -> b.getBuildInfo().getBuildState() != KojiBuildState.COMPLETE);
 
-        numBuilds = builds.keySet().stream().count() - 1L;
+        numBuilds = builds.size() - 1;
 
         LOGGER.info("Found {} builds", green(numBuilds));
 
