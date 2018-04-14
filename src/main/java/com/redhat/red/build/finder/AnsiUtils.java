@@ -16,15 +16,21 @@
 package com.redhat.red.build.finder;
 
 import org.fusesource.jansi.Ansi;
+import org.fusesource.jansi.AnsiConsole;
 
 public final class AnsiUtils {
     private AnsiUtils() {
         throw new AssertionError();
     }
 
-    public static void reset() {
+    public static void install() {
+        AnsiConsole.systemInstall();
+    }
+
+    public static void uninstall() {
         System.out.print(Ansi.ansi().reset());
         System.out.flush();
+        AnsiConsole.systemUninstall();
     }
 
     public static Object cyan(Object o) {
