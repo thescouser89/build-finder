@@ -15,13 +15,14 @@
  */
 package com.redhat.red.build.finder;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.collections4.MultiValuedMap;
 import org.jboss.byteman.contrib.bmunit.BMRule;
 import org.jboss.byteman.contrib.bmunit.BMRules;
 import org.jboss.byteman.contrib.bmunit.BMUnitRunner;
@@ -94,13 +95,25 @@ public class FileObjectTrackingTest {
         System.setProperty("java.io.tmpdir", cache.getAbsolutePath());
 
         List<File> target = Collections.singletonList(TestUtils.loadFile("nested.zip"));
-        DistributionAnalyzer da = new DistributionAnalyzer(target, new BuildConfig());
-        da.checksumFiles();
+
+        BuildConfig config = new BuildConfig();
+
+        config.setArchiveExtensions(Collections.emptyList());
+
+        DistributionAnalyzer da = new DistributionAnalyzer(target, config);
+        MultiValuedMap<String, String> checksums = da.checksumFiles();
+
+        assertEquals(25, checksums.size());
+
+        Object sCounter = getFileSystemCounter();
+        int sCount = (Integer) sCounter;
+
+        assertEquals(0, sCount);
 
         Object fCounter = getAbstractFileObjectCounter();
-        Object sCounter = getFileSystemCounter();
-        assertTrue(fCounter instanceof Integer && ((Integer) fCounter) == 0);
-        assertTrue(sCounter instanceof Integer && ((Integer) sCounter) == 0);
+        int fCount = (Integer) fCounter;
+
+        assertEquals(0, fCount);
     }
 
     /**
