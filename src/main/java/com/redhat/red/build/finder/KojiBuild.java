@@ -15,6 +15,7 @@
  */
 package com.redhat.red.build.finder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -45,6 +46,12 @@ public class KojiBuild {
 
     public KojiBuild() {
 
+    }
+
+    public KojiBuild(KojiBuildInfo buildInfo) {
+        this.buildInfo = buildInfo;
+        this.archives = new ArrayList<>();
+        this.duplicateArchives = new ArrayList<>();
     }
 
     public KojiBuild(KojiBuildInfo buildInfo, KojiTaskInfo taskInfo, KojiTaskRequest taskRequest, List<KojiLocalArchive> archives, List<KojiArchiveInfo> remoteArchives, List<KojiTagInfo> tags, List<String> types) {
@@ -121,10 +128,6 @@ public class KojiBuild {
         this.duplicateArchives = duplicateArchives;
     }
 
-    public boolean containsDuplicateArchive(KojiArchiveInfo archive) {
-        return (duplicateArchives != null && duplicateArchives.contains(archive));
-    }
-
     @JsonIgnore
     public KojiArchiveInfo getProjectSourcesTgz() {
         String mavenVersion = buildInfo.getMavenVersion();
@@ -132,7 +135,7 @@ public class KojiBuild {
 
         if (remoteArchives != null && mavenVersion != null) {
             String sourcesZipFilename = buildInfo.getMavenArtifactId() + "-" + buildInfo.getMavenVersion() + "-project-sources.tar.gz";
-            sourcesZip = remoteArchives.stream().filter(sArchive -> sArchive.getFilename().equals(sourcesZipFilename)).findAny().orElse(null);
+            sourcesZip = remoteArchives.stream().filter(sArchive -> sArchive.getFilename().equals(sourcesZipFilename)).findFirst().orElse(null);
             return sourcesZip;
         }
 
@@ -146,7 +149,7 @@ public class KojiBuild {
 
         if (remoteArchives != null && mavenVersion != null) {
             String sourcesZipFilename = buildInfo.getMavenArtifactId() + "-" + buildInfo.getMavenVersion() + "-scm-sources.zip";
-            sourcesZip = remoteArchives.stream().filter(sArchive -> sArchive.getFilename().equals(sourcesZipFilename)).findAny().orElse(null);
+            sourcesZip = remoteArchives.stream().filter(sArchive -> sArchive.getFilename().equals(sourcesZipFilename)).findFirst().orElse(null);
             return sourcesZip;
         }
 
@@ -160,7 +163,7 @@ public class KojiBuild {
 
         if (remoteArchives != null && mavenVersion != null) {
             String patchesZipFilename = buildInfo.getMavenArtifactId() + "-" + buildInfo.getMavenVersion() + "-patches.zip";
-            patchesZip = remoteArchives.stream().filter(pArchive -> pArchive.getFilename().equals(patchesZipFilename)).findAny().orElse(null);
+            patchesZip = remoteArchives.stream().filter(pArchive -> pArchive.getFilename().equals(patchesZipFilename)).findFirst().orElse(null);
             return patchesZip;
         }
 
