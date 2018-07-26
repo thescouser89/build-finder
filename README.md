@@ -2,7 +2,16 @@
 
 [Koji Build Finder](https://github.com/release-engineering/koji-build-finder/) iterates over any files or directories in the input, recursively scanning any supported (possibly compressed) archive types, locating the associated Koji build for each file matching any given Koji archive type. It attempts to find at least one Koji build containing the file checksum (duplicate builds result in a warning) and records files that don't have any corresponding Koji build to a file. For files with a corresponding Koji build, if the Koji build does not have a corresponding Koji task, it reports the build as an *import*. For builds with a corresponding Koji task, it writes information about the build to a file. Additionally, it writes various reports about the builds.
 
-### Development
+## Build Status
+
+| Name      | Description                | Badge                      |
+| --------- | -------------------------- | -------------------------- |
+| AppVeyor  | Build Status (Windows)     | [![Build Status (AppVeyor)](https://ci.appveyor.com/api/projects/status/775lq2o1chu7abn5?svg=true)](https://ci.appveyor.com/project/dwalluck/koji-build-finder-6o7ag) |
+| Travis CI | Build Status (Linux/OS X)  | [![Build Status (Travis CI)](https://api.travis-ci.com/release-engineering/koji-build-finder.svg)](https://travis-ci.com/release-engineering/koji-build-finder) |
+| Codecov   | Code Coverage              | [![Code Coverage](https://codecov.io/gh/release-engineering/koji-build-finder/graph/badge.svg)](https://codecov.io/gh/release-engineering/koji-build-finder) |
+| Snyk      | Known Vulnerabilities      | [![Known Vulnerabilities](https://snyk.io/test/github/release-engineering/koji-build-finder/badge.svg)](https://snyk.io/test/github/release-engineering/koji-build-finder) |
+
+## Development
 
 An example `codestyle-eclipse.xml` code formatting style is supplied for [Eclipse](https://www.eclipse.org/ide/). An example `codestyle-intellij.xml` code formatting style is supplied for [IntelliJ IDEA](https://www.jetbrains.com/idea/).
 
@@ -26,31 +35,37 @@ Koji Build Finder operates in three stages:
 
 To see the available options, execute the command `java -jar target/koji-build-finder-<version>-jar-with-dependencies.jar --help`, where `<version>` is the Koji Build Finder version. The options are as follows:
 
-    Usage: koji-build-finder <files>
-     -a,--archive-type <type>            Add a Koji archive type to check. Default:
-                                         [jar, xml, pom, so, dll, dylib].
-     -c,--config <file>                  Specify configuration file to use. Default:
-                                         ${user.home}/.koji-build-finder/config.json.
-     -d,--debug                          Enable debug logging.
-     -e,--archive-extension <extension>  Add a Koji archive type extension to
-                                         check. Default: [dll, dylib, ear, jar,
-                                         jdocbook, jdocbook-style, kar, plugin,
-                                         pom, rar, sar, so, war, xml].
-     -h,--help                           Show this help message.
-     -k,--checksum-only                  Only checksum files and do not find builds.
-                                         Default: false.
-    --koji-hub-url <url>                 Set Koji hub URL.
-    --koji-web-url <url>                 Set Koji web URL.
-    --krb-ccache <ccache>                Set location of Kerberos credential cache.
-    --krb-keytab <keytab>                Set location of Kerberos keytab.
-    --krb-password <password>            Set Kerberos password.
-    --krb-principal <principal>          Set Kerberos client principal.
-    --krb-service <service>              Set Kerberos client service.
-     -o,--output-directory <directory>   Set output directory.
-     -t,--checksum-type <type>           Set checksum type (md5, sha1, sha256).
-                                         Default: md5.
-     -x,--exclude <pattern>              Add a pattern to exclude from build lookup.
-                                         Default: [^(?!.*/pom\.xml$).*/.*\.xml$].
+    Usage: koji-build-finder [OPTIONS] FILE...
+    Finds builds in Koji.
+          FILE...                One or more files.
+          --koji-hub-url=URL     Set Koji hub URL.
+          --koji-web-url=URL     Set Koji web URL.
+          --krb-ccache=FILE      Set location of Kerberos credential cache.
+          --krb-keytab=FILE      Set location of Kerberos keytab.
+          --krb-password=STRING  Set Kerberos password.
+          --krb-principal=STRING Set Kerberos client principal.
+          --krb-service=STRING   Set Kerberos client service.
+      -a, --archive-type=STRING  Add a Koji archive type to check.
+                                   Default: [jar, xml, pom, so, dll, dylib]
+      -c, --config=FILE          Specify configuration file to use.
+                                   Default: ${user.home}/.koji-build-finder/config.json
+      -d, --debug                Enable debug logging.
+      -e, --archive-extension=STRING
+                                 Add a Koji archive type extension to check.
+                                   Default: [dll, dylib, ear, jar, jdocbook,
+                                   jdocbook-style, kar, plugin, pom, rar, sar, so, war,
+                                   xml]
+      -h, --help                 Show this help message and exit.
+      -k, --checksum-only        Only checksum files and do not find builds.
+      -o, --output-directory=FILE
+                                 Set output directory.
+      -q, --quiet                Disable all logging.
+      -t, --checksum-type=CHECKSUM
+                                 Set checksum type (md5, sha1, sha256).
+                                   Default: md5
+      -V, --version              Print version information and exit.
+      -x, --exclude=PATTERN      Add a pattern to exclude from build lookup.
+                                   Default: [^(?!.*/pom\.xml$).*/.*\.xml$]
 
 ### Running via Docker containers
 
