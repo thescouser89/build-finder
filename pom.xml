@@ -63,10 +63,10 @@
     <version.com.github.stefanbirkner>1.18.0</version.com.github.stefanbirkner>
     <version.com.j2html>1.3.0</version.com.j2html>
     <version.com.redhat.red.build.kojiji>2.5</version.com.redhat.red.build.kojiji>
-    <version.info.picocli>3.3.0</version.info.picocli>
+    <version.info.picocli>3.4.0</version.info.picocli>
     <version.io.dropwizard.metrics>4.0.3</version.io.dropwizard.metrics>
     <version.junit>4.12</version.junit>
-    <version.net.sourceforge.pmd>6.5.0</version.net.sourceforge.pmd>
+    <version.net.sourceforge.pmd>6.6.0</version.net.sourceforge.pmd>
     <version.org.apache.commons.commons-collections4>4.2</version.org.apache.commons.commons-collections4>
     <version.org.apache.commons.commons-compress>1.17</version.org.apache.commons.commons-compress>
     <version.org.apache.commons.commons-lang3>3.7</version.org.apache.commons.commons-lang3>
@@ -418,6 +418,11 @@
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>${version.org.apache.maven.plugins.maven-failsafe-plugin}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jxr-plugin</artifactId>
           <version>${version.org.apache.maven.plugins.maven-jxr-plugin}</version>
         </plugin>
@@ -455,6 +460,11 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-project-info-reports-plugin</artifactId>
           <version>${version.org.apache.maven.plugins.maven-project-info-reports-plugin}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${version.org.apache.maven.plugins.maven-surefire-plugin}</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -499,6 +509,17 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>properties</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
         <executions>
           <execution>
@@ -520,7 +541,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
-          <forkCount>0</forkCount>
           <includes>
             <include>**/*IT.java</include>
           </includes>
@@ -602,14 +622,38 @@
         </executions>
       </plugin>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <argLine>@{argLine} -javaagent:${org.jboss.byteman:byteman:jar}=port:9091,boot:${org.jboss.byteman:byteman:jar}</argLine>
+          <systemPropertyVariables>
+            <org.jboss.byteman.contrib.bmunit.agent.inhibit>true</org.jboss.byteman.contrib.bmunit.agent.inhibit>
+            <org.jboss.byteman.contrib.bmunit.agent.port>9091</org.jboss.byteman.contrib.bmunit.agent.port>
+         </systemPropertyVariables>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <configuration>
-          <excludes>
-            <exclude>com/redhat/red/build/finder/JSONUtils$*.class</exclude>
-          </excludes>
-        </configuration>
         <executions>
+          <execution>
+            <id>jacoco-merge</id>
+            <goals>
+              <goal>merge</goal>
+            </goals>
+            <configuration>
+              <fileSets>
+                <fileSet>
+                  <directory>${project.build.directory}</directory>
+                  <includes>
+                    <include>jacoco.exec</include>
+                    <include>jacoco-it.exec</include>
+                  </includes>
+                </fileSet>
+              </fileSets>
+              <destFile>${project.build.directory}/jacoco.exec</destFile>
+            </configuration>
+          </execution>
           <execution>
             <id>jacoco-initialize</id>
             <goals>
