@@ -17,7 +17,6 @@ package com.redhat.red.build.finder.pnc.client;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
