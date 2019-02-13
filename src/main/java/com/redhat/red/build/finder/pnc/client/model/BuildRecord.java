@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.redhat.red.build.finder.pnc.client.models;
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+package com.redhat.red.build.finder.pnc.client.model;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BuildRecord {

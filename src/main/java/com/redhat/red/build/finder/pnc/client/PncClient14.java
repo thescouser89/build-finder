@@ -15,27 +15,26 @@
  */
 package com.redhat.red.build.finder.pnc.client;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.ObjectMapper;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
-import com.redhat.red.build.finder.pnc.client.models.Artifact;
-import com.redhat.red.build.finder.pnc.client.models.BuildRecord;
-import com.redhat.red.build.finder.pnc.client.models.PageParameterArtifact;
-import com.redhat.red.build.finder.pnc.client.models.PageParameterBuildRecord;
-
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
+import com.redhat.red.build.finder.pnc.client.model.Artifact;
+import com.redhat.red.build.finder.pnc.client.model.BuildRecord;
+import com.redhat.red.build.finder.pnc.client.model.PageParameterArtifact;
+import com.redhat.red.build.finder.pnc.client.model.PageParameterBuildRecord;
 
 /**
  * PncClient14 class for PNC 1.4.x APIs
  *
  */
 public class PncClient14 {
-
     private String url;
 
     /**
@@ -47,10 +46,8 @@ public class PncClient14 {
      * @param url: Base url of PNC app e.g http://orch.is.here/
      */
     public PncClient14(String url) {
-
         unirestSetup();
         this.url = url;
-
     }
 
     /**
@@ -74,8 +71,7 @@ public class PncClient14 {
      */
     private static void unirestSetup() {
         Unirest.setObjectMapper(new ObjectMapper() {
-            private com.fasterxml.jackson.databind.ObjectMapper jacksonObjectMapper
-                    = new com.fasterxml.jackson.databind.ObjectMapper();
+            private com.fasterxml.jackson.databind.ObjectMapper jacksonObjectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
 
             public <T> T readValue(String value, Class<T> valueType) {
                 try {
@@ -132,24 +128,16 @@ public class PncClient14 {
     }
 
     private List<Artifact> getArtifacts(String key, String value) throws PncClientException {
-
         try {
-
             StringBuilder urlRequest = new StringBuilder();
-            urlRequest.append(url)
-                    .append("/pnc-rest/rest/artifacts")
-                    .append("?")
-                    .append(key)
-                    .append("=")
-                    .append(value);
 
-            HttpResponse<PageParameterArtifact> artifacts = Unirest.get(urlRequest.toString())
-                    .asObject(PageParameterArtifact.class);
+            urlRequest.append(url).append("/pnc-rest/rest/artifacts").append("?").append(key).append("=").append(value);
 
+            HttpResponse<PageParameterArtifact> artifacts = Unirest.get(urlRequest.toString()).asObject(PageParameterArtifact.class);
             PageParameterArtifact artifactData = artifacts.getBody();
 
             if (artifactData == null) {
-                return new LinkedList<>();
+                return Collections.emptyList();
             } else {
                 return artifactData.getContent();
             }
@@ -168,17 +156,12 @@ public class PncClient14 {
      * @throws PncClientException if something goes wrong
      */
     public BuildRecord getBuildRecordById(int id) throws PncClientException {
-
         try {
-
             StringBuilder urlRequest = new StringBuilder();
-            urlRequest.append(url)
-                    .append("/pnc-rest/rest/build-records/")
-                    .append(id);
 
-            HttpResponse<PageParameterBuildRecord> buildRecords = Unirest.get(urlRequest.toString())
-                    .asObject(PageParameterBuildRecord.class);
+            urlRequest.append(url).append("/pnc-rest/rest/build-records/").append(id);
 
+            HttpResponse<PageParameterBuildRecord> buildRecords = Unirest.get(urlRequest.toString()).asObject(PageParameterBuildRecord.class);
             PageParameterBuildRecord buildRecordData = buildRecords.getBody();
 
             if (buildRecordData == null) {

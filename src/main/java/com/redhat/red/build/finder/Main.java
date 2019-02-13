@@ -657,7 +657,7 @@ public final class Main implements Callable<Void> {
         }
     }
 
-   static class FilenameConverter implements ITypeConverter<String> {
+    static class FilenameConverter implements ITypeConverter<String> {
         @Override
         public String convert(String value) throws Exception {
             if (value.matches(".*[\\/:\"*?<>|]+.*")) {

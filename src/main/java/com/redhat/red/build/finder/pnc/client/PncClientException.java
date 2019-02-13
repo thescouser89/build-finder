@@ -19,7 +19,6 @@ package com.redhat.red.build.finder.pnc.client;
  * Exception thrown by PncClient
  */
 public class PncClientException extends Exception {
-
     public PncClientException(Throwable cause) {
         super(cause);
     }

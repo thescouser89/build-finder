@@ -1,23 +1,24 @@
 package com.redhat.red.build.finder.it;
 
-import com.redhat.red.build.finder.pnc.client.PncClient14;
-import com.redhat.red.build.finder.pnc.client.PncClientException;
-import com.redhat.red.build.finder.pnc.client.models.Artifact;
-import com.redhat.red.build.finder.pnc.client.models.BuildRecord;
-import org.junit.Test;
-
-import java.util.List;
-
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-public class PncClient14IT {
+import java.util.List;
 
+import com.redhat.red.build.finder.pnc.client.PncClient14;
+import com.redhat.red.build.finder.pnc.client.PncClientException;
+import com.redhat.red.build.finder.pnc.client.model.Artifact;
+import com.redhat.red.build.finder.pnc.client.model.BuildRecord;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class PncClient14IT {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PncClient14IT.class);
     private static final String PROPERTY = "com.redhat.red.build.finder.it.pnc.url";
     private static final String URL = System.getProperty(PROPERTY);
-
-
     private static final int CONNECTION_TIMEOUT = 300000;
     private static final int READ_TIMEOUT = 900000;
 
@@ -35,9 +36,7 @@ public class PncClient14IT {
 
     @Test
     public void testReturnEmptyListIfNoMatchingSha() throws PncClientException {
-
         PncClient14 client = new PncClient14(URL);
-
         List<Artifact> artifactsMd5 = client.getArtifactsByMd5("do-not-exist");
         assertNotNull(artifactsMd5);
         assertTrue(artifactsMd5.isEmpty());
@@ -53,16 +52,12 @@ public class PncClient14IT {
 
     @Test
     public void testReturnNullIfNoMatchingBuildRecord() throws PncClientException {
-
         PncClient14 client = new PncClient14(URL);
         BuildRecord record = client.getBuildRecordById(-1);
         assertNull(record);
-
     }
 
-
     private void getAnArtifactAndBuildRecord(PncClient14 client) throws PncClientException {
-
         // sha content for classworlds-1.1.jar
         String md5 = "c20629baa65f1f2948b37aa393b0310b";
         String sha1 = "60c708f55deeb7c5dfce8a7886ef09cbc1388eca";
@@ -78,9 +73,9 @@ public class PncClient14IT {
 
         // get the buildrecord and see if we get all the contents
         List<Integer> buildRecordIds = artifactMd5.getDependantBuildRecordIds();
-
         BuildRecord record = client.getBuildRecordById(buildRecordIds.get(0));
         assertNotNull(record);
-        assertNotNull(record.getProjectName());
+        assertEquals("chads-pfg-demo-project", record.getProjectName());
+        LOGGER.debug("Build Record: {}", record.getProjectName());
     }
 }

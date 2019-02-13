@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.redhat.red.build.finder.pnc.client.models;
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+package com.redhat.red.build.finder.pnc.client.model;
 
 import java.util.Date;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Artifact {
@@ -52,7 +52,6 @@ public class Artifact {
      * Internal url to the artifact using internal (cloud) network domain
      */
     private String deployUrl;
-
 
     /**
      * Public url to the artifact using public network domain

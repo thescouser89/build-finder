@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.redhat.red.build.finder.pnc.client.models;
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+package com.redhat.red.build.finder.pnc.client.model;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PageParameterArtifact {
-
-   private List<Artifact> content;
+    private List<Artifact> content;
 
     public List<Artifact> getContent() {
         return content;
