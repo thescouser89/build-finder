@@ -27,7 +27,7 @@
 
   <groupId>com.redhat.red.build</groupId>
   <artifactId>koji-build-finder</artifactId>
-  <version>1.4.1-SNAPSHOT</version>
+  <version>1.5.0</version>
 
   <name>koji-build-finder</name>
   <description>Finds builds in Koji.</description>
@@ -49,14 +49,14 @@
     <connection>scm:git:https://github.com/release-engineering/koji-build-finder.git</connection>
     <developerConnection>scm:git:git@github.com:release-engineering/koji-build-finder.git</developerConnection>
     <url>https://github.com/release-engineering/koji-build-finder</url>
-    <tag>HEAD</tag>
+    <tag>koji-build-finder-1.5.0</tag>
   </scm>
 
   <properties>
-    <koji.hub.url/>
-    <koji.web.url/>
+    <koji.hub.url />
+    <koji.web.url />
     <mavenVersion>3.3.9</mavenVersion>
-    <pnc.url/>
+    <pnc.url />
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <skipITs>true</skipITs>
     <version.ch.qos.logback>1.2.3</version.ch.qos.logback>
