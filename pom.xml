@@ -74,7 +74,7 @@
     <version.info.picocli>4.1.4</version.info.picocli>
     <version.io.dropwizard.metrics>4.1.2</version.io.dropwizard.metrics>
     <version.junit>4.13</version.junit>
-    <version.net.sourceforge.pmd>6.20.0</version.net.sourceforge.pmd>
+    <version.net.sourceforge.pmd>6.21.0</version.net.sourceforge.pmd>
     <version.org.apache.commons.commons-collections4>4.4</version.org.apache.commons.commons-collections4>
     <version.org.apache.commons.commons-compress>1.19</version.org.apache.commons.commons-compress>
     <version.org.apache.commons.commons-lang3>3.9</version.org.apache.commons.commons-lang3>
