@@ -50,6 +50,7 @@
     <module>cli</module>
     <module>core</module>
     <module>report</module>
+    <module>aggregate</module>
   </modules>
 
   <scm>
@@ -93,7 +94,7 @@
     <version.org.apache.maven.plugins.maven-assembly-plugin>3.2.0</version.org.apache.maven.plugins.maven-assembly-plugin>
     <version.org.apache.maven.plugins.maven-checkstyle-plugin>3.1.1</version.org.apache.maven.plugins.maven-checkstyle-plugin>
     <version.org.apache.maven.plugins.maven-clean-plugin>3.1.0</version.org.apache.maven.plugins.maven-clean-plugin>
-    <version.org.apache.maven.plugins.maven-compiler-plugin>3.8.1</version.org.apache.maven.plugins.maven-compiler-plugin>
+    <version.org.apache.maven.plugins.maven-compiler-plugin>3.8.1-jboss-1</version.org.apache.maven.plugins.maven-compiler-plugin>
     <version.org.apache.maven.plugins.maven-dependency-plugin>3.1.2</version.org.apache.maven.plugins.maven-dependency-plugin>
     <version.org.apache.maven.plugins.maven-deploy-plugin>3.0.0-M1</version.org.apache.maven.plugins.maven-deploy-plugin>
     <version.org.apache.maven.plugins.maven-enforcer-plugin>3.0.0-M3</version.org.apache.maven.plugins.maven-enforcer-plugin>
@@ -458,6 +459,57 @@
       <artifactId>slf4j-api</artifactId>
     </dependency>
   </dependencies>
+
+  <repositories>
+    <repository>
+      <id>jboss-public-repository</id>
+      <name>JBoss Public Maven Repository</name>
+      <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+    </repository>
+    <repository>
+      <id>jboss-snapshots-repository</id>
+      <name>JBoss Snapshots Maven Repository</name>
+      <url>https://repository.jboss.org/nexus/content/repositories/snapshots/</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>jboss-public-repository</id>
+      <name>JBoss Public Maven Repository</name>
+      <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+      <layout>default</layout>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+    <pluginRepository>
+      <id>jboss-snapshots-repository</id>
+      <name>JBoss Snapshots Maven Repository</name>
+      <url>https://repository.jboss.org/nexus/content/repositories/snapshots/</url>
+      <layout>default</layout>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+  </pluginRepositories>
 
   <build>
     <pluginManagement>
@@ -841,8 +893,10 @@
                 <fileSet>
                   <directory>${project.build.directory}</directory>
                   <includes>
-                    <include>jacoco.exec</include>
-                    <include>jacoco-it.exec</include>
+                    <include>cli/jacoco.exec</include>
+                    <include>core/jacoco.exec</include>
+                    <include>core/jacoco-it.exec</include>
+                    <include>report/jacoco.exec</include>
                   </includes>
                 </fileSet>
               </fileSets>
