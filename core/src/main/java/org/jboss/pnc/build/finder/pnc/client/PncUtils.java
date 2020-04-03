@@ -24,10 +24,13 @@ import java.util.Map;
 
 import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.build.finder.pnc.PncBuild;
-import org.jboss.pnc.build.finder.pnc.client.model.Artifact;
-import org.jboss.pnc.build.finder.pnc.client.model.BuildRecord;
-import org.jboss.pnc.build.finder.pnc.client.model.BuildRecordPushResult;
-import org.jboss.pnc.build.finder.pnc.client.model.ProductVersion;
+import org.jboss.pnc.constants.Attributes;
+import org.jboss.pnc.dto.Artifact;
+import org.jboss.pnc.dto.Build;
+import org.jboss.pnc.dto.BuildPushResult;
+import org.jboss.pnc.dto.ProductVersion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.redhat.red.build.koji.model.json.KojiJsonConstants;
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
@@ -39,13 +42,15 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiTaskInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTaskRequest;
 
 public final class PncUtils {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PncUtils.class);
+
     private PncUtils() {
         throw new IllegalArgumentException();
     }
 
-    private static void setMavenBuildInfoFromBuildRecord(BuildRecord record, KojiBuildInfo buildInfo) {
-        String executionRootName = record.getExecutionRootName();
-        String executionRootVersion = record.getExecutionRootVersion();
+    private static void setMavenBuildInfoFromBuildRecord(Build record, KojiBuildInfo buildInfo) {
+        String executionRootName = getSafelyExecutionRootName(record);
+        String executionRootVersion = record.getAttributes().get(Attributes.BUILD_BREW_VERSION);
         String[] ga = executionRootName.split(":", 2);
 
         buildInfo.setMavenGroupId(ga[0]);
@@ -53,8 +58,27 @@ public final class PncUtils {
         buildInfo.setMavenVersion(executionRootVersion);
     }
 
-    public static String getNVRFromBuildRecord(BuildRecord record) {
-        return record.getExecutionRootName().replace(':', '-') + "-" + record.getExecutionRootVersion() + "-1";
+    private static String getSafelyExecutionRootName(Build build) {
+        String buildBrewName = build.getAttributes().get(Attributes.BUILD_BREW_NAME);
+        if (buildBrewName == null) {
+            return "NO_BUILD_BREW_NAME";
+        } else {
+            return buildBrewName;
+        }
+    }
+
+    private static String getBrewBuildVersionOrZero(Build build) {
+        String buildBrewVersion = build.getAttributes().get(Attributes.BUILD_BREW_VERSION);
+        if (build == null) {
+            return "0";
+        } else {
+            return buildBrewVersion;
+        }
+    }
+
+    public static String getNVRFromBuildRecord(Build record) {
+        return getSafelyExecutionRootName(record).replace(':', '-') + "-"
+                + record.getAttributes().get(Attributes.BUILD_BREW_VERSION) + "-1";
     }
 
     public static KojiBuild pncBuildToKojiBuild(PncBuild pncbuild) {
@@ -63,13 +87,14 @@ public final class PncUtils {
         build.setTypes(Collections.singletonList("maven"));
 
         KojiBuildInfo buildInfo = new KojiBuildInfo();
-        BuildRecord record = pncbuild.getBuildRecord();
+        Build record = pncbuild.getBuild();
 
         setMavenBuildInfoFromBuildRecord(record, buildInfo);
 
-        buildInfo.setId(record.getId());
-        buildInfo.setName(record.getExecutionRootName().replace(':', '-'));
-        buildInfo.setVersion(record.getExecutionRootVersion() != null ? record.getExecutionRootVersion() : "0");
+        buildInfo.setId(Integer.parseInt(record.getId()));
+
+        buildInfo.setName(getSafelyExecutionRootName(record).replace(':', '-'));
+        buildInfo.setVersion(getBrewBuildVersionOrZero(record));
         buildInfo.setRelease("1");
         buildInfo.setNvr(
                 buildInfo.getName() + "-" + buildInfo.getVersion().replace("-", "_") + "-"
@@ -77,9 +102,10 @@ public final class PncUtils {
         buildInfo.setCreationTime(Date.from(record.getStartTime()));
         buildInfo.setCompletionTime(Date.from(record.getEndTime()));
         buildInfo.setBuildState(KojiBuildState.COMPLETE);
-        buildInfo.setOwnerName(record.getUsername());
+        buildInfo.setOwnerName(record.getUser().getUsername());
         buildInfo.setSource(
-                (record.getScmRepoURL().startsWith("http") ? "git+" : "") + record.getScmRepoURL()
+                (record.getScmRepository().getInternalUrl().startsWith("http") ? "git+" : "")
+                        + record.getScmRepository().getInternalUrl()
                         + (record.getScmRevision() != null ? "#" + record.getScmRevision() : ""));
 
         Map<String, Object> extra = new HashMap<>(5);
@@ -87,32 +113,32 @@ public final class PncUtils {
         extra.put(KojiJsonConstants.BUILD_SYSTEM, "PNC");
         extra.put(KojiJsonConstants.EXTERNAL_BUILD_ID, record.getId());
         // XXX: These aren't used by Koji, but we need them to create the hyperlinks for the HTML report
-        extra.put("external_project_id", record.getProjectId());
-        extra.put("external_build_configuration_id", record.getBuildConfigurationId());
+        extra.put("external_project_id", record.getProject().getId());
+        extra.put("external_build_configuration_id", record.getBuildConfigRevision().getId());
 
-        BuildRecordPushResult result = pncbuild.getBuildRecordPushResult();
+        BuildPushResult result = pncbuild.getBuildPushResult();
 
         if (result != null) {
             extra.put("external_brew_build_id", result.getBrewBuildId());
             extra.put("external_brew_build_url", result.getBrewBuildUrl());
         }
 
-        ProductVersion pv = pncbuild.getProductVersion();
+        ProductVersion productVersion = pncbuild.getProductVersion();
 
         // TODO Review - it is not necessary for the core logic, but only for reports
-        if (pv != null) {
+        if (productVersion != null) {
             // XXX: These aren't used by Koji, but we need them to create the hyperlinks for the HTML report
-            extra.put("external_product_id", pv.getProductId());
-            extra.put("external_version_id", pv.getId());
+            extra.put("external_product_id", productVersion.getProduct().getId());
+            extra.put("external_version_id", productVersion.getId());
 
             List<KojiTagInfo> tags = new ArrayList<>(1);
             KojiTagInfo tag = new KojiTagInfo();
 
-            tag.setId(pv.getId());
+            tag.setId(Integer.parseInt(productVersion.getId()));
             tag.setArches(Collections.singletonList("noarch"));
 
-            String brewName = pv.getAttributes().get("BREW_TAG_PREFIX");
-            String tagName = brewName != null ? brewName : pv.getProductName();
+            String brewName = productVersion.getAttributes().get("BREW_TAG_PREFIX");
+            String tagName = brewName != null ? brewName : productVersion.getProduct().getName();
 
             tag.setName(tagName);
 
@@ -146,14 +172,15 @@ public final class PncUtils {
     }
 
     public static KojiArchiveInfo artifactToKojiArchiveInfo(PncBuild pncbuild, Artifact artifact) {
-        BuildRecord record = pncbuild.getBuildRecord();
+        Build record = pncbuild.getBuild();
         KojiArchiveInfo archiveInfo = new KojiArchiveInfo();
 
-        archiveInfo.setBuildId(record.getId());
-        archiveInfo.setArchiveId(artifact.getId());
+        archiveInfo.setBuildId(Integer.parseInt(record.getId()));
+        archiveInfo.setArchiveId(Integer.parseInt(artifact.getId()));
         archiveInfo.setArch("noarch");
         archiveInfo.setFilename(artifact.getFilename());
-        archiveInfo.setBuildType("maven"); // XXX: Pnc also has a gradle build type
+
+        archiveInfo.setBuildType(pncbuild.getBuild().getBuildConfigRevision().getBuildType());
         archiveInfo.setChecksumType(KojiChecksumType.md5);
         archiveInfo.setChecksum(artifact.getMd5());
         archiveInfo.setSize(artifact.getSize().intValue()); // XXX: Koji size should be long not int
@@ -169,6 +196,22 @@ public final class PncUtils {
         }
 
         return archiveInfo;
+    }
+
+    private static String getBuildType(PncBuild pncBuild) {
+        switch (pncBuild.getBuild().getBuildConfigRevision().getBuildType()) {
+            case MVN:
+                return "maven";
+            case GRADLE:
+                return "gradle";
+            case NPM:
+                return "npm";
+            default:
+                LOGGER.warn(
+                        "Unsupported build type conversion. BuildType: "
+                                + pncBuild.getBuild().getBuildConfigRevision().getBuildType());
+                return "unknown";
+        }
     }
 
     public static void fixNullVersion(KojiBuild kojibuild, KojiArchiveInfo archiveInfo) {

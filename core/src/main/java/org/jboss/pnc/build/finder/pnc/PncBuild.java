@@ -22,12 +22,15 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.jboss.pnc.dto.Artifact;
 import org.jboss.pnc.dto.Build;
+import org.jboss.pnc.dto.BuildPushResult;
 import org.jboss.pnc.dto.ProductVersion;
 
 public class PncBuild implements Serializable {
     private static final long serialVersionUID = 4500090728323371691L;
 
     private Build build;
+
+    private BuildPushResult buildPushResult;
 
     private ProductVersion productVersion;
 
@@ -42,8 +45,9 @@ public class PncBuild implements Serializable {
         this.artifacts = new ArrayList<>();
     }
 
-    public PncBuild(Build build, ProductVersion productVersion, List<Artifact> artifacts) {
+    public PncBuild(Build build, BuildPushResult buildPushResult, ProductVersion productVersion, List<Artifact> artifacts) {
         this.build = build;
+        this.buildPushResult = buildPushResult;
         this.productVersion = productVersion;
         this.artifacts = artifacts;
     }
@@ -73,6 +77,14 @@ public class PncBuild implements Serializable {
 
     public void setBuild(Build build) {
         this.build = build;
+    }
+
+    public BuildPushResult getBuildPushResult() {
+        return buildPushResult;
+    }
+
+    public void setBuildPushResult(BuildPushResult buildPushResult) {
+        this.buildPushResult = buildPushResult;
     }
 
     public ProductVersion getProductVersion() {
