@@ -27,7 +27,7 @@ import org.commonjava.util.jhttpc.auth.MemoryPasswordManager;
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.build.finder.core.ConfigDefaults;
 import org.jboss.pnc.build.finder.koji.KojiClientSession;
-import org.jboss.pnc.build.finder.pnc.client.PncClient14;
+import org.jboss.pnc.build.finder.pnc.client.PncClient;
 import org.junit.After;
 import org.junit.Before;
 import org.slf4j.Logger;
@@ -48,7 +48,7 @@ public abstract class AbstractKojiIT {
     private ScheduledReporter reporter;
     private KojiClientSession session;
     private BuildConfig config;
-    private PncClient14 pncclient;
+    private PncClient pncclient;
 
     @Before
     public void setup() throws IOException, KojiClientException {
@@ -80,7 +80,7 @@ public abstract class AbstractKojiIT {
                 new MemoryPasswordManager(),
                 Executors.newFixedThreadPool(DEFAULT_THREAD_COUNT),
                 REGISTRY);
-        this.pncclient = new PncClient14(config);
+        this.pncclient = new PncClient(config);
         this.reporter = Slf4jReporter.forRegistry(REGISTRY)
                 .outputTo(LOGGER)
                 .convertRatesTo(TimeUnit.SECONDS)
@@ -98,7 +98,7 @@ public abstract class AbstractKojiIT {
         return config;
     }
 
-    public PncClient14 getPncClient() {
+    public PncClient getPncClient() {
         return pncclient;
     }
 
