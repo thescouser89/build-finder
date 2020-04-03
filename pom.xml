@@ -67,6 +67,7 @@
     <pnc.url/>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <skipITs>true</skipITs>
+    <version.org.jboss.pnc>2.0.0-SNAPSHOT</version.org.jboss.pnc>
     <version.ch.qos.logback>1.2.3</version.ch.qos.logback>
     <version.commons-codec>1.14</version.commons-codec>
     <version.commons-io>2.6</version.commons-io>
@@ -128,6 +129,19 @@
     <version.org.slf4j>1.7.30</version.org.slf4j>
   </properties>
 
+  <repositories>
+    <repository>
+      <id>jboss-snapshots</id>
+      <url>https://repository.jboss.org/nexus/content/repositories/snapshots</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+    </repository>
+  </repositories>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -150,6 +164,11 @@
         <groupId>org.jboss.pnc.build.finder</groupId>
         <artifactId>report</artifactId>
         <version>2.0.0-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.pnc</groupId>
+        <artifactId>rest-client</artifactId>
+        <version>${version.org.jboss.pnc}</version>
       </dependency>
       <dependency>
         <groupId>ch.qos.logback</groupId>
