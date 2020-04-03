@@ -99,6 +99,7 @@ public final class PncUtils {
 
         ProductVersion pv = pncbuild.getProductVersion();
 
+        // TODO Review - it is not necessary for the core logic, but only for reports
         if (pv != null) {
             // XXX: These aren't used by Koji, but we need them to create the hyperlinks for the HTML report
             extra.put("external_product_id", pv.getProductId());

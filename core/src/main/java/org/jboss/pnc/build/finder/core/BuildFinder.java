@@ -825,7 +825,7 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
     /**
      * Find builds with the given checksums in Pnc.
      *
-     * @param checksumTable the checksum table
+     * @param checksumTable Table of checksums and all files with that checksum
      * @return the map of builds
      * @throws PncClientException if an error occurs
      * @throws KojiClientException if an error occurs
@@ -846,6 +846,7 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
 
         LOGGER.debug("Archive extensions: {}", green(archiveExtensions));
 
+        // Collects all checksums, which are not in the cache and matches the supported file extensions
         Set<Entry<Checksum, Collection<String>>> entries = checksumTable.entrySet();
         int size = entries.size();
         List<Checksum> checksums = new ArrayList<>(size);
@@ -872,6 +873,7 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
             }
         }
 
+        // Lookup all artifacts by checksum
         // TODO: Support other checksum types
         List<List<Artifact>> artifactsList = pncclient.getArtifactsByMd5(
                 checksums.stream()
@@ -879,8 +881,13 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
                         .map(Checksum::getValue)
                         .collect(Collectors.toList()));
         Iterator<List<Artifact>> it = artifactsList.iterator();
+
+        // Set of unique build IDs matching the input checksums
         Set<Integer> ids = new TreeSet<>();
 
+        // Iterates through all the artifacts and
+        // - adds found artifacts to pncChecksumCaches
+        // - adds the not found ones to notFoundChecksums
         for (Entry<Checksum, Collection<String>> entry : entries) {
             Checksum checksum = entry.getKey();
             Collection<String> filenames = entry.getValue();
@@ -919,6 +926,7 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
             }
         }
 
+        // Lookups various data in PNC to be able to fill the PncBuild objects
         List<Integer> idsList = new ArrayList<>(ids);
         List<BuildRecord> records = pncclient.getBuildRecordsById(idsList);
         List<Integer> buildConfigurationIds = records.stream()
@@ -946,6 +954,7 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
         Map<Integer, ProductVersion> pvMap = productVersions.stream()
                 .collect(Collectors.toMap(ProductVersion::getId, Function.identity()));
 
+        // Sets the missing data to PncBuilds
         for (PncBuild pncBuild : pncBuilds) {
             BuildRecord record = pncBuild.getBuildRecord();
             BuildRecordPushResult buildRecordPushResult = rMap.get(record.getId());
@@ -966,10 +975,12 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
         Map<Integer, PncBuild> allPncBuildsTemp = pncBuilds.stream()
                 .collect(Collectors.toMap(p -> p.getBuildRecord().getId(), Function.identity()));
 
+        // Add found builds to a local cache of PNC builds
         allPncBuilds.putAll(allPncBuildsTemp);
 
         it = artifactsList.iterator();
 
+        // Associates found artifacts to the PncBuilds
         for (Entry<Checksum, Collection<String>> entry : entries) {
             Checksum checksum = entry.getKey();
             Collection<String> filenames = entry.getValue();
@@ -1029,6 +1040,8 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
                     pncbuild.getArtifacts().add(artifact);
                     BuildRecord record = pncbuild.getBuildRecord();
                     Integer id = record.getId();
+
+                    // Converts PncBuild to KojiBuild
                     KojiBuild kojibuild = builds.get(new BuildSystemInteger(id, BuildSystem.pnc));
 
                     if (kojibuild == null) {
