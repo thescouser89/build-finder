@@ -99,8 +99,7 @@ public class PncClient {
         return buildClient.getPushResult(buildId);
     }
 
-    public ProductVersion getProductVersion(ProductMilestoneRef productMilestoneRef)
-            throws RemoteResourceException {
+    public ProductVersion getProductVersion(ProductMilestoneRef productMilestoneRef) throws RemoteResourceException {
         ProductMilestone productMilestone = productMilestoneClient.getSpecific(productMilestoneRef.getId());
         return productVersionClient.getSpecific(productMilestone.getProductVersion().getId());
     }
