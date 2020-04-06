@@ -45,7 +45,11 @@ public class PncBuild implements Serializable {
         this.artifacts = new ArrayList<>();
     }
 
-    public PncBuild(Build build, BuildPushResult buildPushResult, ProductVersion productVersion, List<EnhancedArtifact> artifacts) {
+    public PncBuild(
+            Build build,
+            BuildPushResult buildPushResult,
+            ProductVersion productVersion,
+            List<EnhancedArtifact> artifacts) {
         this.build = build;
         this.buildPushResult = buildPushResult;
         this.productVersion = productVersion;
