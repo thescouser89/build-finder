@@ -19,11 +19,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.jboss.pnc.dto.Artifact;
 import org.jboss.pnc.dto.Build;
 import org.jboss.pnc.dto.BuildPushResult;
 import org.jboss.pnc.dto.ProductVersion;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class PncBuild implements Serializable {
     private static final long serialVersionUID = 4500090728323371691L;
@@ -34,7 +34,7 @@ public class PncBuild implements Serializable {
 
     private ProductVersion productVersion;
 
-    private List<Artifact> artifacts;
+    private List<EnhancedArtifact> artifacts;
 
     public PncBuild() {
         this.artifacts = new ArrayList<>();
@@ -45,7 +45,7 @@ public class PncBuild implements Serializable {
         this.artifacts = new ArrayList<>();
     }
 
-    public PncBuild(Build build, BuildPushResult buildPushResult, ProductVersion productVersion, List<Artifact> artifacts) {
+    public PncBuild(Build build, BuildPushResult buildPushResult, ProductVersion productVersion, List<EnhancedArtifact> artifacts) {
         this.build = build;
         this.buildPushResult = buildPushResult;
         this.productVersion = productVersion;
@@ -95,11 +95,11 @@ public class PncBuild implements Serializable {
         this.productVersion = productVersion;
     }
 
-    public List<Artifact> getArtifacts() {
+    public List<EnhancedArtifact> getArtifacts() {
         return artifacts;
     }
 
-    public void setArtifacts(List<Artifact> artifacts) {
+    public void setArtifacts(List<EnhancedArtifact> artifacts) {
         this.artifacts = artifacts;
     }
 
