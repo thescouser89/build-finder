@@ -180,7 +180,7 @@ public final class PncUtils {
         archiveInfo.setArch("noarch");
         archiveInfo.setFilename(artifact.getFilename());
 
-        archiveInfo.setBuildType(pncbuild.getBuild().getBuildConfigRevision().getBuildType());
+        archiveInfo.setBuildType(getBuildType(pncbuild));
         archiveInfo.setChecksumType(KojiChecksumType.md5);
         archiveInfo.setChecksum(artifact.getMd5());
         archiveInfo.setSize(artifact.getSize().intValue()); // XXX: Koji size should be long not int

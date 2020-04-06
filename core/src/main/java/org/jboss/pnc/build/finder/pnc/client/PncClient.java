@@ -17,12 +17,14 @@ package org.jboss.pnc.build.finder.pnc.client;
 
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.client.ArtifactClient;
+import org.jboss.pnc.client.BuildClient;
 import org.jboss.pnc.client.Configuration;
 import org.jboss.pnc.client.ProductMilestoneClient;
 import org.jboss.pnc.client.ProductVersionClient;
 import org.jboss.pnc.client.RemoteCollection;
 import org.jboss.pnc.client.RemoteResourceException;
 import org.jboss.pnc.dto.Artifact;
+import org.jboss.pnc.dto.BuildPushResult;
 import org.jboss.pnc.dto.ProductMilestone;
 import org.jboss.pnc.dto.ProductMilestoneRef;
 import org.jboss.pnc.dto.ProductVersion;
@@ -34,13 +36,13 @@ import org.jboss.pnc.dto.ProductVersion;
  */
 public class PncClient {
 
-    private Configuration clientConfiguration;
+    private final BuildClient buildClient;
 
-    private ArtifactClient artifactClient;
+    private final ArtifactClient artifactClient;
 
-    private ProductVersionClient productVersionClient;
+    private final ProductVersionClient productVersionClient;
 
-    private ProductMilestoneClient productMilestoneClient;
+    private final ProductMilestoneClient productMilestoneClient;
 
     public PncClient(BuildConfig config) {
         Configuration.ConfigurationBuilder configurationBuilder = Configuration.builder();
@@ -49,11 +51,12 @@ public class PncClient {
         configurationBuilder.host(config.getPncURL().getHost());
         configurationBuilder.port(config.getPncURL().getPort());
         configurationBuilder.pageSize(config.getPncPartitionSize());
-        clientConfiguration = configurationBuilder.build();
+        Configuration clientConfiguration = configurationBuilder.build();
 
         artifactClient = new ArtifactClient(clientConfiguration);
         productVersionClient = new ProductVersionClient(clientConfiguration);
         productMilestoneClient = new ProductMilestoneClient(clientConfiguration);
+        buildClient = new BuildClient(clientConfiguration);
     }
 
     /**
@@ -92,7 +95,11 @@ public class PncClient {
         return artifactClient.getAll(sha256, null, null);
     }
 
-    public ProductVersion getProductVersionByProductMilestoneRef(ProductMilestoneRef productMilestoneRef)
+    public BuildPushResult getBuildPushResult(String buildId) throws RemoteResourceException {
+        return buildClient.getPushResult(buildId);
+    }
+
+    public ProductVersion getProductVersion(ProductMilestoneRef productMilestoneRef)
             throws RemoteResourceException {
         ProductMilestone productMilestone = productMilestoneClient.getSpecific(productMilestoneRef.getId());
         return productVersionClient.getSpecific(productMilestone.getProductVersion().getId());
