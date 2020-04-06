@@ -64,7 +64,6 @@ import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.build.finder.koji.KojiClientSession;
 import org.jboss.pnc.build.finder.koji.KojiJSONUtils;
 import org.jboss.pnc.build.finder.pnc.client.PncClient;
-import org.jboss.pnc.build.finder.pnc.client.PncClient14;
 import org.jboss.pnc.build.finder.report.BuildStatisticsReport;
 import org.jboss.pnc.build.finder.report.GAVReport;
 import org.jboss.pnc.build.finder.report.HTMLReport;
@@ -725,7 +724,7 @@ public final class Main implements Callable<Void> {
                     analyzer.setChecksums(checksums);
 
                     if (config.getPncURL() != null) {
-                        PncClient14 pncclient = new PncClient(config);
+                        PncClient pncclient = new PncClient(config);
                         finder = new BuildFinder(session, config, analyzer, cacheManager, pncclient);
                     } else {
                         finder = new BuildFinder(session, config, analyzer, cacheManager);
@@ -776,7 +775,7 @@ public final class Main implements Callable<Void> {
                     }
 
                     if (config.getPncURL() != null) {
-                        PncClient14 pncclient = new PncClient(config);
+                        PncClient pncclient = new PncClient(config);
                         finder = new BuildFinder(session, config, analyzer, cacheManager, pncclient);
                     } else {
                         finder = new BuildFinder(session, config, analyzer, cacheManager);

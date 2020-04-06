@@ -37,13 +37,13 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -58,16 +58,14 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.pnc.build.finder.koji.ClientSession;
 import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.build.finder.koji.KojiLocalArchive;
+import org.jboss.pnc.build.finder.pnc.EnhancedArtifact;
 import org.jboss.pnc.build.finder.pnc.PncBuild;
-import org.jboss.pnc.build.finder.pnc.client.PncClient14;
-import org.jboss.pnc.build.finder.pnc.client.PncClientException;
+import org.jboss.pnc.build.finder.pnc.client.PncClient;
 import org.jboss.pnc.build.finder.pnc.client.PncUtils;
-import org.jboss.pnc.build.finder.pnc.client.model.Artifact;
-import org.jboss.pnc.build.finder.pnc.client.model.Artifact.Quality;
-import org.jboss.pnc.build.finder.pnc.client.model.BuildConfiguration;
-import org.jboss.pnc.build.finder.pnc.client.model.BuildRecord;
-import org.jboss.pnc.build.finder.pnc.client.model.BuildRecordPushResult;
-import org.jboss.pnc.build.finder.pnc.client.model.ProductVersion;
+import org.jboss.pnc.client.RemoteResourceException;
+import org.jboss.pnc.dto.Artifact;
+import org.jboss.pnc.dto.Build;
+import org.jboss.pnc.enums.ArtifactQuality;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,6 +82,8 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiRpmInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTagInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTaskInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTaskRequest;
+
+import io.vertx.core.impl.ConcurrentHashSet;
 
 public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildFinder.class);
@@ -128,7 +128,7 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
 
     private EmbeddedCacheManager cacheManager;
 
-    private PncClient14 pncclient;
+    private PncClient pncclient;
 
     private Map<Checksum, Collection<String>> foundChecksums;
 
@@ -155,7 +155,7 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
             BuildConfig config,
             DistributionAnalyzer analyzer,
             EmbeddedCacheManager cacheManager,
-            PncClient14 pncclient) {
+            PncClient pncclient) {
         this.session = session;
         this.config = config;
         this.outputDirectory = new File("");
@@ -200,6 +200,22 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
 
         this.foundChecksums = new HashMap<>();
         this.notFoundChecksums = new HashMap<>();
+
+        if (archiveExtensions == null) {
+            LOGGER.debug("Asking server for archive extensions");
+            try {
+                archiveExtensions = getArchiveExtensions();
+            } catch (KojiClientException e) {
+                LOGGER.warn("Getting archive extensions from Koji failed!", e);
+                LOGGER.debug("Getting archive extensions from configuration file");
+                archiveExtensions = config.getArchiveExtensions();
+            }
+        } else {
+            LOGGER.debug("Getting archive extensions from configuration file");
+            archiveExtensions = config.getArchiveExtensions();
+        }
+
+        LOGGER.debug("Archive extensions: {}", green(archiveExtensions));
 
         initBuilds();
     }
@@ -822,277 +838,168 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
         return false;
     }
 
-    /**
-     * Find builds with the given checksums in Pnc.
-     *
-     * @param checksumTable Table of checksums and all files with that checksum
-     * @return the map of builds
-     * @throws PncClientException if an error occurs
-     * @throws KojiClientException if an error occurs
-     */
+    // FIXME solve the exception inside the method. Do not throw it
     public Map<BuildSystemInteger, KojiBuild> findBuildsPnc(Map<Checksum, Collection<String>> checksumTable)
-            throws PncClientException, KojiClientException {
+            throws RemoteResourceException {
         if (checksumTable == null || checksumTable.isEmpty()) {
             LOGGER.warn("Checksum table is empty");
             return Collections.emptyMap();
         }
 
-        if (archiveExtensions == null) {
-            LOGGER.debug("Asking server for archive extensions");
-            archiveExtensions = getArchiveExtensions();
-        } else {
-            LOGGER.debug("Getting archive extensions from configuration file");
+        Set<EnhancedArtifact> artifacts = lookupArtifactsInPnc(checksumTable);
+
+        ConcurrentMap<String, PncBuild> pncBuilds = groupArtifactsAsPncBuilds(artifacts);
+
+        populatePncBuildsMetadata(pncBuilds);
+
+        ConcurrentMap<BuildSystemInteger, KojiBuild> foundBuilds = convertPncBuildsToKojiBuilds(pncBuilds);
+
+        // TODO Add caching to the pncclient - create a CachingPncClient
+        // TODO - move caching to the PncClient
+        // TODO - cache both not found entries and found entries
+
+        return foundBuilds;
+    }
+
+    private ConcurrentMap<BuildSystemInteger, KojiBuild> convertPncBuildsToKojiBuilds(Map<String, PncBuild> pncBuilds) {
+        // TODO switch to parallel execution
+        ConcurrentMap<BuildSystemInteger, KojiBuild> foundBuilds = new ConcurrentHashMap<>();
+        pncBuilds.values().forEach((pncBuild -> {
+            KojiBuild kojiBuild = convertPncBuildToKojiBuild(pncBuild);
+            foundBuilds.put(new BuildSystemInteger(kojiBuild.getBuildInfo().getId()), kojiBuild);
+        }));
+        return foundBuilds;
+    }
+
+    private void populatePncBuildsMetadata(ConcurrentMap<String, PncBuild> pncBuilds) throws RemoteResourceException {
+        // FIXME should not throw exception
+        // TODO Switch to parallel execution
+        for (PncBuild pncBuild : pncBuilds.values()) {
+            Build build = pncBuild.getBuild();
+            pncBuild.setProductVersion(pncclient.getProductVersion(build.getProductMilestone()));
+            pncBuild.setBuildPushResult(pncclient.getBuildPushResult(build.getId()));
         }
+    }
 
-        LOGGER.debug("Archive extensions: {}", green(archiveExtensions));
+    private Set<EnhancedArtifact> lookupArtifactsInPnc(Map<Checksum, Collection<String>> checksumTable) {
+        // TODO Switch to parallel execution
+        Set<EnhancedArtifact> artifacts = new ConcurrentHashSet<>();
+        checksumTable.entrySet().forEach((entry) -> {
+            try {
+                Artifact artifact = findArtifactInPnc(entry.getKey(), entry.getValue());
 
-        // Collects all checksums, which are not in the cache and matches the supported file extensions
-        Set<Entry<Checksum, Collection<String>>> entries = checksumTable.entrySet();
-        int size = entries.size();
-        List<Checksum> checksums = new ArrayList<>(size);
-
-        for (Entry<Checksum, Collection<String>> entry : entries) {
-            Checksum checksum = entry.getKey();
-            Collection<String> filenames = entry.getValue();
-
-            if (shouldSkipChecksum(checksum, filenames)) {
-                LOGGER.debug("Skipped checksum {} for filenames {}", checksum, filenames);
-                continue;
-            }
-
-            LOGGER.debug("PNC: checksum={}", checksum);
-
-            List<Artifact> artifacts = null;
-
-            if (pncChecksumCaches != null) {
-                artifacts = pncChecksumCaches.get(ChecksumType.md5).get(checksum.getValue());
-            }
-
-            if (artifacts == null) {
-                checksums.add(entry.getKey());
-            }
-        }
-
-        // Lookup all artifacts by checksum
-        // TODO: Support other checksum types
-        List<List<Artifact>> artifactsList = pncclient.getArtifactsByMd5(
-                checksums.stream()
-                        .filter(checksum -> checksum.getType().equals(ChecksumType.md5))
-                        .map(Checksum::getValue)
-                        .collect(Collectors.toList()));
-        Iterator<List<Artifact>> it = artifactsList.iterator();
-
-        // Set of unique build IDs matching the input checksums
-        Set<Integer> ids = new TreeSet<>();
-
-        // Iterates through all the artifacts and
-        // - adds found artifacts to pncChecksumCaches
-        // - adds the not found ones to notFoundChecksums
-        for (Entry<Checksum, Collection<String>> entry : entries) {
-            Checksum checksum = entry.getKey();
-            Collection<String> filenames = entry.getValue();
-            List<Artifact> artifacts = null;
-
-            if (pncChecksumCaches != null) {
-                artifacts = pncChecksumCaches.get(ChecksumType.md5).get(checksum.getValue());
-            }
-
-            if (artifacts == null) {
-                artifacts = it.next();
-
-                if (pncChecksumCaches != null) {
-                    pncChecksumCaches.get(checksum.getType()).put(checksum.getValue(), artifacts);
+                if (artifact != null) {
+                    EnhancedArtifact enhancedArtifact = new EnhancedArtifact(
+                            artifact,
+                            entry.getKey(),
+                            entry.getValue());
+                    artifacts.add(enhancedArtifact);
                 }
+            } catch (RemoteResourceException e) {
+                LOGGER.warn("Communication with PNC failed! ", e);
             }
+        });
+        return artifacts;
+    }
 
-            if (artifacts.isEmpty()) {
-                notFoundChecksums.put(checksum, filenames);
-                continue;
-            }
+    /**
+     * A build produces multiple artifacts. This methods associates all the artifacts to the one PncBuild
+     *
+     * @param artifacts All found artifacts
+     * @return A map pncBuildId,pncBuild
+     */
+    private ConcurrentMap<String, PncBuild> groupArtifactsAsPncBuilds(Set<EnhancedArtifact> artifacts) {
+        ConcurrentMap<String, PncBuild> pncBuilds = new ConcurrentHashMap<>();
+        artifacts.forEach((artifact) -> {
+            Build build = artifact.getArtifact().getBuild();
 
-            Artifact artifact = getBestPncArtifact(artifacts);
-            PncBuild pncbuild = null;
-
-            if (pncBuildCache != null) {
-                pncbuild = pncBuildCache.get(artifact.getId());
-            }
-
-            if (pncbuild == null) {
-                Integer id = !artifact.getBuildRecordIds().isEmpty() ? artifact.getBuildRecordIds().get(0) : null;
-
-                if (id != null && !allPncBuilds.containsKey(id)) {
-                    ids.add(id);
-                }
-            }
-        }
-
-        // Lookups various data in PNC to be able to fill the PncBuild objects
-        List<Integer> idsList = new ArrayList<>(ids);
-        List<BuildRecord> records = pncclient.getBuildRecordsById(idsList);
-        List<Integer> buildConfigurationIds = records.stream()
-                .map(BuildRecord::getBuildConfigurationId)
-                .sorted()
-                .distinct()
-                .collect(Collectors.toList());
-        List<List<Artifact>> remoteArtifacts = pncclient.getBuiltArtifactsById(idsList);
-        List<BuildConfiguration> buildConfigurations = pncclient.getBuildConfigurationsById(buildConfigurationIds);
-        List<Integer> productVersionIds = buildConfigurations.stream()
-                .map(BuildConfiguration::getProductVersionId)
-                .filter(Objects::nonNull)
-                .sorted()
-                .distinct()
-                .collect(Collectors.toList());
-        List<ProductVersion> productVersions = pncclient.getProductVersionsById(productVersionIds);
-        List<PncBuild> pncBuilds = records.stream().map(PncBuild::new).collect(Collectors.toList());
-        List<BuildRecordPushResult> results = pncclient.getBuildRecordPushResultsById(idsList);
-        Map<Integer, BuildRecordPushResult> rMap = results.stream()
-                .filter(Objects::nonNull)
-                .collect(Collectors.toMap(BuildRecordPushResult::getBuildRecordId, Function.identity()));
-        Map<Integer, BuildConfiguration> bcMap = buildConfigurations.stream()
-                .collect(Collectors.toMap(BuildConfiguration::getId, Function.identity()));
-        Iterator<List<Artifact>> ita = remoteArtifacts.iterator();
-        Map<Integer, ProductVersion> pvMap = productVersions.stream()
-                .collect(Collectors.toMap(ProductVersion::getId, Function.identity()));
-
-        // Sets the missing data to PncBuilds
-        for (PncBuild pncBuild : pncBuilds) {
-            BuildRecord record = pncBuild.getBuildRecord();
-            BuildRecordPushResult buildRecordPushResult = rMap.get(record.getId());
-            BuildConfiguration buildConfiguration = bcMap.get(record.getBuildConfigurationId());
-
-            pncBuild.setBuildRecordPushResult(buildRecordPushResult);
-            pncBuild.setBuildConfiguration(buildConfiguration);
-
-            if (buildConfiguration.getProductVersionId() != null) {
-                ProductVersion pv = pvMap.get(buildConfiguration.getProductVersionId());
-
-                pncBuild.setProductVersion(pv);
-            }
-
-            pncBuild.setArtifacts(ita.next());
-        }
-
-        Map<Integer, PncBuild> allPncBuildsTemp = pncBuilds.stream()
-                .collect(Collectors.toMap(p -> p.getBuildRecord().getId(), Function.identity()));
-
-        // Add found builds to a local cache of PNC builds
-        allPncBuilds.putAll(allPncBuildsTemp);
-
-        it = artifactsList.iterator();
-
-        // Associates found artifacts to the PncBuilds
-        for (Entry<Checksum, Collection<String>> entry : entries) {
-            Checksum checksum = entry.getKey();
-            Collection<String> filenames = entry.getValue();
-            List<Artifact> artifacts;
-
-            if (pncChecksumCaches != null) {
-                artifacts = pncChecksumCaches.get(ChecksumType.md5).get(checksum.getValue());
-
-                if (artifacts != null) {
-                    LOGGER.debug("Found {} in Pnc checksum cache", checksum);
+            if (build != null) {
+                if (pncBuilds.containsKey(build.getId())) {
+                    pncBuilds.get(build.getId()).getArtifacts().add(artifact);
+                } else {
+                    PncBuild pncBuild = new PncBuild(build);
+                    pncBuild.getArtifacts().add(artifact);
+                    pncBuilds.put(build.getId(), pncBuild);
                 }
             } else {
-                artifacts = it.next();
+                // FIXME solve case when artifact is not associated with any build
+                artifact.getArtifact();
             }
+        });
+        return pncBuilds;
+    }
 
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("PNC: number of artifacts={}", artifacts == null ? 0 : artifacts.size());
-            }
+    private KojiBuild convertPncBuildToKojiBuild(PncBuild pncBuild) {
+        KojiBuild kojibuild = PncUtils.pncBuildToKojiBuild(pncBuild);
 
-            Artifact artifact = null;
+        for (EnhancedArtifact artifact : pncBuild.getArtifacts()) {
 
-            if (artifacts != null && !artifacts.isEmpty()) {
-                artifact = getBestPncArtifact(artifacts);
-            }
+            KojiArchiveInfo kojiArchive = PncUtils.artifactToKojiArchiveInfo(pncBuild, artifact.getArtifact());
+            PncUtils.fixNullVersion(kojibuild, kojiArchive);
+            addArchiveToBuild(kojibuild, kojiArchive, artifact.getFilenames());
 
-            if (artifact != null) {
-                List<Integer> buildIds = artifact.getBuildRecordIds();
-                Integer buildId;
+            // TODO review logic of buildZero - is it needed?
+            // KojiBuild buildZero = builds.get(new BuildSystemInteger(0, BuildSystem.none));
+            //
+            // buildZero.getArchives()
+            // .removeIf(
+            // a -> a.getChecksums()
+            // .stream()
+            // .anyMatch(
+            // c -> c.getType().equals(checksum.getType())
+            // && c.getValue().equals(checksum.getValue())));
 
-                if (!buildIds.isEmpty()) {
-                    buildId = buildIds.get(0);
-                } else {
-                    notFoundChecksums.put(checksum, filenames);
-                    continue;
-                }
-
-                LOGGER.debug("PNC: artifact={}, buildId={}", artifact, buildId);
-                PncBuild pncbuild = null;
-
-                if (pncBuildCache != null) {
-                    pncbuild = pncBuildCache.get(buildId);
-
-                    if (pncbuild != null) {
-                        LOGGER.debug("Found {} in Pnc build cache", buildId);
-                    }
-                }
-
-                if (pncbuild == null) {
-                    pncbuild = allPncBuilds.get(buildId);
-
-                    if (pncBuildCache != null && pncbuild != null) {
-                        pncBuildCache.put(pncbuild.getBuildRecord().getId(), pncbuild);
-                    }
-                }
-
-                if (pncbuild != null) {
-                    pncbuild.getArtifacts().add(artifact);
-                    BuildRecord record = pncbuild.getBuildRecord();
-                    Integer id = record.getId();
-
-                    // Converts PncBuild to KojiBuild
-                    KojiBuild kojibuild = builds.get(new BuildSystemInteger(id, BuildSystem.pnc));
-
-                    if (kojibuild == null) {
-                        kojibuild = PncUtils.pncBuildToKojiBuild(pncbuild);
-                        builds.put(new BuildSystemInteger(id, BuildSystem.pnc), kojibuild);
-                    }
-
-                    KojiArchiveInfo kojiarchive = PncUtils.artifactToKojiArchiveInfo(pncbuild, artifact);
-
-                    PncUtils.fixNullVersion(kojibuild, kojiarchive);
-
-                    addArchiveToBuild(kojibuild, kojiarchive, filenames);
-
-                    foundChecksums.put(checksum, filenames);
-                    notFoundChecksums.remove(checksum);
-
-                    if (pncBuildCache != null) {
-                        pncBuildCache.put(id, pncbuild);
-                    }
-
-                    KojiBuild buildZero = builds.get(new BuildSystemInteger(0, BuildSystem.none));
-
-                    buildZero.getArchives()
-                            .removeIf(
-                                    a -> a.getChecksums()
-                                            .stream()
-                                            .anyMatch(
-                                                    c -> c.getType().equals(checksum.getType())
-                                                            && c.getValue().equals(checksum.getValue())));
-
-                    LOGGER.info(
-                            "Found build in Pnc: id: {} nvr: {} checksum: ({}) {} archive: {}",
-                            green(pncbuild.getBuildRecord().getId()),
-                            green(PncUtils.getNVRFromBuildRecord(pncbuild.getBuildRecord())),
-                            green(checksum.getType()),
-                            green(checksum.getValue()),
-                            green(artifact.getFilename()));
-                } else {
-                    notFoundChecksums.put(checksum, filenames);
-                }
-            } else {
-                notFoundChecksums.put(checksum, filenames);
-            }
+            LOGGER.info(
+                    "Found build in Pnc: id: {} nvr: {} checksum: ({}) {} archive: {}",
+                    green(pncBuild.getBuild().getId()),
+                    green(PncUtils.getNVRFromBuildRecord(pncBuild.getBuild())),
+                    green(artifact.getChecksum().getType()),
+                    green(artifact.getChecksum().getValue()),
+                    green(artifact.getFilenames()));
         }
 
-        return Collections.unmodifiableMap(builds);
+        return kojibuild;
+    }
+
+    private Artifact findArtifactInPnc(Checksum checksum, Collection<String> filenames) throws RemoteResourceException {
+        if (shouldSkipChecksum(checksum, filenames)) {
+            LOGGER.debug("Skipped checksum {} for filenames {}", checksum, filenames);
+            return null;
+        }
+        LOGGER.debug("PNC: checksum={}", checksum);
+
+        // Lookup Artifacts and associated builds in PNC
+        Collection<Artifact> artifacts = lookupPncArtifactsByChecksum(checksum);
+        if (artifacts == null || artifacts.isEmpty()) {
+            // FIXME Solve the case when an artifact is not available in PNC
+            checksum.getType();
+        }
+
+        // FIXME Review logic of choosing the best artifact
+        return getBestPncArtifact(artifacts);
+    }
+
+    private Collection<Artifact> lookupPncArtifactsByChecksum(Checksum checksum) throws RemoteResourceException {
+        switch (checksum.getType()) {
+            case md5:
+                return pncclient.getArtifactsByMd5(checksum.getValue()).getAll();
+
+            case sha1:
+                return pncclient.getArtifactsBySha1(checksum.getValue()).getAll();
+
+            case sha256:
+                return pncclient.getArtifactsBySha256(checksum.getValue()).getAll();
+
+            default:
+                throw new IllegalArgumentException(
+                        "Unsupported checksum type requested! " + "Checksum type " + checksum.getType()
+                                + " is not supported.");
+        }
     }
 
     private int getArtifactQuality(Object obj) {
         Artifact a = (Artifact) obj;
-        Quality quality = a.getArtifactQuality();
+        ArtifactQuality quality = a.getArtifactQuality();
 
         switch (quality) {
             case NEW:
@@ -1104,29 +1011,31 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
             case DEPRECATED:
                 return -1;
             case BLACKLISTED:
+                return -2;
+            case TEMPORARY:
                 return -3;
             case DELETED:
                 return -4;
-            case TEMPORARY:
-                return -2;
             default:
+                LOGGER.warn("Unsupported ArtifactQuality! Got: " + quality);
                 return 0;
         }
     }
 
-    private Artifact getBestPncArtifact(List<Artifact> artifacts) {
-        int size = artifacts.size();
-        Artifact artifact = artifacts.get(0);
-
-        if (size == 1) {
-            return artifact;
+    private Artifact getBestPncArtifact(Collection<Artifact> artifacts) {
+        if (artifacts == null || artifacts.isEmpty()) {
+            throw new IllegalArgumentException("No artifacts provided!");
         }
 
-        return artifacts.stream()
-                .sorted(Comparator.comparing(this::getArtifactQuality).reversed())
-                .filter(a -> !a.getBuildRecordIds().isEmpty())
-                .findFirst()
-                .orElse(artifact);
+        if (artifacts.size() == 1) {
+            return artifacts.iterator().next();
+        } else {
+            return artifacts.stream()
+                    .sorted(Comparator.comparing(this::getArtifactQuality).reversed())
+                    .filter(artifact -> artifact.getBuild() != null)
+                    .findFirst()
+                    .orElse(artifacts.iterator().next());
+        }
     }
 
     /**
@@ -1836,7 +1745,7 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
             if (config.getBuildSystems().contains(BuildSystem.pnc) && config.getPncURL() != null) {
                 try {
                     findBuildsPnc(localchecksumMap.asMap());
-                } catch (PncClientException e) {
+                } catch (RemoteResourceException e) {
                     throw new KojiClientException("Pnc error", e);
                 }
 
