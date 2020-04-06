@@ -130,19 +130,6 @@
     <version.org.sonatype.plugins.nexus-staging-maven-plugin>1.6.8</version.org.sonatype.plugins.nexus-staging-maven-plugin>
   </properties>
 
-  <repositories>
-    <repository>
-      <id>jboss-snapshots</id>
-      <url>https://repository.jboss.org/nexus/content/repositories/snapshots</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-    </repository>
-  </repositories>
-
   <dependencyManagement>
     <dependencies>
       <dependency>
