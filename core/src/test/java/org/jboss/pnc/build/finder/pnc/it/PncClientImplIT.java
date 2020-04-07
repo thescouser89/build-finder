@@ -26,7 +26,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Jakub Bartecek
  */
-public class PncClientIT extends AbstractKojiIT {
+public class PncClientImplIT extends AbstractKojiIT {
 
     @Test
     public void shouldGetArtifactByMd5() throws RemoteResourceException {

@@ -94,7 +94,7 @@ public class PncBuildFinder {
         // TODO Switch to parallel execution
         for (PncBuild pncBuild : pncBuilds.values()) {
             Build build = pncBuild.getBuild();
-            pncBuild.setProductVersion(pncClient.getProductVersion(build.getProductMilestone()));
+            pncBuild.setProductVersion(pncClient.getProductVersion(build.getProductMilestone().getId()));
             pncBuild.setBuildPushResult(pncClient.getBuildPushResult(build.getId()));
         }
     }
