@@ -32,11 +32,11 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import static org.jboss.pnc.build.finder.core.AnsiUtils.green;
 
@@ -47,6 +47,9 @@ import static org.jboss.pnc.build.finder.core.AnsiUtils.green;
  */
 public class PncBuildFinder {
     private static final Logger LOGGER = LoggerFactory.getLogger(PncBuildFinder.class);
+
+    // TODO make the parallelismThreashold configurable
+    private final int concurrentMapParallelismThreshold = 10;
 
     private final PncClient pncClient;
 
@@ -64,20 +67,17 @@ public class PncBuildFinder {
             return Collections.emptyMap();
         }
 
-        Set<EnhancedArtifact> artifacts = lookupArtifactsInPnc(checksumTable);
+        Set<EnhancedArtifact> artifacts = lookupArtifactsInPnc(new ConcurrentHashMap<>(checksumTable));
 
-        ConcurrentMap<String, PncBuild> pncBuilds = groupArtifactsAsPncBuilds(artifacts);
+        ConcurrentHashMap<String, PncBuild> pncBuilds = groupArtifactsAsPncBuilds(artifacts);
 
         populatePncBuildsMetadata(pncBuilds);
 
-        ConcurrentMap<BuildSystemInteger, KojiBuild> foundBuilds = convertPncBuildsToKojiBuilds(pncBuilds);
-
-        return foundBuilds;
+        return convertPncBuildsToKojiBuilds(pncBuilds);
     }
 
-    private ConcurrentMap<BuildSystemInteger, KojiBuild> convertPncBuildsToKojiBuilds(Map<String, PncBuild> pncBuilds) {
-        // TODO switch to parallel execution
-        ConcurrentMap<BuildSystemInteger, KojiBuild> foundBuilds = new ConcurrentHashMap<>();
+    private Map<BuildSystemInteger, KojiBuild> convertPncBuildsToKojiBuilds(Map<String, PncBuild> pncBuilds) {
+        Map<BuildSystemInteger, KojiBuild> foundBuilds = new HashMap<>();
 
         pncBuilds.values().forEach((pncBuild -> {
 
@@ -93,33 +93,59 @@ public class PncBuildFinder {
         return foundBuilds;
     }
 
-    private void populatePncBuildsMetadata(ConcurrentMap<String, PncBuild> pncBuilds) throws RemoteResourceException {
-        // TODO Switch to parallel execution
-        for (PncBuild pncBuild : pncBuilds.values()) {
+    private void populatePncBuildsMetadata(ConcurrentHashMap<String, PncBuild> pncBuilds)
+            throws RemoteResourceException {
+        final RemoteResourceExceptionWrapper exceptionWrapper = null;
+
+        pncBuilds.forEach(concurrentMapParallelismThreshold, (buildId, pncBuild) -> {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(
+                        "Parallel execution of populatePncBuildsMetadata using thread "
+                                + Thread.currentThread().getName() + "of build " + pncBuild);
+            }
             Build build = pncBuild.getBuild();
 
             // Skip build with id 0, which is just a container for not found artifacts
             if (!isBuildZero(pncBuild)) {
-                pncBuild.setProductVersion(pncClient.getProductVersion(build.getProductMilestone().getId()));
-                pncBuild.setBuildPushResult(pncClient.getBuildPushResult(build.getId()));
+                try {
+                    pncBuild.setProductVersion(pncClient.getProductVersion(build.getProductMilestone().getId()));
+                    pncBuild.setBuildPushResult(pncClient.getBuildPushResult(build.getId()));
+                } catch (RemoteResourceException e) {
+                    exceptionWrapper.setException(e);
+                }
             }
+        });
+
+        if (exceptionWrapper.getException() != null) {
+            throw exceptionWrapper.getException();
         }
     }
 
-    private Set<EnhancedArtifact> lookupArtifactsInPnc(Map<Checksum, Collection<String>> checksumTable)
+    private Set<EnhancedArtifact> lookupArtifactsInPnc(ConcurrentHashMap<Checksum, Collection<String>> checksumTable)
             throws RemoteResourceException {
-        // TODO Switch to parallel execution
         Set<EnhancedArtifact> artifacts = new ConcurrentHashSet<>();
+        final RemoteResourceExceptionWrapper exceptionWrapper = null;
 
-        for (Map.Entry<Checksum, Collection<String>> entry : checksumTable.entrySet()) {
-            Checksum checksum = entry.getKey();
-            Collection<String> fileNames = entry.getValue();
+        checksumTable.forEach(concurrentMapParallelismThreshold, (checksum, fileNames) -> {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(
+                        "Parallel execution of lookupArtifactsInPnc using thread " + Thread.currentThread().getName()
+                                + " of an artifact with checksum: " + checksum);
+            }
 
-            EnhancedArtifact enhancedArtifact = new EnhancedArtifact(
-                    findArtifactInPnc(checksum, fileNames),
-                    checksum,
-                    fileNames);
-            artifacts.add(enhancedArtifact);
+            try {
+                EnhancedArtifact enhancedArtifact = new EnhancedArtifact(
+                        findArtifactInPnc(checksum, fileNames),
+                        checksum,
+                        fileNames);
+                artifacts.add(enhancedArtifact);
+            } catch (RemoteResourceException e) {
+                exceptionWrapper.setException(e);
+            }
+        });
+
+        if (exceptionWrapper.getException() != null) {
+            throw exceptionWrapper.getException();
         }
 
         return artifacts;
@@ -131,8 +157,8 @@ public class PncBuildFinder {
      * @param artifacts All found artifacts
      * @return A map pncBuildId,pncBuild
      */
-    private ConcurrentMap<String, PncBuild> groupArtifactsAsPncBuilds(Set<EnhancedArtifact> artifacts) {
-        ConcurrentMap<String, PncBuild> pncBuilds = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, PncBuild> groupArtifactsAsPncBuilds(Set<EnhancedArtifact> artifacts) {
+        ConcurrentHashMap<String, PncBuild> pncBuilds = new ConcurrentHashMap<>();
         Build buildZero = Build.builder().id("0").build();
 
         artifacts.forEach((artifact) -> {
@@ -277,4 +303,15 @@ public class PncBuildFinder {
         return "0".equals(pncBuild.getBuild().getId());
     }
 
+    private class RemoteResourceExceptionWrapper {
+        private RemoteResourceException exception;
+
+        public RemoteResourceException getException() {
+            return exception;
+        }
+
+        public synchronized void setException(RemoteResourceException exception) {
+            this.exception = exception;
+        }
+    }
 }
