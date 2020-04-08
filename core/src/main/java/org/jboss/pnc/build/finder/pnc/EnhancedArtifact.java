@@ -18,6 +18,7 @@ package org.jboss.pnc.build.finder.pnc;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.jboss.pnc.build.finder.core.Checksum;
 import org.jboss.pnc.dto.Artifact;
@@ -29,7 +30,7 @@ import org.jboss.pnc.dto.Artifact;
  */
 public class EnhancedArtifact {
 
-    private Artifact artifact;
+    private Optional<Artifact> artifact;
 
     private Checksum checksum;
 
@@ -39,17 +40,17 @@ public class EnhancedArtifact {
         fileNames = new ArrayList<>();
     }
 
-    public EnhancedArtifact(Artifact artifact, Checksum checksum, Collection<String> fileNames) {
+    public EnhancedArtifact(Optional<Artifact> artifact, Checksum checksum, Collection<String> fileNames) {
         this.artifact = artifact;
         this.checksum = checksum;
         this.fileNames = fileNames;
     }
 
-    public Artifact getArtifact() {
+    public Optional<Artifact> getArtifact() {
         return artifact;
     }
 
-    public void setArtifact(Artifact artifact) {
+    public void setArtifact(Optional<Artifact> artifact) {
         this.artifact = artifact;
     }
 

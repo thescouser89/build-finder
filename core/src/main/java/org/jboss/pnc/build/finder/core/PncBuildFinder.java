@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -56,7 +57,6 @@ public class PncBuildFinder {
         this.buildFinderUtils = buildFinderUtils;
     }
 
-    // FIXME solve the exception inside the method. Do not throw it
     public Map<BuildSystemInteger, KojiBuild> findBuildsPnc(Map<Checksum, Collection<String>> checksumTable)
             throws RemoteResourceException {
         if (checksumTable == null || checksumTable.isEmpty()) {
@@ -72,51 +72,56 @@ public class PncBuildFinder {
 
         ConcurrentMap<BuildSystemInteger, KojiBuild> foundBuilds = convertPncBuildsToKojiBuilds(pncBuilds);
 
-        // TODO Add caching to the pncclient - create a CachingPncClient
-        // TODO - move caching to the PncClient
-        // TODO - cache both not found entries and found entries
-
         return foundBuilds;
     }
 
     private ConcurrentMap<BuildSystemInteger, KojiBuild> convertPncBuildsToKojiBuilds(Map<String, PncBuild> pncBuilds) {
         // TODO switch to parallel execution
         ConcurrentMap<BuildSystemInteger, KojiBuild> foundBuilds = new ConcurrentHashMap<>();
+
         pncBuilds.values().forEach((pncBuild -> {
-            KojiBuild kojiBuild = convertPncBuildToKojiBuild(pncBuild);
-            foundBuilds.put(new BuildSystemInteger(kojiBuild.getBuildInfo().getId()), kojiBuild);
+
+            if (isBuildZero(pncBuild)) {
+                // FIXME How to convert buildZero to KojiBuild?
+                foundBuilds.put(new BuildSystemInteger(0, BuildSystem.none), null);
+            } else {
+                KojiBuild kojiBuild = convertPncBuildToKojiBuild(pncBuild);
+                foundBuilds.put(new BuildSystemInteger(kojiBuild.getBuildInfo().getId(), BuildSystem.pnc), kojiBuild);
+            }
         }));
+
         return foundBuilds;
     }
 
     private void populatePncBuildsMetadata(ConcurrentMap<String, PncBuild> pncBuilds) throws RemoteResourceException {
-        // FIXME should not throw exception
         // TODO Switch to parallel execution
         for (PncBuild pncBuild : pncBuilds.values()) {
             Build build = pncBuild.getBuild();
-            pncBuild.setProductVersion(pncClient.getProductVersion(build.getProductMilestone().getId()));
-            pncBuild.setBuildPushResult(pncClient.getBuildPushResult(build.getId()));
+
+            // Skip build with id 0, which is just a container for not found artifacts
+            if (!isBuildZero(pncBuild)) {
+                pncBuild.setProductVersion(pncClient.getProductVersion(build.getProductMilestone().getId()));
+                pncBuild.setBuildPushResult(pncClient.getBuildPushResult(build.getId()));
+            }
         }
     }
 
-    private Set<EnhancedArtifact> lookupArtifactsInPnc(Map<Checksum, Collection<String>> checksumTable) {
+    private Set<EnhancedArtifact> lookupArtifactsInPnc(Map<Checksum, Collection<String>> checksumTable)
+            throws RemoteResourceException {
         // TODO Switch to parallel execution
         Set<EnhancedArtifact> artifacts = new ConcurrentHashSet<>();
-        checksumTable.entrySet().forEach((entry) -> {
-            try {
-                Artifact artifact = findArtifactInPnc(entry.getKey(), entry.getValue());
 
-                if (artifact != null) {
-                    EnhancedArtifact enhancedArtifact = new EnhancedArtifact(
-                            artifact,
-                            entry.getKey(),
-                            entry.getValue());
-                    artifacts.add(enhancedArtifact);
-                }
-            } catch (RemoteResourceException e) {
-                LOGGER.warn("Communication with PNC failed! ", e);
-            }
-        });
+        for (Map.Entry<Checksum, Collection<String>> entry : checksumTable.entrySet()) {
+            Checksum checksum = entry.getKey();
+            Collection<String> fileNames = entry.getValue();
+
+            EnhancedArtifact enhancedArtifact = new EnhancedArtifact(
+                    findArtifactInPnc(checksum, fileNames),
+                    checksum,
+                    fileNames);
+            artifacts.add(enhancedArtifact);
+        }
+
         return artifacts;
     }
 
@@ -128,26 +133,44 @@ public class PncBuildFinder {
      */
     private ConcurrentMap<String, PncBuild> groupArtifactsAsPncBuilds(Set<EnhancedArtifact> artifacts) {
         ConcurrentMap<String, PncBuild> pncBuilds = new ConcurrentHashMap<>();
-        artifacts.forEach((artifact) -> {
-            Build build = artifact.getArtifact().getBuild();
+        Build buildZero = Build.builder().id("0").build();
 
-            if (build != null) {
-                if (pncBuilds.containsKey(build.getId())) {
-                    pncBuilds.get(build.getId()).getArtifacts().add(artifact);
-                } else {
-                    PncBuild pncBuild = new PncBuild(build);
-                    pncBuild.getArtifacts().add(artifact);
-                    pncBuilds.put(build.getId(), pncBuild);
-                }
+        artifacts.forEach((artifact) -> {
+            Build build;
+
+            if (artifact.getArtifact().isPresent() && artifact.getArtifact().get() != null) {
+                build = artifact.getArtifact().get().getBuild();
             } else {
-                // FIXME solve case when artifact is not associated with any build
-                artifact.getArtifact();
+                // Covers 2 cases:
+                // 1) An Artifact stored in PNC DB, which was not built in PNC
+                // Such artifacts are treated the same way as artifacts not found in PNC
+                // 2) Artifact was not found in PNC
+                // Such artifacts will be associated in a build with ID 0
+                build = buildZero;
+            }
+
+            if (pncBuilds.containsKey(build.getId())) {
+                pncBuilds.get(build.getId()).getArtifacts().add(artifact);
+            } else {
+                PncBuild pncBuild = new PncBuild(build);
+                pncBuild.getArtifacts().add(artifact);
+                pncBuilds.put(build.getId(), pncBuild);
             }
         });
+
         return pncBuilds;
     }
 
-    private Artifact findArtifactInPnc(Checksum checksum, Collection<String> fileNames) throws RemoteResourceException {
+    /**
+     * Lookups an Artifact in PNC and chooses the best candidate
+     *
+     * @param checksum A checksum
+     * @param fileNames List of filenames
+     * @return Artifact found in PNC or Optional.empty() if not found
+     * @throws RemoteResourceException Thrown if a problem in communication with PNC occurs
+     */
+    private Optional<Artifact> findArtifactInPnc(Checksum checksum, Collection<String> fileNames)
+            throws RemoteResourceException {
         if (buildFinderUtils.shouldSkipChecksum(checksum, fileNames)) {
             LOGGER.debug("Skipped checksum {} for fileNames {}", checksum, fileNames);
             return null;
@@ -157,11 +180,9 @@ public class PncBuildFinder {
         // Lookup Artifacts and associated builds in PNC
         Collection<Artifact> artifacts = lookupPncArtifactsByChecksum(checksum);
         if (artifacts == null || artifacts.isEmpty()) {
-            // FIXME Solve the case when an artifact is not available in PNC
-            checksum.getType();
+            return Optional.empty();
         }
 
-        // FIXME Review logic of choosing the best artifact
         return getBestPncArtifact(artifacts);
     }
 
@@ -204,23 +225,24 @@ public class PncBuildFinder {
                 return -4;
             default:
                 LOGGER.warn("Unsupported ArtifactQuality! Got: " + quality);
-                return 0;
+                return -100;
         }
     }
 
-    private Artifact getBestPncArtifact(Collection<Artifact> artifacts) {
+    private Optional<Artifact> getBestPncArtifact(Collection<Artifact> artifacts) {
         if (artifacts == null || artifacts.isEmpty()) {
             throw new IllegalArgumentException("No artifacts provided!");
         }
 
         if (artifacts.size() == 1) {
-            return artifacts.iterator().next();
+            return Optional.of(artifacts.iterator().next());
         } else {
-            return artifacts.stream()
-                    .sorted(Comparator.comparing(this::getArtifactQuality).reversed())
-                    .filter(artifact -> artifact.getBuild() != null)
-                    .findFirst()
-                    .orElse(artifacts.iterator().next());
+            return Optional.of(
+                    artifacts.stream()
+                            .sorted(Comparator.comparing(this::getArtifactQuality).reversed())
+                            .filter(artifact -> artifact.getBuild() != null)
+                            .findFirst()
+                            .orElse(artifacts.iterator().next()));
         }
     }
 
@@ -229,20 +251,9 @@ public class PncBuildFinder {
 
         for (EnhancedArtifact artifact : pncBuild.getArtifacts()) {
 
-            KojiArchiveInfo kojiArchive = PncUtils.artifactToKojiArchiveInfo(pncBuild, artifact.getArtifact());
+            KojiArchiveInfo kojiArchive = PncUtils.artifactToKojiArchiveInfo(pncBuild, artifact.getArtifact().get());
             PncUtils.fixNullVersion(kojibuild, kojiArchive);
             buildFinderUtils.addArchiveToBuild(kojibuild, kojiArchive, artifact.getFilenames());
-
-            // TODO review logic of buildZero - is it needed?
-            // KojiBuild buildZero = builds.get(new BuildSystemInteger(0, BuildSystem.none));
-            //
-            // buildZero.getArchives()
-            // .removeIf(
-            // a -> a.getChecksums()
-            // .stream()
-            // .anyMatch(
-            // c -> c.getType().equals(checksum.getType())
-            // && c.getValue().equals(checksum.getValue())));
 
             LOGGER.info(
                     "Found build in Pnc: id: {} nvr: {} checksum: ({}) {} archive: {}",
@@ -254,6 +265,16 @@ public class PncBuildFinder {
         }
 
         return kojibuild;
+    }
+
+    /**
+     * Check if PncBuild.build.id has "0" value, which indicates a container for not found artifacts
+     *
+     * @param pncBuild A PncBuild
+     * @return False if the build has ID 0 otherwise true
+     */
+    private boolean isBuildZero(PncBuild pncBuild) {
+        return "0".equals(pncBuild.getBuild().getId());
     }
 
 }
