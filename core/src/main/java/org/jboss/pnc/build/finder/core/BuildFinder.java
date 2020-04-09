@@ -1266,6 +1266,8 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
         Checksum checksum = null;
         boolean finished = false;
 
+        Map<BuildSystemInteger, KojiBuild> allBuilds = new HashMap<>();
+
         while (!finished) {
             try {
                 checksum = analyzer.getQueue().take();
@@ -1296,18 +1298,24 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
                 }
             }
 
+            FindBuildsResult pncBuildsNew;
+            Map<BuildSystemInteger, KojiBuild> kojiBuildsNew;
+
             if (config.getBuildSystems().contains(BuildSystem.pnc) && config.getPncURL() != null) {
                 try {
-                    pncBuildFinder.findBuildsPnc(localchecksumMap.asMap());
+                    pncBuildsNew = pncBuildFinder.findBuildsPnc(localchecksumMap.asMap());
                 } catch (RemoteResourceException e) {
                     throw new KojiClientException("Pnc error", e);
                 }
+                allBuilds.putAll(pncBuildsNew.getFoundBuilds());
 
-                if (!notFoundChecksums.isEmpty()) {
-                    findBuilds(notFoundChecksums);
+                if (!pncBuildsNew.getNotFoundChecksums().isEmpty()) {
+                    kojiBuildsNew = findBuilds(pncBuildsNew.getNotFoundChecksums());
+                    allBuilds.putAll(kojiBuildsNew);
                 }
             } else {
-                findBuilds(localchecksumMap.asMap());
+                kojiBuildsNew = findBuilds(localchecksumMap.asMap());
+                allBuilds.putAll(kojiBuildsNew);
             }
 
             notFoundChecksums.clear();
@@ -1315,7 +1323,7 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
             checksums.clear();
         }
 
-        int numBuilds = builds.size() - 1;
+        int numBuilds = allBuilds.size() - 1;
         Instant endTime = Instant.now();
         Duration duration = Duration.between(startTime, endTime).abs();
 
@@ -1325,6 +1333,6 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
                 green(duration),
                 green(numBuilds > 0 ? duration.dividedBy(numBuilds) : 0));
 
-        return builds;
+        return allBuilds;
     }
 }
