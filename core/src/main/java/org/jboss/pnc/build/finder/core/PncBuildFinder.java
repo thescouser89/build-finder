@@ -307,14 +307,16 @@ public class PncBuildFinder {
     }
 
     private KojiBuild convertPncBuildZeroToKojiBuild(PncBuild pncBuild) {
-        KojiBuild kojiBuild = buildFinderUtils.createKojiBuildZero();
+        KojiBuild buildZero = buildFinderUtils.createKojiBuildZero();
 
         pncBuild.getArtifacts().forEach((enhancedArtifact -> {
             buildFinderUtils
-                    .addArchiveWithoutBuild(kojiBuild, enhancedArtifact.getChecksum(), enhancedArtifact.getFilenames());
+                    .addArchiveWithoutBuild(buildZero, enhancedArtifact.getChecksum(), enhancedArtifact.getFilenames());
         }));
 
-        return kojiBuild;
+        buildFinderUtils.addFilesInError(buildZero);
+
+        return buildZero;
     }
 
     /**

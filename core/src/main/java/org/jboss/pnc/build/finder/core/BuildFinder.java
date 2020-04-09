@@ -46,7 +46,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.collections4.ListUtils;
-import org.apache.commons.collections4.MultiMapUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.infinispan.Cache;
@@ -1153,14 +1152,7 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
         KojiBuild buildZero = builds.get(new BuildSystemInteger(0, BuildSystem.none));
         List<KojiLocalArchive> localArchives = buildZero.getArchives();
 
-        if (analyzer != null) {
-            for (String fileInError : analyzer.getFilesInError()) {
-                Optional<Checksum> checksum = Checksum
-                        .findByType(MultiMapUtils.getValuesAsSet(analyzer.getFiles(), fileInError), ChecksumType.md5);
-
-                checksum.ifPresent(cksum -> addArchiveWithoutBuild(cksum, Collections.singletonList(fileInError)));
-            }
-        }
+        buildFinderUtils.addFilesInError(buildZero);
 
         LOGGER.debug("Find parents for {} archives: {}", localArchives.size(), localArchives);
 

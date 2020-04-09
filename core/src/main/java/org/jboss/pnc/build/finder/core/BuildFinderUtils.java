@@ -23,6 +23,7 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiBuildState;
 import com.redhat.red.build.koji.model.xmlrpc.KojiChecksumType;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.collections4.MultiMapUtils;
 import org.jboss.pnc.build.finder.koji.ClientSession;
 import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.build.finder.koji.KojiLocalArchive;
@@ -189,6 +190,19 @@ public class BuildFinderUtils {
         buildInfo.setRelease("not found");
 
         return new KojiBuild(buildInfo);
+    }
+
+    public void addFilesInError(KojiBuild buildZero) {
+        if (distributionAnalyzer != null) {
+            for (String fileInError : distributionAnalyzer.getFilesInError()) {
+                Optional<Checksum> checksum = Checksum.findByType(
+                        MultiMapUtils.getValuesAsSet(distributionAnalyzer.getFiles(), fileInError),
+                        ChecksumType.md5);
+
+                checksum.ifPresent(
+                        cksum -> addArchiveWithoutBuild(buildZero, cksum, Collections.singletonList(fileInError)));
+            }
+        }
     }
 
     public void loadArchiveExtensions(BuildConfig config, ClientSession session) {
