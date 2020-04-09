@@ -32,6 +32,7 @@ import org.jboss.pnc.build.finder.pnc.PncBuild;
 import org.jboss.pnc.build.finder.pnc.client.PncClient;
 import org.jboss.pnc.build.finder.pnc.client.PncUtils;
 import org.jboss.pnc.client.RemoteResourceException;
+import org.jboss.pnc.client.RemoteResourceNotFoundException;
 import org.jboss.pnc.dto.Artifact;
 import org.jboss.pnc.dto.Build;
 import org.jboss.pnc.enums.ArtifactQuality;
@@ -110,8 +111,18 @@ public class PncBuildFinder {
             // Skip build with id 0, which is just a container for not found artifacts
             if (!isBuildZero(pncBuild)) {
                 try {
-                    pncBuild.setProductVersion(pncClient.getProductVersion(build.getProductMilestone().getId()));
-                    pncBuild.setBuildPushResult(pncClient.getBuildPushResult(build.getId()));
+                    pncBuild.setProductVersion(
+                            Optional.of(pncClient.getProductVersion(build.getProductMilestone().getId())));
+                } catch (RemoteResourceNotFoundException e) {
+                    // NOOP - keep the field empty
+                } catch (RemoteResourceException e) {
+                    exceptionWrapper.setException(e);
+                }
+
+                try {
+                    pncBuild.setBuildPushResult(Optional.of(pncClient.getBuildPushResult(build.getId())));
+                } catch (RemoteResourceNotFoundException e) {
+                    // NOOP - keep the field empty
                 } catch (RemoteResourceException e) {
                     exceptionWrapper.setException(e);
                 }
