@@ -18,9 +18,7 @@ package org.jboss.pnc.build.finder.core;
 import static org.jboss.pnc.build.finder.core.AnsiUtils.green;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -63,11 +61,11 @@ public class PncBuildFinder {
         this.buildFinderUtils = buildFinderUtils;
     }
 
-    public Map<BuildSystemInteger, KojiBuild> findBuildsPnc(Map<Checksum, Collection<String>> checksumTable)
+    public FindBuildsResult findBuildsPnc(Map<Checksum, Collection<String>> checksumTable)
             throws RemoteResourceException {
         if (checksumTable == null || checksumTable.isEmpty()) {
             LOGGER.warn("Checksum table is empty");
-            return Collections.emptyMap();
+            return new FindBuildsResult();
         }
 
         Set<EnhancedArtifact> artifacts = lookupArtifactsInPnc(new ConcurrentHashMap<>(checksumTable));
@@ -79,21 +77,27 @@ public class PncBuildFinder {
         return convertPncBuildsToKojiBuilds(pncBuilds);
     }
 
-    private Map<BuildSystemInteger, KojiBuild> convertPncBuildsToKojiBuilds(Map<String, PncBuild> pncBuilds) {
-        Map<BuildSystemInteger, KojiBuild> foundBuilds = new HashMap<>();
+    private FindBuildsResult convertPncBuildsToKojiBuilds(Map<String, PncBuild> pncBuilds) {
+        FindBuildsResult findBuildsResult = new FindBuildsResult();
 
         pncBuilds.values().forEach((pncBuild -> {
 
             if (isBuildZero(pncBuild)) {
                 KojiBuild kojiBuild = convertPncBuildZeroToKojiBuild(pncBuild);
-                foundBuilds.put(new BuildSystemInteger(0, BuildSystem.none), kojiBuild);
+                findBuildsResult.getFoundBuilds().put(new BuildSystemInteger(0, BuildSystem.none), kojiBuild);
+
+                pncBuild.getArtifacts().forEach(enhancedArtifact -> {
+                    findBuildsResult.getNotFoundChecksums()
+                            .put(enhancedArtifact.getChecksum(), enhancedArtifact.getFilenames());
+                });
             } else {
                 KojiBuild kojiBuild = convertPncBuildToKojiBuild(pncBuild);
-                foundBuilds.put(new BuildSystemInteger(kojiBuild.getBuildInfo().getId(), BuildSystem.pnc), kojiBuild);
+                findBuildsResult.getFoundBuilds()
+                        .put(new BuildSystemInteger(kojiBuild.getBuildInfo().getId(), BuildSystem.pnc), kojiBuild);
             }
         }));
 
-        return foundBuilds;
+        return findBuildsResult;
     }
 
     private void populatePncBuildsMetadata(ConcurrentHashMap<String, PncBuild> pncBuilds)
