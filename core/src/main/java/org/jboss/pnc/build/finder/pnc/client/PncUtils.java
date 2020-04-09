@@ -27,8 +27,6 @@ import org.jboss.pnc.build.finder.pnc.PncBuild;
 import org.jboss.pnc.constants.Attributes;
 import org.jboss.pnc.dto.Artifact;
 import org.jboss.pnc.dto.Build;
-import org.jboss.pnc.dto.BuildPushResult;
-import org.jboss.pnc.dto.ProductVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,17 +114,13 @@ public final class PncUtils {
         extra.put("external_project_id", record.getProject().getId());
         extra.put("external_build_configuration_id", record.getBuildConfigRevision().getId());
 
-        BuildPushResult result = pncbuild.getBuildPushResult();
-
-        if (result != null) {
-            extra.put("external_brew_build_id", result.getBrewBuildId());
-            extra.put("external_brew_build_url", result.getBrewBuildUrl());
-        }
-
-        ProductVersion productVersion = pncbuild.getProductVersion();
+        pncbuild.getBuildPushResult().ifPresent(buildPushResult -> {
+            extra.put("external_brew_build_id", buildPushResult.getBrewBuildId());
+            extra.put("external_brew_build_url", buildPushResult.getBrewBuildUrl());
+        });
 
         // TODO Review - it is not necessary for the core logic, but only for reports
-        if (productVersion != null) {
+        pncbuild.getProductVersion().ifPresent((productVersion -> {
             // XXX: These aren't used by Koji, but we need them to create the hyperlinks for the HTML report
             extra.put("external_product_id", productVersion.getProduct().getId());
             extra.put("external_version_id", productVersion.getId());
@@ -160,7 +154,8 @@ public final class PncUtils {
 
             build.setTaskInfo(taskInfo);
             build.setTaskRequest(taskRequest);
-        }
+
+        }));
 
         buildInfo.setExtra(extra);
 

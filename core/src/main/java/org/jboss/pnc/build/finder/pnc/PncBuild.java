@@ -18,6 +18,7 @@ package org.jboss.pnc.build.finder.pnc;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.jboss.pnc.dto.Build;
 import org.jboss.pnc.dto.BuildPushResult;
@@ -30,9 +31,9 @@ public class PncBuild implements Serializable {
 
     private Build build;
 
-    private BuildPushResult buildPushResult;
+    private Optional<BuildPushResult> buildPushResult;
 
-    private ProductVersion productVersion;
+    private Optional<ProductVersion> productVersion;
 
     private List<EnhancedArtifact> artifacts;
 
@@ -43,12 +44,14 @@ public class PncBuild implements Serializable {
     public PncBuild(Build build) {
         this.build = build;
         this.artifacts = new ArrayList<>();
+        this.buildPushResult = Optional.empty();
+        this.productVersion = Optional.empty();
     }
 
     public PncBuild(
             Build build,
-            BuildPushResult buildPushResult,
-            ProductVersion productVersion,
+            Optional<BuildPushResult> buildPushResult,
+            Optional<ProductVersion> productVersion,
             List<EnhancedArtifact> artifacts) {
         this.build = build;
         this.buildPushResult = buildPushResult;
@@ -83,19 +86,19 @@ public class PncBuild implements Serializable {
         this.build = build;
     }
 
-    public BuildPushResult getBuildPushResult() {
+    public Optional<BuildPushResult> getBuildPushResult() {
         return buildPushResult;
     }
 
-    public void setBuildPushResult(BuildPushResult buildPushResult) {
+    public void setBuildPushResult(Optional<BuildPushResult> buildPushResult) {
         this.buildPushResult = buildPushResult;
     }
 
-    public ProductVersion getProductVersion() {
+    public Optional<ProductVersion> getProductVersion() {
         return productVersion;
     }
 
-    public void setProductVersion(ProductVersion productVersion) {
+    public void setProductVersion(Optional<ProductVersion> productVersion) {
         this.productVersion = productVersion;
     }
 

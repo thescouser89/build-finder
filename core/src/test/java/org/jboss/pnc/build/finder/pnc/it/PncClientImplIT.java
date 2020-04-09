@@ -15,13 +15,16 @@
  */
 package org.jboss.pnc.build.finder.pnc.it;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import org.jboss.pnc.build.finder.core.it.AbstractKojiIT;
 import org.jboss.pnc.client.RemoteCollection;
 import org.jboss.pnc.client.RemoteResourceException;
+import org.jboss.pnc.client.RemoteResourceNotFoundException;
 import org.jboss.pnc.dto.Artifact;
+import org.jboss.pnc.dto.ProductVersion;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * @author Jakub Bartecek
@@ -80,5 +83,36 @@ public class PncClientImplIT extends AbstractKojiIT {
 
         // then
         assertEquals(0, remoteArtifacts.size());
+    }
+
+    @Test(expected = RemoteResourceNotFoundException.class)
+    public void shouldNotGetBuildPushResult() throws RemoteResourceException {
+        // given
+        String buildId = "-100";
+
+        // when
+        getPncClient().getBuildPushResult(buildId);
+    }
+
+    @Test
+    public void shouldGetProductVersion() throws RemoteResourceException {
+        // given
+        String buildId = "100";
+
+        // when
+        ProductVersion productVersion = getPncClient().getProductVersion(buildId);
+
+        // then
+        assertNotNull(productVersion);
+        assertNotNull(productVersion.getProduct());
+    }
+
+    @Test(expected = RemoteResourceNotFoundException.class)
+    public void shouldNotGetProductVersion() throws RemoteResourceException {
+        // given
+        String buildId = "-100";
+
+        // when
+        getPncClient().getProductVersion(buildId);
     }
 }
