@@ -177,17 +177,7 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
     private void initBuilds() {
         builds = new HashMap<>();
 
-        KojiBuildInfo buildInfo = new KojiBuildInfo();
-
-        buildInfo.setId(0);
-        buildInfo.setPackageId(0);
-        buildInfo.setBuildState(KojiBuildState.ALL);
-        buildInfo.setName("not found");
-        buildInfo.setVersion("not found");
-        buildInfo.setRelease("not found");
-
-        KojiBuild build = new KojiBuild(buildInfo);
-
+        KojiBuild build = buildFinderUtils.createKojiBuildZero();
         builds.put(new BuildSystemInteger(0), build);
     }
 
@@ -276,51 +266,7 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
 
     private void addArchiveWithoutBuild(Checksum checksum, Collection<String> filenames) {
         KojiBuild buildZero = builds.get(new BuildSystemInteger(0, BuildSystem.none));
-        Optional<KojiLocalArchive> matchingArchive = buildZero.getArchives()
-                .stream()
-                .filter(
-                        a -> a.getArchive()
-                                .getChecksumType()
-                                .equals(KojiChecksumType.valueOf(checksum.getType().getAlgorithm().toLowerCase()))
-                                && a.getArchive().getChecksum().equals(checksum.getValue()))
-                .findFirst();
-
-        if (matchingArchive.isPresent()) {
-            KojiLocalArchive existingArchive = matchingArchive.get();
-
-            LOGGER.debug(
-                    "Adding not-found checksum {} to existing archive id {} with filenames {}",
-                    existingArchive.getArchive().getChecksum(),
-                    existingArchive.getArchive().getArchiveId(),
-                    filenames);
-
-            existingArchive.getFilenames().addAll(filenames);
-        } else {
-            KojiArchiveInfo tmpArchive = new KojiArchiveInfo();
-
-            tmpArchive.setBuildId(0);
-            tmpArchive.setFilename("not found");
-            tmpArchive.setChecksum(checksum.getValue());
-            tmpArchive.setChecksumType(KojiChecksumType.valueOf(checksum.getType().getAlgorithm().toLowerCase()));
-
-            tmpArchive.setArchiveId(-1 * (buildZero.getArchives().size() + 1));
-
-            LOGGER.debug(
-                    "Adding not-found checksum {} to new archive id {} with filenames {}",
-                    checksum,
-                    tmpArchive.getArchiveId(),
-                    filenames);
-
-            KojiLocalArchive localArchive = new KojiLocalArchive(
-                    tmpArchive,
-                    filenames,
-                    analyzer != null ? analyzer.getFiles().get(filenames.iterator().next()) : Collections.emptySet());
-            List<KojiLocalArchive> buildZeroArchives = buildZero.getArchives();
-
-            buildZeroArchives.add(localArchive);
-
-            buildZeroArchives.sort(Comparator.comparing(a -> a.getArchive().getFilename()));
-        }
+        buildFinderUtils.addArchiveWithoutBuild(buildZero, checksum, filenames);
     }
 
     private void addArchiveToBuild(KojiBuild build, KojiArchiveInfo archive, Collection<String> filenames) {

@@ -15,8 +15,17 @@
  */
 package org.jboss.pnc.build.finder.core;
 
-import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
-import io.vertx.core.impl.ConcurrentHashSet;
+import static org.jboss.pnc.build.finder.core.AnsiUtils.green;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.build.finder.pnc.EnhancedArtifact;
 import org.jboss.pnc.build.finder.pnc.PncBuild;
@@ -29,16 +38,9 @@ import org.jboss.pnc.enums.ArtifactQuality;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 
-import static org.jboss.pnc.build.finder.core.AnsiUtils.green;
+import io.vertx.core.impl.ConcurrentHashSet;
 
 /**
  * Build Finder for PNC
@@ -82,8 +84,8 @@ public class PncBuildFinder {
         pncBuilds.values().forEach((pncBuild -> {
 
             if (isBuildZero(pncBuild)) {
-                // FIXME How to convert buildZero to KojiBuild?
-                foundBuilds.put(new BuildSystemInteger(0, BuildSystem.none), null);
+                KojiBuild kojiBuild = convertPncBuildZeroToKojiBuild(pncBuild);
+                foundBuilds.put(new BuildSystemInteger(0, BuildSystem.none), kojiBuild);
             } else {
                 KojiBuild kojiBuild = convertPncBuildToKojiBuild(pncBuild);
                 foundBuilds.put(new BuildSystemInteger(kojiBuild.getBuildInfo().getId(), BuildSystem.pnc), kojiBuild);
@@ -291,6 +293,17 @@ public class PncBuildFinder {
         }
 
         return kojibuild;
+    }
+
+    private KojiBuild convertPncBuildZeroToKojiBuild(PncBuild pncBuild) {
+        KojiBuild kojiBuild = buildFinderUtils.createKojiBuildZero();
+
+        pncBuild.getArtifacts().forEach((enhancedArtifact -> {
+            buildFinderUtils
+                    .addArchiveWithoutBuild(kojiBuild, enhancedArtifact.getChecksum(), enhancedArtifact.getFilenames());
+        }));
+
+        return kojiBuild;
     }
 
     /**
