@@ -102,7 +102,7 @@ public class PncBuildFinder {
 
     private void populatePncBuildsMetadata(ConcurrentHashMap<String, PncBuild> pncBuilds)
             throws RemoteResourceException {
-        final RemoteResourceExceptionWrapper exceptionWrapper = null;
+        final RemoteResourceExceptionWrapper exceptionWrapper = new RemoteResourceExceptionWrapper();
 
         pncBuilds.forEach(concurrentMapParallelismThreshold, (buildId, pncBuild) -> {
             if (LOGGER.isDebugEnabled()) {
@@ -115,8 +115,10 @@ public class PncBuildFinder {
             // Skip build with id 0, which is just a container for not found artifacts
             if (!isBuildZero(pncBuild)) {
                 try {
-                    pncBuild.setProductVersion(
-                            Optional.of(pncClient.getProductVersion(build.getProductMilestone().getId())));
+                    if (build.getProductMilestone() != null) {
+                        pncBuild.setProductVersion(
+                                Optional.of(pncClient.getProductVersion(build.getProductMilestone().getId())));
+                    }
                 } catch (RemoteResourceNotFoundException e) {
                     // NOOP - keep the field empty
                 } catch (RemoteResourceException e) {
@@ -141,7 +143,7 @@ public class PncBuildFinder {
     private Set<EnhancedArtifact> lookupArtifactsInPnc(ConcurrentHashMap<Checksum, Collection<String>> checksumTable)
             throws RemoteResourceException {
         Set<EnhancedArtifact> artifacts = new ConcurrentHashSet<>();
-        final RemoteResourceExceptionWrapper exceptionWrapper = null;
+        final RemoteResourceExceptionWrapper exceptionWrapper = new RemoteResourceExceptionWrapper();
 
         checksumTable.forEach(concurrentMapParallelismThreshold, (checksum, fileNames) -> {
             if (LOGGER.isDebugEnabled()) {
@@ -181,7 +183,7 @@ public class PncBuildFinder {
         artifacts.forEach((artifact) -> {
             Build build;
 
-            if (artifact.getArtifact().isPresent() && artifact.getArtifact().get() != null) {
+            if (artifact.getArtifact().isPresent() && artifact.getArtifact().get().getBuild() != null) {
                 build = artifact.getArtifact().get().getBuild();
             } else {
                 // Covers 2 cases:
