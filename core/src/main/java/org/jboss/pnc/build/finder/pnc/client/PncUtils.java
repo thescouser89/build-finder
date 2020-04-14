@@ -46,13 +46,17 @@ public final class PncUtils {
         throw new IllegalArgumentException();
     }
 
+    // FIXME Implement a better way of reading GAV from PNC as not all builds are pushed to Brew
     private static void setMavenBuildInfoFromBuildRecord(Build record, KojiBuildInfo buildInfo) {
         String executionRootName = getSafelyExecutionRootName(record);
         String executionRootVersion = record.getAttributes().get(Attributes.BUILD_BREW_VERSION);
         String[] ga = executionRootName.split(":", 2);
 
-        buildInfo.setMavenGroupId(ga[0]);
-        buildInfo.setMavenArtifactId(ga[1]);
+        if (ga.length >= 2) {
+            buildInfo.setMavenGroupId(ga[0]);
+            buildInfo.setMavenArtifactId(ga[1]);
+        }
+
         buildInfo.setMavenVersion(executionRootVersion);
     }
 
@@ -67,7 +71,7 @@ public final class PncUtils {
 
     private static String getBrewBuildVersionOrZero(Build build) {
         String buildBrewVersion = build.getAttributes().get(Attributes.BUILD_BREW_VERSION);
-        if (build == null) {
+        if (buildBrewVersion == null) {
             return "0";
         } else {
             return buildBrewVersion;
@@ -216,9 +220,7 @@ public final class PncUtils {
 
         if (buildVersion == null || buildVersion.equals("0")) {
             buildInfo.setVersion(version);
-            buildInfo.setNvr(
-                    buildInfo.getName() + "-" + buildInfo.getVersion().replace("-", "_") + "-"
-                            + buildInfo.getRelease().replace("-", "_"));
+            buildInfo.setNvr(buildInfo.getName() + "-" + 0 + "-" + buildInfo.getRelease().replace("-", "_"));
         }
     }
 }

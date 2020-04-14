@@ -126,6 +126,7 @@
     <version.org.jacoco>0.8.5</version.org.jacoco>
     <version.org.jboss.byteman>4.0.11</version.org.jboss.byteman>
     <version.org.json.json>20190722</version.org.json.json>
+    <version.org.mockito>3.3.3</version.org.mockito>
     <version.org.ow2.asm>8.0</version.org.ow2.asm>
     <version.org.slf4j>1.7.30</version.org.slf4j>
     <version.org.sonatype.plugins.nexus-staging-maven-plugin>1.6.8</version.org.sonatype.plugins.nexus-staging-maven-plugin>
@@ -435,6 +436,13 @@
         <artifactId>slf4j-api</artifactId>
         <version>${version.org.slf4j}</version>
       </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>${version.org.mockito}</version>
+        <scope>test</scope>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
 
