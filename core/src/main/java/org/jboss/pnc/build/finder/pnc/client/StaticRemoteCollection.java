@@ -34,7 +34,7 @@ public class StaticRemoteCollection<T> implements RemoteCollection<T> {
         this.staticCollection = Collections.unmodifiableCollection(remoteCollection.getAll());
     }
 
-    public StaticRemoteCollection(Collection collection) {
+    public StaticRemoteCollection(Collection<T> collection) {
         this.staticCollection = collection;
     }
 
