@@ -533,6 +533,18 @@
           <groupId>net.revelc.code.formatter</groupId>
           <artifactId>formatter-maven-plugin</artifactId>
           <version>${version.net.revelc.code.formatter}</version>
+          <configuration>
+            <configFile>https://raw.githubusercontent.com/project-ncl/ide-config/master/eclipse/jboss-java-formatter.xml</configFile>
+            <lineEnding>LF</lineEnding>
+          </configuration>
+          <executions>
+            <execution>
+              <id>java-format</id>
+              <goals>
+                <goal>format</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <groupId>com.github.spotbugs</groupId>
@@ -808,21 +820,6 @@
     </pluginManagement>
 
     <plugins>
-      <plugin>
-        <groupId>net.revelc.code.formatter</groupId>
-        <artifactId>formatter-maven-plugin</artifactId>
-        <configuration>
-          <configFile>../jboss-java-formatter.xml</configFile>
-        </configuration>
-        <executions>
-          <execution>
-            <id>java-format</id>
-            <goals>
-              <goal>format</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
