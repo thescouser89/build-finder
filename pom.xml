@@ -531,23 +531,6 @@
     <pluginManagement>
       <plugins>
         <plugin>
-          <groupId>net.revelc.code.formatter</groupId>
-          <artifactId>formatter-maven-plugin</artifactId>
-          <version>${version.net.revelc.code.formatter}</version>
-          <configuration>
-            <configFile>https://raw.githubusercontent.com/project-ncl/ide-config/master/eclipse/jboss-java-formatter.xml</configFile>
-            <lineEnding>LF</lineEnding>
-          </configuration>
-          <executions>
-            <execution>
-              <id>java-format</id>
-              <goals>
-                <goal>format</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
           <groupId>com.github.spotbugs</groupId>
           <artifactId>spotbugs-maven-plugin</artifactId>
           <version>${version.com.github.spotbugs}</version>
@@ -570,6 +553,23 @@
               <version>${version.com.mycila}</version>
             </dependency>
           </dependencies>
+        </plugin>
+        <plugin>
+          <groupId>net.revelc.code.formatter</groupId>
+          <artifactId>formatter-maven-plugin</artifactId>
+          <version>${version.net.revelc.code.formatter}</version>
+          <configuration>
+            <configFile>https://raw.githubusercontent.com/project-ncl/ide-config/master/eclipse/jboss-java-formatter.xml</configFile>
+            <lineEnding>LF</lineEnding>
+          </configuration>
+          <executions>
+            <execution>
+              <id>java-format</id>
+              <goals>
+                <goal>format</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
