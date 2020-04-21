@@ -23,6 +23,7 @@ import org.jboss.pnc.dto.BuildPushResult;
 import org.jboss.pnc.dto.ProductVersion;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Implementation of adapter to communicate with PNC Orchestrator REST API, which caches the results in HashMaps to
@@ -31,18 +32,17 @@ import java.util.HashMap;
  * @author Jakub Bartecek
  */
 public class HashMapCachingPncClient implements PncClient {
-
     private final PncClient pncClient;
 
-    private HashMap<String, StaticRemoteCollection<Artifact>> md5Cache = new HashMap<>();
+    private Map<String, StaticRemoteCollection<Artifact>> md5Cache = new HashMap<>();
 
-    private HashMap<String, StaticRemoteCollection<Artifact>> sha1Cache = new HashMap<>();
+    private Map<String, StaticRemoteCollection<Artifact>> sha1Cache = new HashMap<>();
 
-    private HashMap<String, StaticRemoteCollection<Artifact>> sha256Cache = new HashMap<>();
+    private Map<String, StaticRemoteCollection<Artifact>> sha256Cache = new HashMap<>();
 
-    private HashMap<String, BuildPushResult> getBuildPushResultCache = new HashMap<>();
+    private Map<String, BuildPushResult> getBuildPushResultCache = new HashMap<>();
 
-    private HashMap<String, ProductVersion> getProductVersionCache = new HashMap<>();
+    private Map<String, ProductVersion> getProductVersionCache = new HashMap<>();
 
     public HashMapCachingPncClient(BuildConfig config) {
         this.pncClient = new PncClientImpl(config);
