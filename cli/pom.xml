@@ -147,6 +147,18 @@
                   </includes>
                 </filter>
                 <filter>
+                  <artifact>org.jboss.logging:jboss-logging</artifact>
+                  <includes>
+                    <include>**</include>
+                  </includes>
+                </filter>
+                <filter>
+                  <artifact>org.jboss.resteasy:resteasy-jaxrs</artifact>
+                  <includes>
+                    <include>**</include>
+                  </includes>
+                </filter>
+                <filter>
                   <artifact>*:*</artifact>
                   <excludes>
                     <exclude>META-INF/*.SF</exclude>
