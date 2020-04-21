@@ -126,6 +126,7 @@
     <version.org.infinispan>10.0.0.CR1</version.org.infinispan>
     <version.org.jacoco>0.8.5</version.org.jacoco>
     <version.org.jboss.byteman>4.0.11</version.org.jboss.byteman>
+    <version.org.jboss.logmanager>2.1.15.Final</version.org.jboss.logmanager>
     <version.org.json.json>20190722</version.org.json.json>
     <version.org.mockito>3.3.3</version.org.mockito>
     <version.org.ow2.asm>8.0</version.org.ow2.asm>
@@ -420,6 +421,11 @@
         <groupId>org.jboss.byteman</groupId>
         <artifactId>byteman-bmunit</artifactId>
         <version>${version.org.jboss.byteman}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.logmanager</groupId>
+        <artifactId>jboss-logmanager</artifactId>
+        <version>${version.org.jboss.logmanager}</version>
       </dependency>
       <dependency>
         <groupId>org.json</groupId>
