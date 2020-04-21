@@ -46,7 +46,7 @@ To see the available options, execute the command `java -jar target/build-finder
                                    Default: [pnc, koji]
       -c, --config=FILE          Specify configuration file to use.
                                    Default: ${user.home}.
-                                   build-finder\config.json
+                                   build-finder/config.json
           --cache-lifespan=LONG  Specify cache lifespan.
                                    Default: 3600000
           --cache-max-idle=LONG  Specify cache maximum idle time.
@@ -112,6 +112,7 @@ where `<version>` should be replaced with the current version of the software.
 ## Getting Started
 
 On the first run, Build Finder will write a starter configuration file. You may optionally edit this file by hand, but you do not need to create it ahead of time as Build Finder will create a default configuration file if none exists.
+
 
 ### Configuration file format
 
