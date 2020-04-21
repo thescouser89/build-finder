@@ -185,14 +185,8 @@ public final class Main implements Callable<Void> {
     @Option(names = { "-o", "--output-directory" }, paramLabel = "FILE", description = "Set output directory.")
     private File outputDirectory = new File(ConfigDefaults.OUTPUT_DIR);
 
-    @Option(names = { "--pnc-connection-timeout" }, paramLabel = "LONG", description = "Set Pnc connection timeout.")
-    private Long pncConnectionTimeout = ConfigDefaults.PNC_CONNECTION_TIMEOUT;
-
     @Option(names = { "--pnc-partition-size" }, paramLabel = "INT", description = "Set Pnc partition size.")
     private Integer pncPartitionSize = ConfigDefaults.PNC_PARTITION_SIZE;
-
-    @Option(names = { "--pnc-read-timeout" }, paramLabel = "LONG", description = "Set Pnc read timeout.")
-    private Long pncReadTimeout = ConfigDefaults.PNC_READ_TIMEOUT;
 
     @Option(names = { "--pnc-url" }, paramLabel = "URL", description = "Set Pnc URL.")
     private URL pncURL = ConfigDefaults.PNC_URL;
@@ -392,16 +386,8 @@ public final class Main implements Callable<Void> {
             LOGGER.debug("Read Kerberos password");
         }
 
-        if (commandSpec.commandLine().getParseResult().hasMatchedOption("--pnc-connection-timeout")) {
-            config.setPncConnectionTimeout(pncConnectionTimeout);
-        }
-
         if (commandSpec.commandLine().getParseResult().hasMatchedOption("--pnc-partition-size")) {
             config.setPncPartitionSize(pncPartitionSize);
-        }
-
-        if (commandSpec.commandLine().getParseResult().hasMatchedOption("--pnc-read-timeout")) {
-            config.setPncReadTimeout(pncReadTimeout);
         }
 
         if (commandSpec.commandLine().getParseResult().hasMatchedOption("--pnc-url")) {

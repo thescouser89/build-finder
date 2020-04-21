@@ -77,15 +77,9 @@ To see the available options, execute the command `java -jar target/koji-build-f
       -o, --output-directory=FILE
                                  Set output directory.
                                    Default: .
-          --pnc-connection-timeout=LONG
-                                 Set Pnc connection timeout.
-                                   Default: -1
           --pnc-partition-size=INT
                                  Set Pnc partition size.
                                    Default: 18
-          --pnc-read-timeout=LONG
-                                 Set Pnc read timeout.
-                                   Default: -1
           --pnc-url=URL          Set Pnc URL.
       -q, --quiet                Disable all logging.
       -t, --checksum-type=CHECKSUM
