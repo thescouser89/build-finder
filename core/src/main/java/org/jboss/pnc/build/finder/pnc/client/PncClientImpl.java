@@ -34,7 +34,6 @@ import org.jboss.pnc.dto.ProductVersion;
  * @author Jakub Bartecek
  */
 public class PncClientImpl implements PncClient {
-
     private final BuildClient buildClient;
 
     private final ArtifactClient artifactClient;

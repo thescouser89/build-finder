@@ -27,7 +27,6 @@ import java.util.Map;
  * @author Jakub Bartecek
  */
 public class FindBuildsResult {
-
     private Map<BuildSystemInteger, KojiBuild> foundBuilds;
 
     private Map<Checksum, Collection<String>> notFoundChecksums;

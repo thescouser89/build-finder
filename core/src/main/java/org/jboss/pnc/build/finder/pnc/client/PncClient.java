@@ -27,7 +27,6 @@ import org.jboss.pnc.dto.ProductVersion;
  * @author Jakub Bartecek
  */
 public interface PncClient {
-
     /**
      * Get a list of artifacts with matching md5. Returns empty list if no matching artifacts
      *

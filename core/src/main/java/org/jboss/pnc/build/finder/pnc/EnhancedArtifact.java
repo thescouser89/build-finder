@@ -29,7 +29,6 @@ import org.jboss.pnc.dto.Artifact;
  * @author Jakub Bartecek
  */
 public class EnhancedArtifact {
-
     private Optional<Artifact> artifact;
 
     private Checksum checksum;

@@ -30,7 +30,6 @@ import org.junit.Test;
  * @author Jakub Bartecek
  */
 public class PncClientImplIT extends AbstractKojiIT {
-
     @Test
     public void shouldGetArtifactByMd5() throws RemoteResourceException {
         // given

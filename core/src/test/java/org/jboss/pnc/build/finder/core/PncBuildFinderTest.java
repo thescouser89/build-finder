@@ -55,7 +55,6 @@ import static org.mockito.Mockito.when;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class PncBuildFinderTest {
-
     @Mock
     private BuildConfig buildConfig;
 

@@ -27,7 +27,6 @@ import java.util.Iterator;
  * @author Jakub Bartecek
  */
 public class StaticRemoteCollection<T> implements RemoteCollection<T> {
-
     private Collection<T> staticCollection;
 
     public StaticRemoteCollection(RemoteCollection<T> remoteCollection) {

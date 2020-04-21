@@ -33,7 +33,6 @@ import java.util.Collection;
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class HashMapCachingClientTest {
-
     private HashMapCachingPncClient cachingPncClient;
 
     private DummyPncClient dummyPncClient;
@@ -56,7 +55,6 @@ public class HashMapCachingClientTest {
     }
 
     private class DummyPncClient implements PncClient {
-
         private Collection<Artifact> artifacts;
 
         private int getArtifactsByMd5Counter = 0;
