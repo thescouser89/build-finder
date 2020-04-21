@@ -73,14 +73,8 @@ public class BuildConfig {
     @JsonProperty("output-directory")
     private String outputDirectory;
 
-    @JsonProperty("pnc-connection-timeout")
-    private Long pncConnectionTimeout;
-
     @JsonProperty("pnc-partition-size")
     private Integer pncPartitionSize;
-
-    @JsonProperty("pnc-read-timeout")
-    private Long pncReadTimeout;
 
     @JsonProperty("pnc-url")
     private URL pncURL;
@@ -325,18 +319,6 @@ public class BuildConfig {
         this.outputDirectory = outputDirectory;
     }
 
-    public Long getPncConnectionTimeout() {
-        if (pncConnectionTimeout == null) {
-            pncConnectionTimeout = ConfigDefaults.PNC_CONNECTION_TIMEOUT;
-        }
-
-        return pncConnectionTimeout;
-    }
-
-    public void setPncConnectionTimeout(Long pncConnectionTimeout) {
-        this.pncConnectionTimeout = pncConnectionTimeout;
-    }
-
     public Integer getPncPartitionSize() {
         if (pncPartitionSize == null) {
             pncPartitionSize = ConfigDefaults.PNC_PARTITION_SIZE;
@@ -347,18 +329,6 @@ public class BuildConfig {
 
     public void setPncPartitionSize(Integer pncPartitionSize) {
         this.pncPartitionSize = pncPartitionSize;
-    }
-
-    public Long getPncReadTimeout() {
-        if (pncReadTimeout == null) {
-            pncReadTimeout = ConfigDefaults.PNC_READ_TIMEOUT;
-        }
-
-        return pncReadTimeout;
-    }
-
-    public void setPncReadTimeout(Long pncReadTimeout) {
-        this.pncReadTimeout = pncReadTimeout;
     }
 
     public URL getPncURL() {
@@ -406,8 +376,7 @@ public class BuildConfig {
                 + getDisableCache() + ", \n\texcludes=" + getExcludes() + ", \n\tkojiHubURL=" + getKojiHubURL()
                 + ", \n\tkojiMulticallSize=" + getKojiMulticallSize() + ", \n\tkojiNumThreads=" + getKojiNumThreads()
                 + ", \n\tkojiWebURL=" + getKojiWebURL() + ", \n\toutputDirectory=" + getOutputDirectory()
-                + ", \n\tpncConnectionTimeout=" + getPncConnectionTimeout() + ", \n\tpncPartitionSize="
-                + getPncPartitionSize() + ", \n\tpncReadTimeout=" + getPncReadTimeout() + ", \n\tpncURL=" + getPncURL()
+                + ", \n\tpncPartitionSize=" + getPncPartitionSize() + ", \n\tpncURL=" + getPncURL()
                 + ", \n\tuseBuildsFile=" + getUseBuildsFile() + ", \n\tuseChecksumsFile='" + getUseChecksumsFile()
                 + "}";
     }
