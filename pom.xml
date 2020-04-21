@@ -67,7 +67,6 @@
     <pnc.url/>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <skipITs>true</skipITs>
-    <version.org.jboss.pnc>2.0.0-SNAPSHOT</version.org.jboss.pnc>
     <version.ch.qos.logback>1.2.3</version.ch.qos.logback>
     <version.commons-codec>1.14</version.commons-codec>
     <version.commons-io>2.6</version.commons-io>
@@ -127,6 +126,7 @@
     <version.org.jacoco>0.8.5</version.org.jacoco>
     <version.org.jboss.byteman>4.0.11</version.org.jboss.byteman>
     <version.org.jboss.logmanager>2.1.15.Final</version.org.jboss.logmanager>
+    <version.org.jboss.pnc>2.0.0-SNAPSHOT</version.org.jboss.pnc>
     <version.org.json.json>20190722</version.org.json.json>
     <version.org.mockito>3.3.3</version.org.mockito>
     <version.org.ow2.asm>8.0</version.org.ow2.asm>
@@ -156,11 +156,6 @@
         <groupId>org.jboss.pnc.build.finder</groupId>
         <artifactId>report</artifactId>
         <version>2.0.0-SNAPSHOT</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.pnc</groupId>
-        <artifactId>rest-client</artifactId>
-        <version>${version.org.jboss.pnc}</version>
       </dependency>
       <dependency>
         <groupId>ch.qos.logback</groupId>
@@ -426,6 +421,11 @@
         <groupId>org.jboss.logmanager</groupId>
         <artifactId>jboss-logmanager</artifactId>
         <version>${version.org.jboss.logmanager}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.pnc</groupId>
+        <artifactId>rest-client</artifactId>
+        <version>${version.org.jboss.pnc}</version>
       </dependency>
       <dependency>
         <groupId>org.json</groupId>
