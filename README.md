@@ -132,9 +132,7 @@ The configuration file is in JSON format. The default configuration file, `confi
       "koji-multicall-size" : 8,
       "koji-num-threads" : 12,
       "output-directory" : ".",
-      "pnc-connection-timeout" : -1,
       "pnc-partition-size" : 18,
-      "pnc-read-timeout" : -1,
       "use-builds-file" : false,
       "use-checksums-file" : false
     }
@@ -165,11 +163,7 @@ The `koji-num-threads` option sets the number of Koji threads.
 
 The `koji-hub-url` and `koji-web-url` options must be set to valid URLs for your particular network.
 
-The `pnc-connection-timeout` option sets the Pnc connection timeout.
-
 The `pnc-partition-size` option sets the Pnc partition size.
-
-The `pnc-read-timeout` option sets the Pnc read timeout.
 
 The `pnc-url` option must be set to a valid URL for your particular network if you want Pnc support.
 
