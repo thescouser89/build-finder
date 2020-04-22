@@ -7,10 +7,10 @@
 | Name      | Description                | Badge                      |
 | --------- | -------------------------- | -------------------------- |
 | Maven     | Latest Release             | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.redhat.red.build/koji-build-finder/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.redhat.red.build/koji-build-finder)
-| AppVeyor  | Build Status (Windows)     | [![Build Status (AppVeyor)](https://ci.appveyor.com/api/projects/status/775lq2o1chu7abn5?svg=true)](https://ci.appveyor.com/project/dwalluck/koji-build-finder-6o7ag) |
-| Travis CI | Build Status (Linux/OS X)  | [![Build Status (Travis CI)](https://api.travis-ci.com/release-engineering/koji-build-finder.svg)](https://travis-ci.com/release-engineering/koji-build-finder) |
-| Codecov   | Code Coverage              | [![Code Coverage](https://codecov.io/gh/release-engineering/koji-build-finder/graph/badge.svg)](https://codecov.io/gh/release-engineering/koji-build-finder) |
-| Snyk      | Known Vulnerabilities      | [![Known Vulnerabilities](https://snyk.io/test/github/release-engineering/koji-build-finder/badge.svg)](https://snyk.io/test/github/release-engineering/koji-build-finder) |
+| AppVeyor  | Build Status (Windows)     | [![Build Status (AppVeyor)](https://ci.appveyor.com/api/projects/status/g1bjwaun03fao5qm?svg=true)](https://ci.appveyor.com/project/dwalluck/build-finder) |
+| Travis CI | Build Status (Linux/OS X)  | [![Build Status (Travis CI)](https://api.travis-ci.com/project-ncl/build-finder.svg)](https://travis-ci.com/project-ncl/build-finder) |
+| Codecov   | Code Coverage              | [![Code Coverage](https://codecov.io/gh/project-ncl/build-finder/graph/badge.svg)](https://codecov.io/gh/project-ncl/build-finder) |
+| Snyk      | Known Vulnerabilities      | [![Known Vulnerabilities](https://snyk.io/test/github/project-ncl/build-finder/badge.svg)](https://snyk.io/test/github/project-ncl/build-finder) |
 
 ## Development
 
@@ -22,9 +22,9 @@ An example `codestyle-eclipse.xml` code formatting style is supplied for [Eclips
 
 The support for various compressed archive types relies on [Apache Commons VFS](https://commons.apache.org/proper/commons-vfs/) and the compressor and archive formats that Commons VFS can open *automatically*. If an exception occurs while trying to open a file, then the file is considered to be a normal file and recursive processing of the file is aborted.
 
-The default supported Koji archive types are `jar`, `xml`, `pom`, `so`, `dll`, and `dylib`. Koji Build Finder uses [Koji Java Interface](https://github.com/release-engineering/kojiji) for Koji support and asks for all known extensions for the given Koji archive type name. Note that if you specify no Koji archive types, Koji Build Finder will ask the Koji server for all known Koji archive types. The default set of types is meant to give a reasonable default, particularly for Java-based distributions.
+The default supported Koji archive types are `jar`, `xml`, `pom`, `so`, `dll`, and `dylib`. Build Finder uses [Koji Java Interface](https://github.com/release-engineering/kojiji) for Koji support and asks for all known extensions for the given Koji archive type name. Note that if you specify no Koji archive types, Build Finder will ask the Koji server for all known Koji archive types. The default set of types is meant to give a reasonable default, particularly for Java-based distributions.
 
-Koji Build Finder operates in three stages:
+Build Finder operates in three stages:
 
 1. Checksums are calculated offline for all files in the distribution, including files inside archives. Checksum information is stored in JSON format.
 
