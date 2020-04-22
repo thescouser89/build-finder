@@ -14,7 +14,7 @@
 
 ## Development
 
-An example `codestyle-eclipse.xml` code formatting style is supplied for [Eclipse](https://www.eclipse.org/ide/). An example `codestyle-intellij.xml` code formatting style is supplied for [IntelliJ IDEA](https://www.jetbrains.com/idea/).
+To format the code, run `net.revelc.code.formatter:formatter-maven-plugin:format`.
 
 [Apache Maven](https://maven.apache.org/) is used for the building. The command `mvn clean install` will compile the code and run all of the unit tests.
 
