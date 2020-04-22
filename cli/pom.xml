@@ -56,6 +56,10 @@
       <artifactId>infinispan-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.jboss.logmanager</groupId>
+      <artifactId>jboss-logmanager</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.github.stefanbirkner</groupId>
       <artifactId>system-rules</artifactId>
       <scope>test</scope>
@@ -142,6 +146,18 @@
                 </filter>
                 <filter>
                   <artifact>org.jgroups:jgroups</artifact>
+                  <includes>
+                    <include>**</include>
+                  </includes>
+                </filter>
+                <filter>
+                  <artifact>org.jboss.logmanager:jboss-logmanager</artifact>
+                  <includes>
+                    <include>**</include>
+                  </includes>
+                </filter>
+                <filter>
+                  <artifact>org.jboss.resteasy:resteasy-jaxrs</artifact>
                   <includes>
                     <include>**</include>
                   </includes>
