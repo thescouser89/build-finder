@@ -37,6 +37,7 @@ import org.jboss.pnc.build.finder.core.Checksum;
 import org.jboss.pnc.build.finder.core.ChecksumType;
 import org.jboss.pnc.build.finder.core.DistributionAnalyzer;
 import org.jboss.pnc.build.finder.core.FileError;
+import org.jboss.pnc.build.finder.core.LocalFile;
 import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +58,7 @@ class RpmNvrNotFoundIT extends AbstractRpmIT {
         Map<Checksum, Collection<String>> foundChecksums = finder.getFoundChecksums();
         Map<Checksum, Collection<String>> notFoundChecksums = finder.getNotFoundChecksums();
         List<KojiBuild> buildsFound = finder.getBuildsFound();
-        Map<ChecksumType, MultiValuedMap<String, String>> checksums = analyzer.getChecksums();
+        Map<ChecksumType, MultiValuedMap<String, LocalFile>> checksums = analyzer.getChecksums();
         Map<BuildSystemInteger, KojiBuild> builds = finder.getBuildsMap();
 
         assertThat(checksums, is(aMapWithSize(3)));
@@ -74,7 +75,10 @@ class RpmNvrNotFoundIT extends AbstractRpmIT {
                 analyzer.getChecksums(ChecksumType.md5),
                 hasEntry(
                         is("aa585b870f59ef457f26fa32a0daf923"),
-                        contains("java-11-openjdk-11.0.8.10-1.fc33.x86_64.rpm")));
+                        contains(
+                                allOf(
+                                        hasProperty("filename", is("java-11-openjdk-11.0.8.10-1.fc33.x86_64.rpm")),
+                                        hasProperty("size", is(258129L))))));
         assertThat(
                 notFoundChecksums,
                 allOf(

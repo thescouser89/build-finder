@@ -37,6 +37,7 @@ import org.jboss.pnc.build.finder.core.Checksum;
 import org.jboss.pnc.build.finder.core.ChecksumType;
 import org.jboss.pnc.build.finder.core.DistributionAnalyzer;
 import org.jboss.pnc.build.finder.core.FileError;
+import org.jboss.pnc.build.finder.core.LocalFile;
 import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +58,7 @@ class RpmIT extends AbstractRpmIT {
         Map<Checksum, Collection<String>> foundChecksums = finder.getFoundChecksums();
         Map<Checksum, Collection<String>> notFoundChecksums = finder.getNotFoundChecksums();
         List<KojiBuild> buildsFound = finder.getBuildsFound();
-        Map<ChecksumType, MultiValuedMap<String, String>> checksums = analyzer.getChecksums();
+        Map<ChecksumType, MultiValuedMap<String, LocalFile>> checksums = analyzer.getChecksums();
         Map<BuildSystemInteger, KojiBuild> builds = finder.getBuildsMap();
 
         assertThat(checksums, is(aMapWithSize(3)));
@@ -65,7 +66,12 @@ class RpmIT extends AbstractRpmIT {
         assertThat(fileErrors, is(empty()));
         assertThat(
                 analyzer.getChecksums(ChecksumType.md5),
-                hasEntry(is("31bc067a6462aacd3b891681bdb27512"), contains("basesystem-11-5.el8.noarch.rpm")));
+                hasEntry(
+                        is("31bc067a6462aacd3b891681bdb27512"),
+                        contains(
+                                allOf(
+                                        hasProperty("filename", is("basesystem-11-5.el8.noarch.rpm")),
+                                        hasProperty("size", is(10756L))))));
         assertThat(
                 files,
                 allOf(

@@ -45,6 +45,7 @@ import org.jboss.pnc.build.finder.core.Checksum;
 import org.jboss.pnc.build.finder.core.ChecksumType;
 import org.jboss.pnc.build.finder.core.DistributionAnalyzer;
 import org.jboss.pnc.build.finder.core.FileError;
+import org.jboss.pnc.build.finder.core.LocalFile;
 import org.jboss.pnc.build.finder.core.it.AbstractRpmIT;
 import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.build.finder.report.Report;
@@ -67,7 +68,7 @@ class RpmBuildIdNotFoundReportIT extends AbstractRpmIT {
         Map<Checksum, Collection<String>> foundChecksums = finder.getFoundChecksums();
         Map<Checksum, Collection<String>> notFoundChecksums = finder.getNotFoundChecksums();
         List<KojiBuild> buildsFound = finder.getBuildsFound();
-        Map<ChecksumType, MultiValuedMap<String, String>> checksums = analyzer.getChecksums();
+        Map<ChecksumType, MultiValuedMap<String, LocalFile>> checksums = analyzer.getChecksums();
         Map<BuildSystemInteger, KojiBuild> builds = finder.getBuildsMap();
 
         assertThat(checksums, is(aMapWithSize(3)));
@@ -78,7 +79,12 @@ class RpmBuildIdNotFoundReportIT extends AbstractRpmIT {
         assertThat(fileErrors, is(empty()));
         assertThat(
                 analyzer.getChecksums(ChecksumType.md5),
-                hasEntry(is("84ed0982a77b1c3a0c093409eb19c8ab"), contains("libdnf-0.48.0-4.fc33.x86_64.rpm")));
+                hasEntry(
+                        is("84ed0982a77b1c3a0c093409eb19c8ab"),
+                        contains(
+                                allOf(
+                                        hasProperty("filename", is("libdnf-0.48.0-4.fc33.x86_64.rpm")),
+                                        hasProperty("size", is(605175L))))));
         assertThat(notFoundChecksums, is(anEmptyMap()));
         assertThat(
                 files,

@@ -43,6 +43,7 @@ import org.jboss.pnc.build.finder.core.Checksum;
 import org.jboss.pnc.build.finder.core.ChecksumType;
 import org.jboss.pnc.build.finder.core.DistributionAnalyzer;
 import org.jboss.pnc.build.finder.core.FileError;
+import org.jboss.pnc.build.finder.core.LocalFile;
 import org.jboss.pnc.build.finder.koji.ClientSession;
 import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.junit.jupiter.api.Test;
@@ -67,7 +68,7 @@ class FileErrorIT extends AbstractKojiIT {
         Timer timer = REGISTRY.timer(MetricRegistry.name(FileErrorIT.class, "checksums"));
         ExecutorService pool = Executors.newFixedThreadPool(2);
         DistributionAnalyzer analyzer;
-        Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum;
+        Future<Map<ChecksumType, MultiValuedMap<String, LocalFile>>> futureChecksum;
 
         try (Timer.Context context = timer.time()) {
             analyzer = new DistributionAnalyzer(Collections.singletonList(URL), getConfig());
@@ -81,7 +82,7 @@ class FileErrorIT extends AbstractKojiIT {
             BuildFinder finder = new BuildFinder(session, getConfig(), analyzer, null, getPncClient());
             finder.setOutputDirectory(folder);
             Future<Map<BuildSystemInteger, KojiBuild>> futureBuilds = pool.submit(finder);
-            Map<ChecksumType, MultiValuedMap<String, String>> map = futureChecksum.get();
+            Map<ChecksumType, MultiValuedMap<String, LocalFile>> map = futureChecksum.get();
             Map<BuildSystemInteger, KojiBuild> builds = futureBuilds.get();
             Map<BuildSystemInteger, KojiBuild> buildsMap = finder.getBuildsMap();
             Collection<FileError> fileErrors = analyzer.getFileErrors();
@@ -114,17 +115,26 @@ class FileErrorIT extends AbstractKojiIT {
                     analyzer.getChecksums(ChecksumType.md5),
                     hasEntry(
                             is("ac2a6ab1fbf6afba37789e2e88a916a6"),
-                            contains("jboss-jaxb-intros-1.0.2.GA-sources.jar")));
+                            contains(
+                                    allOf(
+                                            hasProperty("filename", is("jboss-jaxb-intros-1.0.2.GA-sources.jar")),
+                                            hasProperty("size", is(29537L))))));
             assertThat(
                     analyzer.getChecksums(ChecksumType.sha1),
                     hasEntry(
                             is("ab2f490dd83035bee3a719d2118cbab90508082f"),
-                            contains("jboss-jaxb-intros-1.0.2.GA-sources.jar")));
+                            contains(
+                                    allOf(
+                                            hasProperty("filename", is("jboss-jaxb-intros-1.0.2.GA-sources.jar")),
+                                            hasProperty("size", is(29537L))))));
             assertThat(
                     analyzer.getChecksums(ChecksumType.sha256),
                     hasEntry(
                             is("987dd27e51ba77cb067dbec1baa5169eb184313688640e3951e3cb34d9a85c48"),
-                            contains("jboss-jaxb-intros-1.0.2.GA-sources.jar")));
+                            contains(
+                                    allOf(
+                                            hasProperty("filename", is("jboss-jaxb-intros-1.0.2.GA-sources.jar")),
+                                            hasProperty("size", is(29537L))))));
             assertThat(notFoundChecksums, is(anEmptyMap()));
             assertThat(foundChecksums, is(aMapWithSize(1)));
             assertThat(buildsFound, hasSize(1));
