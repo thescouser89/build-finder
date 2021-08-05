@@ -48,8 +48,8 @@ import java.util.stream.Stream;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
-import org.infinispan.Cache;
-import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.commons.api.BasicCache;
+import org.infinispan.commons.api.BasicCacheContainer;
 import org.jboss.pnc.build.finder.koji.ClientSession;
 import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.build.finder.koji.KojiLocalArchive;
@@ -92,13 +92,13 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
 
     private final DistributionAnalyzer analyzer;
 
-    private Map<ChecksumType, Cache<String, List<KojiArchiveInfo>>> checksumCaches;
+    private Map<ChecksumType, BasicCache<String, List<KojiArchiveInfo>>> checksumCaches;
 
-    private Cache<Integer, KojiBuild> buildCache;
+    private BasicCache<Integer, KojiBuild> buildCache;
 
-    private Map<ChecksumType, Cache<String, KojiBuild>> rpmCaches;
+    private Map<ChecksumType, BasicCache<String, KojiBuild>> rpmCaches;
 
-    private final EmbeddedCacheManager cacheManager;
+    private final BasicCacheContainer cacheManager;
 
     private final PncBuildFinder pncBuildFinder;
 
@@ -122,7 +122,7 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
             ClientSession session,
             BuildConfig config,
             DistributionAnalyzer analyzer,
-            EmbeddedCacheManager cacheManager) {
+            BasicCacheContainer cacheManager) {
         this(session, config, analyzer, cacheManager, null);
     }
 
@@ -130,7 +130,7 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
             ClientSession session,
             BuildConfig config,
             DistributionAnalyzer analyzer,
-            EmbeddedCacheManager cacheManager,
+            BasicCacheContainer cacheManager,
             PncClient pncclient) {
         this.session = session;
         this.config = config;
