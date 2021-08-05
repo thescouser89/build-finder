@@ -433,7 +433,7 @@ public final class Main implements Callable<Void> {
                 .marshaller(new GenericJBossMarshaller())
                 .addAdvancedExternalizer(kojiBuildExternalizer.getId(), kojiBuildExternalizer)
                 .addAdvancedExternalizer(localFileExternalizer.getId(), localFileExternalizer)
-                .whiteList()
+                .allowList()
                 .addRegexp(".*")
                 .create();
 
