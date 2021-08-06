@@ -1012,7 +1012,7 @@ limitations under the License.]]></inlineHeader>
         <executions>
           <execution>
             <goals>
-              <goal>check</goal>
+              <goal>sort</goal>
             </goals>
           </execution>
         </executions>
@@ -1023,7 +1023,7 @@ limitations under the License.]]></inlineHeader>
         <executions>
           <execution>
             <goals>
-              <goal>validate</goal>
+              <goal>format</goal>
             </goals>
           </execution>
         </executions>
