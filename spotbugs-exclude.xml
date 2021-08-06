@@ -24,4 +24,8 @@
     <Class name="org.jboss.pnc.build.finder.cli.Main"/>
     <Bug pattern="DM_EXIT,RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
   </Match>
+  <Match>
+    <Class name="org.jboss.pnc.build.finder.core.DistributionAnalyzer"/>
+    <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
+  </Match>
 </FindBugsFilter>
