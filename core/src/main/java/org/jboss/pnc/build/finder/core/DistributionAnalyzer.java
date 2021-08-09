@@ -95,8 +95,6 @@ public class DistributionAnalyzer implements Callable<Map<ChecksumType, MultiVal
 
     private Map<ChecksumType, MultiValuedMap<String, LocalFile>> map;
 
-    private StandardFileSystemManager sfs;
-
     private String root;
 
     private BlockingQueue<Checksum> queue;
@@ -144,169 +142,119 @@ public class DistributionAnalyzer implements Callable<Map<ChecksumType, MultiVal
 
     public Map<ChecksumType, MultiValuedMap<String, LocalFile>> checksumFiles() throws IOException {
         Instant startTime = Instant.now();
-        FileObject fo = null;
-        sfs = new StandardFileSystemManager();
 
-        try {
-            sfs.init();
-
-            if (!sfs.hasProvider("http")) {
-                sfs.addProvider("http", new Http5FileProvider());
-            }
-
-            if (!sfs.hasProvider("https")) {
-                sfs.addProvider("https", new Http5FileProvider());
-            }
-
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info(
-                        "Initialized file system manager {} with schemes: {}",
-                        green(sfs.getClass().getSimpleName()),
-                        green(Arrays.asList(sfs.getSchemes())));
-            }
+        try (StandardFileSystemManager sfs = createStandardFileSystemManager()) {
 
             for (String input : inputs) {
-                try {
-                    URI uri = URI.create(input);
-                    fo = sfs.resolveFile(uri);
-                } catch (IllegalArgumentException | FileSystemException e) {
-                    File file = new File(input);
 
-                    if (!file.exists()) {
-                        throw new IOException("Input file " + file + " does not exist");
-                    }
+                try (FileObject fo = getFileObjectOfFile(input, sfs)) {
 
-                    fo = sfs.resolveFile(file.toURI());
-                }
+                    root = fo.getName()
+                            .getFriendlyURI()
+                            .substring(0, fo.getName().getFriendlyURI().indexOf(fo.getName().getBaseName()));
+                    Set<Checksum> fileChecksums = cacheManager != null
+                            ? Checksum.checksum(fo, checksumTypesToCheck, root)
+                            : null;
 
-                if (LOGGER.isInfoEnabled()) {
-                    String filename = fo.getPublicURIString();
+                    if (fileChecksums != null) {
+                        Iterator<ChecksumType> it = checksumTypesToCheck.iterator();
 
-                    if (fo.isFile()) {
-                        LOGGER.info("Analyzing: {} ({})", green(filename), green(Utils.byteCountToDisplaySize(fo)));
-                    } else {
-                        LOGGER.info("Analyzing: {}", green(filename));
-                    }
-                }
+                        while (it.hasNext()) {
+                            ChecksumType checksumType = it.next();
+                            String value = Checksum.findByType(fileChecksums, checksumType)
+                                    .map(Checksum::getValue)
+                                    .orElse(null);
 
-                root = fo.getName()
-                        .getFriendlyURI()
-                        .substring(0, fo.getName().getFriendlyURI().indexOf(fo.getName().getBaseName()));
-                Set<Checksum> fileChecksums = cacheManager != null ? Checksum.checksum(fo, checksumTypesToCheck, root)
-                        : null;
+                            if (value != null) {
+                                MultiValuedMap<String, LocalFile> localMap = fileCaches.get(checksumType).get(value);
 
-                if (fileChecksums != null) {
-                    Iterator<ChecksumType> it = checksumTypesToCheck.iterator();
+                                if (localMap != null) {
+                                    this.map.get(checksumType).putAll(localMap);
 
-                    while (it.hasNext()) {
-                        ChecksumType checksumType = it.next();
-                        String value = Checksum.findByType(fileChecksums, checksumType)
-                                .map(Checksum::getValue)
-                                .orElse(null);
-
-                        if (value != null) {
-                            MultiValuedMap<String, LocalFile> localMap = fileCaches.get(checksumType).get(value);
-
-                            if (localMap != null) {
-                                this.map.get(checksumType).putAll(localMap);
-
-                                Collection<Map.Entry<String, LocalFile>> entries = localMap.entries();
-                                try {
-                                    for (Map.Entry<String, LocalFile> entry : entries) {
-                                        inverseMap.put(
-                                                entry.getValue().getFilename(),
-                                                new Checksum(checksumType, entry.getKey(), entry.getValue()));
+                                    Collection<Map.Entry<String, LocalFile>> entries = localMap.entries();
+                                    try {
+                                        for (Map.Entry<String, LocalFile> entry : entries) {
+                                            inverseMap.put(
+                                                    entry.getValue().getFilename(),
+                                                    new Checksum(checksumType, entry.getKey(), entry.getValue()));
+                                        }
+                                    } catch (ClassCastException e) {
+                                        LOGGER.error(
+                                                "Error loading cache {}: {}. The cache format has changed"
+                                                        + " and you will have to manually delete the existing cache",
+                                                boldRed(ConfigDefaults.CACHE_LOCATION),
+                                                boldRed(e.getMessage()),
+                                                e);
+                                        throw e;
                                     }
-                                } catch (ClassCastException e) {
-                                    LOGGER.error(
-                                            "Error loading cache {}: {}. The cache format has changed"
-                                                    + " and you will have to manually delete the existing cache",
-                                            boldRed(ConfigDefaults.CACHE_LOCATION),
-                                            boldRed(e.getMessage()),
-                                            e);
-                                    throw e;
-                                }
 
-                                if (queue != null && checksumType == ChecksumType.md5) {
-                                    for (Map.Entry<String, LocalFile> entry : entries) {
-                                        try {
-                                            Checksum checksum = new Checksum(
-                                                    checksumType,
-                                                    entry.getKey(),
-                                                    entry.getValue());
-                                            queue.put(checksum);
-                                        } catch (InterruptedException e) {
-                                            Thread.currentThread().interrupt();
-                                            throw new IOException(e);
+                                    if (queue != null && checksumType == ChecksumType.md5) {
+                                        for (Map.Entry<String, LocalFile> entry : entries) {
+                                            try {
+                                                Checksum checksum = new Checksum(
+                                                        checksumType,
+                                                        entry.getKey(),
+                                                        entry.getValue());
+                                                queue.put(checksum);
+                                            } catch (InterruptedException e) {
+                                                Thread.currentThread().interrupt();
+                                                throw new IOException(e);
+                                            }
                                         }
                                     }
+
+                                    it.remove();
+
+                                    int size = localMap.size();
+
+                                    if (listener != null) {
+                                        listener.checksumsComputed(new ChecksumsComputedEvent(size));
+                                    }
+
+                                    LOGGER.info(
+                                            "Loaded {} checksums for file: {} (checksum: {}) from cache",
+                                            green(size),
+                                            green(fo.getName()),
+                                            green(value));
+                                } else {
+                                    LOGGER.info(
+                                            "File: {} (checksum: {}) not found in cache",
+                                            green(fo.getName()),
+                                            green(value));
                                 }
-
-                                it.remove();
-
-                                int size = localMap.size();
-
-                                if (listener != null) {
-                                    listener.checksumsComputed(new ChecksumsComputedEvent(size));
-                                }
-
-                                LOGGER.info(
-                                        "Loaded {} checksums for file: {} (checksum: {}) from cache",
-                                        green(size),
-                                        green(fo.getName()),
-                                        green(value));
-                            } else {
-                                LOGGER.info(
-                                        "File: {} (checksum: {}) not found in cache",
-                                        green(fo.getName()),
-                                        green(value));
                             }
                         }
                     }
-                }
 
-                if (!checksumTypesToCheck.isEmpty()) {
-                    LOGGER.info(
-                            "Finding checksums: {} for file: {}",
-                            green(
-                                    String.join(
-                                            ", ",
-                                            checksumTypesToCheck.stream()
-                                                    .map(String::valueOf)
-                                                    .collect(Collectors.toSet()))),
-                            green(fo.getName()));
+                    if (!checksumTypesToCheck.isEmpty()) {
+                        LOGGER.info(
+                                "Finding checksums: {} for file: {}",
+                                green(
+                                        String.join(
+                                                ", ",
+                                                checksumTypesToCheck.stream()
+                                                        .map(String::valueOf)
+                                                        .collect(Collectors.toSet()))),
+                                green(fo.getName()));
 
-                    listChildren(fo);
+                        listChildren(fo, sfs);
 
-                    if (fileChecksums != null) {
-                        for (ChecksumType checksumType : checksumTypesToCheck) {
-                            Optional<Checksum> cksum = Checksum.findByType(fileChecksums, checksumType);
+                        if (fileChecksums != null) {
+                            for (ChecksumType checksumType : checksumTypesToCheck) {
+                                Optional<Checksum> cksum = Checksum.findByType(fileChecksums, checksumType);
 
-                            if (cksum.isPresent()) {
-                                fileCaches.get(checksumType).put(cksum.get().getValue(), map.get(checksumType));
-                            } else {
-                                throw new IOException("Checksum type " + checksumType + " not found");
+                                if (cksum.isPresent()) {
+                                    fileCaches.get(checksumType).put(cksum.get().getValue(), map.get(checksumType));
+                                } else {
+                                    throw new IOException("Checksum type " + checksumType + " not found");
+                                }
                             }
                         }
                     }
                 }
             }
         } finally {
-            if (fo != null) {
-                fo.close();
-            }
-
-            sfs.close();
-
-            // XXX: <https://issues.apache.org/jira/browse/VFS-634>
-            String tmpDir = System.getProperty("java.io.tmpdir");
-
-            if (tmpDir != null) {
-                File vfsCacheDir = new File(tmpDir, "vfs_cache");
-
-                Files.deleteIfExists(vfsCacheDir.toPath());
-            }
-
+            cleanupVfsCache();
             Utils.shutdownAndAwaitTermination(pool);
         }
 
@@ -328,7 +276,71 @@ public class DistributionAnalyzer implements Callable<Map<ChecksumType, MultiVal
         return Collections.unmodifiableMap(map);
     }
 
-    private boolean isArchive(FileObject fo) {
+    private void cleanupVfsCache() throws IOException {
+        // XXX: <https://issues.apache.org/jira/browse/VFS-634>
+        String tmpDir = System.getProperty("java.io.tmpdir");
+
+        if (tmpDir != null) {
+            File vfsCacheDir = new File(tmpDir, "vfs_cache");
+
+            Files.deleteIfExists(vfsCacheDir.toPath());
+        }
+    }
+
+    private StandardFileSystemManager createStandardFileSystemManager() throws FileSystemException {
+
+        StandardFileSystemManager sfs = new StandardFileSystemManager();
+        sfs.init();
+
+        if (!sfs.hasProvider("http")) {
+            sfs.addProvider("http", new Http5FileProvider());
+        }
+
+        if (!sfs.hasProvider("https")) {
+            sfs.addProvider("https", new Http5FileProvider());
+        }
+
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info(
+                    "Initialized file system manager {} with schemes: {}",
+                    green(sfs.getClass().getSimpleName()),
+                    green(Arrays.asList(sfs.getSchemes())));
+        }
+
+        return sfs;
+    }
+
+    private FileObject getFileObjectOfFile(String input, StandardFileSystemManager sfs) throws IOException {
+
+        FileObject fo = null;
+
+        try {
+            URI uri = URI.create(input);
+            fo = sfs.resolveFile(uri);
+        } catch (IllegalArgumentException | FileSystemException e) {
+            File file = new File(input);
+
+            if (!file.exists()) {
+                throw new IOException("Input file " + file + " does not exist");
+            }
+
+            fo = sfs.resolveFile(file.toURI());
+        }
+
+        if (LOGGER.isInfoEnabled()) {
+            String filename = fo.getPublicURIString();
+
+            if (fo.isFile()) {
+                LOGGER.info("Analyzing: {} ({})", green(filename), green(Utils.byteCountToDisplaySize(fo)));
+            } else {
+                LOGGER.info("Analyzing: {}", green(filename));
+            }
+        }
+
+        return fo;
+    }
+
+    private boolean isArchive(FileObject fo, StandardFileSystemManager sfs) {
         return !NON_ARCHIVE_SCHEMES.contains(fo.getName().getExtension())
                 && Stream.of(sfs.getSchemes()).anyMatch(s -> s.equals(fo.getName().getExtension()));
     }
@@ -348,7 +360,7 @@ public class DistributionAnalyzer implements Callable<Map<ChecksumType, MultiVal
         return Boolean.FALSE.equals(config.getDisableRecursion()) || isDistributionArchive(fo) || isTarArchive(fo);
     }
 
-    private void listArchive(FileObject fo) {
+    private void listArchive(FileObject fo, StandardFileSystemManager sfs) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Creating file system for: {}", Utils.normalizePath(fo, root));
         }
@@ -360,7 +372,7 @@ public class DistributionAnalyzer implements Callable<Map<ChecksumType, MultiVal
             layered = sfs.createFileSystem(fo.getName().getExtension(), fo);
             fs = layered.getFileSystem();
 
-            listChildren(layered);
+            listChildren(layered, sfs);
         } catch (IOException e) {
             String filename = Utils.normalizePath(fo, root);
             String message = e.getMessage();
@@ -453,7 +465,7 @@ public class DistributionAnalyzer implements Callable<Map<ChecksumType, MultiVal
         }
     }
 
-    private void listChildren(FileObject fo) throws IOException {
+    private void listChildren(FileObject fo, StandardFileSystemManager sfs) throws IOException {
         List<FileObject> localFiles = new ArrayList<>();
 
         try {
@@ -473,11 +485,11 @@ public class DistributionAnalyzer implements Callable<Map<ChecksumType, MultiVal
                         }
                     }
 
-                    if (isArchive(file)) {
+                    if (isArchive(file, sfs)) {
                         level.incrementAndGet();
 
                         if (shouldListArchive(file)) {
-                            listArchive(file);
+                            listArchive(file, sfs);
                         }
 
                         level.decrementAndGet();
