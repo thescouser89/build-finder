@@ -103,6 +103,11 @@
       <artifactId>rest-client</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.infinispan.protostream</groupId>
+      <artifactId>protostream-processor</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>com.github.luben</groupId>
       <artifactId>zstd-jni</artifactId>
       <scope>runtime</scope>

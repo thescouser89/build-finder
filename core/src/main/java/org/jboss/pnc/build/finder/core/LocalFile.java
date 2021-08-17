@@ -23,12 +23,15 @@ import java.util.Set;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.util.Util;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @JsonDeserialize
+// TODO: Remove this annotation once conversion to protobuf is done
 @SerializeWith(LocalFile.LocalFileExternalizer.class)
 public class LocalFile {
     private final String filename;
@@ -36,15 +39,18 @@ public class LocalFile {
     private final long size;
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+    @ProtoFactory
     public LocalFile(@JsonProperty("filename") String filename, @JsonProperty("size") long size) {
         this.filename = filename;
         this.size = size;
     }
 
+    @ProtoField(value = 1, required = true)
     public String getFilename() {
         return filename;
     }
 
+    @ProtoField(value = 2, required = true)
     public long getSize() {
         return size;
     }
@@ -54,6 +60,7 @@ public class LocalFile {
         return "LocalFile{" + "filename='" + filename + '\'' + ", size=" + size + '}';
     }
 
+    // TODO: Remove this class once conversion to protobuf is done
     public static class LocalFileExternalizer implements AdvancedExternalizer<LocalFile> {
         private static final long serialVersionUID = -3322870654564600039L;
 
