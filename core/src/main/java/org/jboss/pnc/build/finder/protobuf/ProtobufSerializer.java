@@ -21,7 +21,7 @@ import org.jboss.pnc.build.finder.core.LocalFile;
 
 @AutoProtoSchemaBuilder(
         includeClasses = { LocalFile.class, MultiValuedMapProtobufWrapper.class },
-        schemaFileName = "buildfinder.proto",
+        schemaFileName = "build-finder.proto",
         schemaFilePath = "proto/",
         schemaPackageName = "org.jboss.pnc.build.finder")
 public interface ProtobufSerializer extends GeneratedSchema {

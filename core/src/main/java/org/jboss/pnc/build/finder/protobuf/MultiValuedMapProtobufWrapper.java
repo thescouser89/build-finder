@@ -16,7 +16,6 @@
 package org.jboss.pnc.build.finder.protobuf;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.MultiValuedMap;
@@ -26,16 +25,16 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
 /**
- * Class wrapping around MultiValuedMap interface (via HashSetValuedHashMap) so that it can be marshalled with Protobuf
+ * Class wrapping around MultiValuedMap interface (via HashSetValuedHashMap) so that it can be marshalled with Protobuf.
  *
  * @param <K> The key type
  * @param <V> The value type
  */
 public class MultiValuedMapProtobufWrapper<K, V> extends HashSetValuedHashMap<K, V> {
-    private static final long serialVersionUID = 20211111L;
+    private static final long serialVersionUID = -4929571021288563518L;
 
     /**
-     * Constructor wrapping around the MultiValuedMap
+     * Constructor wrapping around the MultiValuedMap.
      *
      * @param map MultiValuedMap to wrap around
      */
@@ -44,18 +43,18 @@ public class MultiValuedMapProtobufWrapper<K, V> extends HashSetValuedHashMap<K,
     }
 
     /**
-     * This method is called for Protobuf -> MultiValuedMapWrapper convertor
+     * This method is called for Protobuf to MultiValuedMapWrapper convertor.
      *
      * @param entries
      */
     @ProtoFactory
-    MultiValuedMapProtobufWrapper(List<MultiValuedMapProtobufEntry<K, V>> entries) {
+    MultiValuedMapProtobufWrapper(Collection<MultiValuedMapProtobufEntry<K, V>> entries) {
         super();
         entries.forEach(a -> this.putAll(a.key, a.values));
     }
 
     @ProtoField(number = 1)
-    List<MultiValuedMapProtobufEntry<K, V>> getEntries() {
+    Collection<MultiValuedMapProtobufEntry<K, V>> getEntries() {
         return this.asMap()
                 .entrySet()
                 .stream()
@@ -68,7 +67,7 @@ public class MultiValuedMapProtobufWrapper<K, V> extends HashSetValuedHashMap<K,
      *
      * The key and values are marshalled as a WrappedMessage. In theory, the WrappedMessage object should know how to
      * marshall primitives, enums, and other POJO objects which can be marshalled by Protobuf (as long as they are in
-     * the `AutoProtoSchemaBuilder` list in the ProtobufSerializer interface
+     * the `AutoProtoSchemaBuilder` list in the ProtobufSerializer interface.
      *
      * @param <K> Key type
      * @param <V> Value type
@@ -76,12 +75,13 @@ public class MultiValuedMapProtobufWrapper<K, V> extends HashSetValuedHashMap<K,
      * @see ProtobufSerializer
      */
     static class MultiValuedMapProtobufEntry<K, V> {
-
         private K key;
+
         private Collection<V> values;
 
         // Required by Protostream
         MultiValuedMapProtobufEntry() {
+
         }
 
         MultiValuedMapProtobufEntry(K key, Collection<V> values) {
@@ -91,7 +91,7 @@ public class MultiValuedMapProtobufWrapper<K, V> extends HashSetValuedHashMap<K,
 
         @SuppressWarnings("unchecked")
         @ProtoFactory
-        MultiValuedMapProtobufEntry(WrappedMessage key, List<WrappedMessage> values) {
+        MultiValuedMapProtobufEntry(WrappedMessage key, Collection<WrappedMessage> values) {
             this.key = (K) key.getValue();
             this.values = values.stream().map(a -> (V) a.getValue()).collect(Collectors.toList());
         }
@@ -102,7 +102,7 @@ public class MultiValuedMapProtobufWrapper<K, V> extends HashSetValuedHashMap<K,
         }
 
         @ProtoField(number = 2)
-        List<WrappedMessage> getValues() {
+        Collection<WrappedMessage> getValues() {
             return this.values.stream().map(WrappedMessage::new).collect(Collectors.toList());
         }
     }
