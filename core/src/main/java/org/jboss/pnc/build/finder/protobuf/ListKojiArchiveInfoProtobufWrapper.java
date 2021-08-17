@@ -16,6 +16,7 @@
 package org.jboss.pnc.build.finder.protobuf;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -24,15 +25,19 @@ import org.infinispan.protostream.annotations.ProtoField;
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 
 /**
- * Class to wrap around a List of KojiArchiveInfo. This is used so that Protostream can properly marshall / unmarshall
- * the list and avoid this Protostream bug (https://issues.redhat.com/browse/IPROTO-219).
+ * Class to wrap around a List of {@link com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo}. This is used so that
+ * Protostream can properly marshall/unmarshall the list and avoid this Protostream bug
+ * (<a href="https://issues.redhat.com/browse/IPROTO-219">IPROTO-219</a>).
+ *
+ * @see <a href="https://issues.redhat.com/browse/IPROTO-219">IPROTO-219</a>
  */
 public class ListKojiArchiveInfoProtobufWrapper {
     /**
      * We cannot use Collections.emptyList because Protostream has no idea how to marshall it. Instead, we use an empty
      * ArrayList.
      */
-    private List<KojiArchiveInfo> data = new ArrayList<>(0);
+    private static final List<KojiArchiveInfo> EMPTY_LIST = Collections.unmodifiableList(new ArrayList<>(0));
+    private List<KojiArchiveInfo> data;
 
     public ListKojiArchiveInfoProtobufWrapper() {
 
@@ -45,6 +50,6 @@ public class ListKojiArchiveInfoProtobufWrapper {
 
     @ProtoField(1)
     public List<KojiArchiveInfo> getData() {
-        return data;
+        return data == null ? EMPTY_LIST : data;
     }
 }

@@ -25,7 +25,8 @@ import com.redhat.red.build.koji.model.json.util.KojiObjectMapper;
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 
 /**
- * Protostream adapter to be able to properly marshall / unmarshall KojiArchiveInfo.
+ * Protostream adapter to be able to properly marshall/unmarshall
+ * {@link com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo}.
  *
  * This class is defined in Kojiji and can't be easily modified to add Proto annotations. Instead, the marshalling
  * process involves converting KojiArchiveInfo object into JSON and stored in Protobuf as a string. The unmarshalling

@@ -596,11 +596,17 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
                     buildCache.put(cacheRpmBuildInfo.getBuildInfo().getId(), cacheRpmBuildInfo);
                 }
             } else {
-                if (cacheManager == null || checksumCaches.get(ChecksumType.md5).get(checksum.getValue()) == null) {
+                ListKojiArchiveInfoProtobufWrapper wrapper = null;
+
+                if (checksumCaches != null) {
+                    wrapper = checksumCaches.get(ChecksumType.md5).get(checksum.getValue());
+                }
+
+                if (cacheManager == null || wrapper == null) {
                     LOGGER.debug("Add checksum {} to list", checksum);
                     checksums.add(entry);
                 } else {
-                    cacheArchiveInfos = checksumCaches.get(ChecksumType.md5).get(checksum.getValue()).getData();
+                    cacheArchiveInfos = wrapper.getData();
                     LOGGER.debug(
                             "Checksum {} cached with build ids {}",
                             green(checksum),
