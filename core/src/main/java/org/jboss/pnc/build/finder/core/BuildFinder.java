@@ -54,6 +54,7 @@ import org.jboss.pnc.build.finder.koji.ClientSession;
 import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.build.finder.koji.KojiLocalArchive;
 import org.jboss.pnc.build.finder.pnc.client.PncClient;
+import org.jboss.pnc.build.finder.protobuf.ListKojiArchiveInfoProtobufWrapper;
 import org.jboss.pnc.client.RemoteResourceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,7 +93,7 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
 
     private final DistributionAnalyzer analyzer;
 
-    private Map<ChecksumType, BasicCache<String, List<KojiArchiveInfo>>> checksumCaches;
+    private Map<ChecksumType, BasicCache<String, ListKojiArchiveInfoProtobufWrapper>> checksumCaches;
 
     private BasicCache<Integer, KojiBuild> buildCache;
 
@@ -595,11 +596,11 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
                     buildCache.put(cacheRpmBuildInfo.getBuildInfo().getId(), cacheRpmBuildInfo);
                 }
             } else {
-                if (cacheManager == null || (cacheArchiveInfos = checksumCaches.get(ChecksumType.md5)
-                        .get(checksum.getValue())) == null) {
+                if (cacheManager == null || checksumCaches.get(ChecksumType.md5).get(checksum.getValue()) == null) {
                     LOGGER.debug("Add checksum {} to list", checksum);
                     checksums.add(entry);
                 } else {
+                    cacheArchiveInfos = checksumCaches.get(ChecksumType.md5).get(checksum.getValue()).getData();
                     LOGGER.debug(
                             "Checksum {} cached with build ids {}",
                             green(checksum),
@@ -686,7 +687,7 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
 
             if (archiveList.isEmpty()) {
                 if (cacheManager != null) {
-                    checksumCaches.get(ChecksumType.md5).put(queryChecksum, Collections.emptyList());
+                    checksumCaches.get(ChecksumType.md5).put(queryChecksum, new ListKojiArchiveInfoProtobufWrapper());
                 }
             } else {
                 String archiveChecksum = archiveList.get(0).getChecksum();
@@ -699,7 +700,8 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
                 }
 
                 if (cacheManager != null) {
-                    checksumCaches.get(ChecksumType.md5).put(queryChecksum, archiveList);
+                    checksumCaches.get(ChecksumType.md5)
+                            .put(queryChecksum, new ListKojiArchiveInfoProtobufWrapper(archiveList));
                 }
             }
         }
