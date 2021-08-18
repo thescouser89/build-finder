@@ -20,7 +20,12 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.jboss.pnc.build.finder.core.LocalFile;
 
 @AutoProtoSchemaBuilder(
-        includeClasses = { LocalFile.class, MultiValuedMapProtobufWrapper.class },
+        includeClasses = {
+                LocalFile.class,
+                MultiValuedMapProtobufWrapper.class,
+                KojiArchiveInfoAdapter.class,
+                KojiBuildAdapter.class,
+                ListKojiArchiveInfoProtobufWrapper.class },
         schemaFileName = "build-finder.proto",
         schemaFilePath = "proto/",
         schemaPackageName = "org.jboss.pnc.build.finder")

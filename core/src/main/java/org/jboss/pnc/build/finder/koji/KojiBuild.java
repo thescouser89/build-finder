@@ -15,18 +15,10 @@
  */
 package org.jboss.pnc.build.finder.koji;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.SerializeWith;
-import org.infinispan.commons.util.Util;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.redhat.red.build.koji.model.json.KojiJsonConstants;
@@ -38,7 +30,6 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiTagInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTaskInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTaskRequest;
 
-@SerializeWith(KojiBuild.KojiBuildExternalizer.class)
 public class KojiBuild {
     public static final String KEY_VERSION = "version";
 
@@ -302,59 +293,5 @@ public class KojiBuild {
         return "KojiBuild [buildInfo=" + buildInfo + ", taskInfo=" + taskInfo + ", taskRequest=" + taskRequest
                 + ", archives=" + archives + ", remoteArchives=" + remoteArchives + ", tags=" + tags + ", remoteRpms="
                 + remoteRpms + ", duplicateArchives=" + duplicateArchives + "]";
-    }
-
-    public static class KojiBuildExternalizer implements AdvancedExternalizer<KojiBuild> {
-        private static final long serialVersionUID = 8698588352614405297L;
-
-        private static final int VERSION = 2;
-
-        private static final Integer ID = (Character.getNumericValue('K') << 16) | (Character.getNumericValue('B') << 8)
-                | Character.getNumericValue('F');
-
-        @Override
-        public void writeObject(ObjectOutput output, KojiBuild object) throws IOException {
-            output.writeInt(VERSION);
-            output.writeObject(object.getBuildInfo());
-            output.writeObject(object.getTaskInfo());
-            output.writeObject(object.getRemoteArchives());
-            output.writeObject(object.getTags());
-            output.writeObject(object.getTypes());
-            output.writeObject(object.getRemoteRpms());
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public KojiBuild readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-            int version = input.readInt();
-
-            if (version != 1 && version != 2) {
-                throw new IOException("Invalid version: " + version);
-            }
-
-            KojiBuild build = new KojiBuild();
-
-            build.setBuildInfo((KojiBuildInfo) input.readObject());
-            build.setTaskInfo((KojiTaskInfo) input.readObject());
-            build.setRemoteArchives((List<KojiArchiveInfo>) input.readObject());
-            build.setTags((List<KojiTagInfo>) input.readObject());
-            build.setTypes((List<String>) input.readObject());
-
-            if (version > 1) {
-                build.setRemoteRpms((List<KojiRpmInfo>) input.readObject());
-            }
-
-            return build;
-        }
-
-        @Override
-        public Set<Class<? extends KojiBuild>> getTypeClasses() {
-            return Util.asSet(KojiBuild.class);
-        }
-
-        @Override
-        public Integer getId() {
-            return ID;
-        }
     }
 }

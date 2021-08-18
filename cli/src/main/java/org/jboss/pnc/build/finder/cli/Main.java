@@ -49,7 +49,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationChildBuilder;
-import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.pnc.build.finder.core.BuildConfig;
@@ -68,6 +67,7 @@ import org.jboss.pnc.build.finder.koji.KojiClientSession;
 import org.jboss.pnc.build.finder.koji.KojiJSONUtils;
 import org.jboss.pnc.build.finder.pnc.client.HashMapCachingPncClient;
 import org.jboss.pnc.build.finder.pnc.client.PncClient;
+import org.jboss.pnc.build.finder.protobuf.ProtobufSerializerImpl;
 import org.jboss.pnc.build.finder.report.Report;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -422,17 +422,13 @@ public final class Main implements Callable<Void> {
     }
 
     private void initCaches(BuildConfig config) {
-        KojiBuild.KojiBuildExternalizer kojiBuildExternalizer = new KojiBuild.KojiBuildExternalizer();
-        LocalFile.LocalFileExternalizer localFileExternalizer = new LocalFile.LocalFileExternalizer();
         GlobalConfigurationChildBuilder globalConfig = new GlobalConfigurationBuilder();
         String location = new File(ConfigDefaults.CACHE_LOCATION).getAbsolutePath();
 
         globalConfig.globalState()
                 .persistentLocation(location)
                 .serialization()
-                .marshaller(new GenericJBossMarshaller())
-                .addAdvancedExternalizer(kojiBuildExternalizer.getId(), kojiBuildExternalizer)
-                .addAdvancedExternalizer(localFileExternalizer.getId(), localFileExternalizer)
+                .addContextInitializer(new ProtobufSerializerImpl())
                 .allowList()
                 .addRegexp(".*")
                 .create();

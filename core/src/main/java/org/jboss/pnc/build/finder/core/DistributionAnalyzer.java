@@ -59,6 +59,7 @@ import org.apache.commons.vfs2.impl.StandardFileSystemManager;
 import org.apache.commons.vfs2.provider.http5.Http5FileProvider;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.BasicCacheContainer;
+import org.jboss.pnc.build.finder.protobuf.MultiValuedMapProtobufWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,7 +83,7 @@ public class DistributionAnalyzer implements Callable<Map<ChecksumType, MultiVal
 
     private final BuildConfig config;
 
-    private final Map<ChecksumType, BasicCache<String, MultiValuedMap<String, LocalFile>>> fileCaches;
+    private final Map<ChecksumType, BasicCache<String, MultiValuedMapProtobufWrapper<String, LocalFile>>> fileCaches;
 
     private final BasicCacheContainer cacheManager;
 
@@ -243,7 +244,10 @@ public class DistributionAnalyzer implements Callable<Map<ChecksumType, MultiVal
                                 Optional<Checksum> cksum = Checksum.findByType(fileChecksums, checksumType);
 
                                 if (cksum.isPresent()) {
-                                    fileCaches.get(checksumType).put(cksum.get().getValue(), map.get(checksumType));
+                                    fileCaches.get(checksumType)
+                                            .put(
+                                                    cksum.get().getValue(),
+                                                    new MultiValuedMapProtobufWrapper<>(map.get(checksumType)));
                                 } else {
                                     throw new IOException("Checksum type " + checksumType + " not found");
                                 }
