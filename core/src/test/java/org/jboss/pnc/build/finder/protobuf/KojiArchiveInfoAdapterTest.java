@@ -23,17 +23,15 @@ import org.junit.jupiter.api.Test;
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 
 class KojiArchiveInfoAdapterTest {
-
     private static final EasyRandom EASY_RANDOM = new EasyRandom();
 
     @Test
     public void testSerializeDeserializeKojiArchiveInfo() {
         KojiArchiveInfo kojiArchiveInfo = EASY_RANDOM.nextObject(KojiArchiveInfo.class);
-
         KojiArchiveInfoAdapter adapter = new KojiArchiveInfoAdapter();
         String json = adapter.getJsonData(kojiArchiveInfo);
-
         KojiArchiveInfo deSerialized = adapter.create(json);
+
         assertEquals(kojiArchiveInfo.getArchiveId(), deSerialized.getArchiveId());
     }
 }

@@ -22,14 +22,12 @@ import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.Test;
 
 class KojiBuildAdapterTest {
-
     private static final EasyRandom EASY_RANDOM = new EasyRandom();
 
     @Test
     public void testSerializeDeserializeKojiBuild() {
         KojiBuild kojiBuild = EASY_RANDOM.nextObject(KojiBuild.class);
         KojiBuildAdapter adapter = new KojiBuildAdapter();
-
         String json = adapter.getJsonData(kojiBuild);
         KojiBuild deserialized = adapter.create(json);
 
