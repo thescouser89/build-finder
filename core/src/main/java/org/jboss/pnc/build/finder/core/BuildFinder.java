@@ -38,10 +38,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -70,7 +72,8 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiRpmInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTagInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTaskInfo;
 
-public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>> {
+public class BuildFinder
+        implements Callable<Map<BuildSystemInteger, KojiBuild>>, Supplier<Map<BuildSystemInteger, KojiBuild>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildFinder.class);
 
     private static final String BUILDS_FILENAME = "builds.json";
@@ -1201,6 +1204,23 @@ public class BuildFinder implements Callable<Map<BuildSystemInteger, KojiBuild>>
         }
 
         return allBuilds;
+    }
+
+    /**
+     * Provide a Supplier version of the Callable. This is useful when using the BuildFinder to obtain a
+     * CompletableFuture (via {@link java.util.concurrent.CompletableFuture#supplyAsync(Supplier)})
+     *
+     * throws CompletionException if a KojiClientException is thrown
+     *
+     * @return For each checksum type (key), the checksum values of the files
+     */
+    @Override
+    public Map<BuildSystemInteger, KojiBuild> get() {
+        try {
+            return call();
+        } catch (KojiClientException e) {
+            throw new CompletionException(e);
+        }
     }
 
     public void setListener(BuildFinderListener listener) {
