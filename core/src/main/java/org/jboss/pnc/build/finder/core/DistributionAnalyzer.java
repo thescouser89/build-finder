@@ -39,12 +39,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -64,7 +66,8 @@ import org.jboss.pnc.build.finder.protobuf.MultiValuedMapProtobufWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DistributionAnalyzer implements Callable<Map<ChecksumType, MultiValuedMap<String, LocalFile>>> {
+public class DistributionAnalyzer implements Callable<Map<ChecksumType, MultiValuedMap<String, LocalFile>>>,
+        Supplier<Map<ChecksumType, MultiValuedMap<String, LocalFile>>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributionAnalyzer.class);
 
     /**
@@ -572,6 +575,23 @@ public class DistributionAnalyzer implements Callable<Map<ChecksumType, MultiVal
         }
 
         return Collections.unmodifiableMap(map);
+    }
+
+    /**
+     * Provide a Supplier version of the Callable. This is useful when using the DistributionAnalyzer to obtain a
+     * CompletableFuture (via {@link java.util.concurrent.CompletableFuture#supplyAsync(Supplier)})
+     *
+     * throws CompletionException if an IO exception is thrown
+     *
+     * @return For each checksum type (key), the checksum values of the files
+     */
+    @Override
+    public Map<ChecksumType, MultiValuedMap<String, LocalFile>> get() {
+        try {
+            return call();
+        } catch (IOException e) {
+            throw new CompletionException(e);
+        }
     }
 
     public BlockingQueue<Checksum> getQueue() {
