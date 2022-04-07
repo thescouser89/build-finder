@@ -107,6 +107,8 @@ public class DistributionAnalyzer implements Callable<Map<ChecksumType, MultiVal
 
     private DistributionAnalyzerListener listener;
 
+    private CancelWrapper cancelWrapper;
+
     public DistributionAnalyzer(List<String> inputs, BuildConfig config) {
         this(inputs, config, null);
     }
@@ -136,6 +138,20 @@ public class DistributionAnalyzer implements Callable<Map<ChecksumType, MultiVal
         level = new AtomicInteger();
         pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         fileErrors = new ArrayList<>();
+
+        // make sure the cancelWrapper field is never null. Set by default to not cancel
+        this.cancelWrapper = new CancelWrapper();
+    }
+
+    /**
+     * Use the cancelWrapper to be able to cancel the callable if necessary.
+     *
+     * @param cancelWrapper object that allows us to cancel the callable
+     */
+    public void setCancelWrapper(CancelWrapper cancelWrapper) {
+        if (cancelWrapper != null) {
+            this.cancelWrapper = cancelWrapper;
+        }
     }
 
     private static boolean isJar(FileObject fo) {
@@ -151,6 +167,7 @@ public class DistributionAnalyzer implements Callable<Map<ChecksumType, MultiVal
 
         try (FileSystemManager manager = createManager()) {
             for (String input : inputs) {
+                cancelWrapper.checkIfWeNeedToStop();
 
                 try (FileObject fo = getFileObjectOfFile(manager, input)) {
                     root = fo.getName()
@@ -164,6 +181,7 @@ public class DistributionAnalyzer implements Callable<Map<ChecksumType, MultiVal
                         Iterator<ChecksumType> it = checksumTypesToCheck.iterator();
 
                         while (it.hasNext()) {
+                            cancelWrapper.checkIfWeNeedToStop();
                             ChecksumType checksumType = it.next();
                             String value = Checksum.findByType(fileChecksums, checksumType)
                                     .map(Checksum::getValue)
@@ -230,6 +248,8 @@ public class DistributionAnalyzer implements Callable<Map<ChecksumType, MultiVal
                         }
                     }
 
+                    cancelWrapper.checkIfWeNeedToStop();
+
                     if (!checksumTypesToCheck.isEmpty()) {
                         LOGGER.info(
                                 "Finding checksums: {} for file: {}",
@@ -245,6 +265,7 @@ public class DistributionAnalyzer implements Callable<Map<ChecksumType, MultiVal
 
                         if (fileChecksums != null) {
                             for (ChecksumType checksumType : checksumTypesToCheck) {
+                                cancelWrapper.checkIfWeNeedToStop();
                                 Optional<Checksum> cksum = Checksum.findByType(fileChecksums, checksumType);
 
                                 if (cksum.isPresent()) {
@@ -484,6 +505,7 @@ public class DistributionAnalyzer implements Callable<Map<ChecksumType, MultiVal
             Collection<Callable<Set<Checksum>>> tasks = new ArrayList<>(numChildren);
 
             for (FileObject file : localFiles) {
+                cancelWrapper.checkIfWeNeedToStop();
                 if (file.isFile()) {
                     if (includeFile(file)) {
                         if ("tar".equals(file.getName().getScheme())) {
@@ -601,4 +623,5 @@ public class DistributionAnalyzer implements Callable<Map<ChecksumType, MultiVal
     public void setListener(DistributionAnalyzerListener listener) {
         this.listener = listener;
     }
+
 }

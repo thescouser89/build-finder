@@ -113,6 +113,7 @@ public class BuildFinder
     private final BuildFinderUtils buildFinderUtils;
 
     private BuildFinderListener listener;
+    private CancelWrapper cancelWrapper;
 
     public BuildFinder(ClientSession session, BuildConfig config) {
         this(session, config, null, null, null);
@@ -163,6 +164,9 @@ public class BuildFinder
         this.foundChecksums = new HashMap<>();
         this.notFoundChecksums = new HashMap<>();
 
+        // make sure the cancelWrapper field is never null. Set by default to not cancel
+        this.cancelWrapper = new CancelWrapper();
+
         initBuilds();
     }
 
@@ -172,6 +176,17 @@ public class BuildFinder
 
     public static String getBuildsFilename() {
         return BUILDS_FILENAME;
+    }
+
+    /**
+     * Use the cancelWrapper to be able to cancel the callable if necessary.
+     *
+     * @param cancelWrapper object that allows us to cancel the callable
+     */
+    public void setCancelWrapper(CancelWrapper cancelWrapper) {
+        if (cancelWrapper != null) {
+            this.cancelWrapper = cancelWrapper;
+        }
     }
 
     private void initBuilds() {
@@ -572,6 +587,7 @@ public class BuildFinder
         Collection<Entry<Checksum, Collection<String>>> rpmEntries = new ArrayList<>(numEntries);
 
         for (Entry<Checksum, Collection<String>> entry : entries) {
+            cancelWrapper.checkIfWeNeedToStop();
             Checksum checksum = entry.getKey();
             Collection<String> filenames = entry.getValue();
 
@@ -636,11 +652,13 @@ public class BuildFinder
             Collection<Callable<List<List<KojiArchiveInfo>>>> tasks = new ArrayList<>(numChecksums);
 
             for (int i = 0; i < numChunks; i++) {
+                cancelWrapper.checkIfWeNeedToStop();
                 int chunkNumber = i + 1;
                 List<Entry<Checksum, Collection<String>>> chunk = chunks.get(i);
                 List<KojiArchiveQuery> queries = new ArrayList<>(numChunks);
 
                 for (Entry<Checksum, Collection<String>> entry : chunk) {
+                    cancelWrapper.checkIfWeNeedToStop();
                     Checksum checksum = entry.getKey();
                     KojiArchiveQuery query = new KojiArchiveQuery().withChecksum(checksum.getValue());
 
@@ -667,6 +685,7 @@ public class BuildFinder
                 List<Future<List<List<KojiArchiveInfo>>>> futures = pool.invokeAll(tasks);
 
                 for (Future<List<List<KojiArchiveInfo>>> future : futures) {
+                    cancelWrapper.checkIfWeNeedToStop();
                     try {
                         List<List<KojiArchiveInfo>> archiveFutures = future.get();
                         archives.addAll(archiveFutures);
@@ -689,6 +708,7 @@ public class BuildFinder
         Iterator<KojiArchiveQuery> itqueries = allQueries.iterator();
 
         for (List<KojiArchiveInfo> archiveList : archives) {
+            cancelWrapper.checkIfWeNeedToStop();
             String queryChecksum = itqueries.next().getChecksum();
 
             if (archiveList.isEmpty()) {
@@ -726,6 +746,7 @@ public class BuildFinder
             Iterator<Integer> it = buildIds.iterator();
 
             while (it.hasNext()) {
+                cancelWrapper.checkIfWeNeedToStop();
                 Integer id = it.next();
                 KojiBuild build = buildCache.get(id);
 
@@ -760,6 +781,7 @@ public class BuildFinder
             List<KojiArchiveQuery> queries = new ArrayList<>(buildIdsSize);
 
             for (Integer buildId : buildIds) {
+                cancelWrapper.checkIfWeNeedToStop();
                 KojiArchiveQuery query = new KojiArchiveQuery().withBuildId(buildId);
                 queries.add(query);
             }
@@ -782,6 +804,7 @@ public class BuildFinder
             List<Integer> taskIds = new ArrayList<>(archiveBuilds.size());
 
             for (KojiBuildInfo archiveBuild : archiveBuilds) {
+                cancelWrapper.checkIfWeNeedToStop();
                 Integer taskId = archiveBuild.getTaskId();
 
                 if (taskId != null) {
@@ -823,6 +846,7 @@ public class BuildFinder
             Iterator<KojiTaskInfo> ittasks = taskInfos.iterator();
 
             while (itbuilds.hasNext()) {
+                cancelWrapper.checkIfWeNeedToStop();
                 KojiBuildInfo buildInfo = itbuilds.next();
                 KojiBuild build = new KojiBuild(buildInfo);
 
@@ -851,6 +875,7 @@ public class BuildFinder
             Collection<KojiBuild> values = allKojiBuilds.values();
 
             for (KojiBuild build : values) {
+                cancelWrapper.checkIfWeNeedToStop();
                 List<Optional<KojiArchiveInfo>> sources = Arrays
                         .asList(build.getScmSourcesZip(), build.getProjectSourcesTgz(), build.getPatchesZip());
 
@@ -879,6 +904,7 @@ public class BuildFinder
         Iterator<List<KojiArchiveInfo>> itarchives = archives.iterator();
 
         while (itchecksums.hasNext()) {
+            cancelWrapper.checkIfWeNeedToStop();
             Entry<Checksum, Collection<String>> entry = itchecksums.next();
             Checksum checksum = entry.getKey();
             Collection<String> filenames = entry.getValue();
@@ -1004,6 +1030,7 @@ public class BuildFinder
         Iterator<KojiLocalArchive> it = localArchives.iterator();
 
         while (it.hasNext()) {
+            cancelWrapper.checkIfWeNeedToStop();
             KojiLocalArchive localArchive = it.next();
             Collection<String> filenames = localArchive.getFilenames();
 
@@ -1012,6 +1039,7 @@ public class BuildFinder
             Iterator<String> it2 = filenames.iterator();
 
             while (it2.hasNext()) {
+                cancelWrapper.checkIfWeNeedToStop();
                 String filename = it2.next();
                 Optional<String> optionalParentFilename = handleFileNotFound(filename);
 
@@ -1135,6 +1163,7 @@ public class BuildFinder
 
         while (!finished) {
             try {
+                cancelWrapper.checkIfWeNeedToStop();
                 checksum = analyzer.getQueue().take();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -1167,7 +1196,7 @@ public class BuildFinder
             FindBuildsResult pncBuildsNew;
             Map<BuildSystemInteger, KojiBuild> kojiBuildsNew;
             Map<Checksum, Collection<String>> map = localchecksumMap.asMap();
-
+            cancelWrapper.checkIfWeNeedToStop();
             if (config.getBuildSystems().contains(BuildSystem.pnc) && config.getPncURL() != null) {
                 try {
                     pncBuildsNew = pncBuildFinder.findBuildsPnc(map);
