@@ -113,7 +113,7 @@
     <version.org.apache.maven.plugins.maven-release-plugin>3.0.0-M5</version.org.apache.maven.plugins.maven-release-plugin>
     <version.org.apache.maven.plugins.maven-resources-plugin>3.2.0</version.org.apache.maven.plugins.maven-resources-plugin>
     <version.org.apache.maven.plugins.maven-shade-plugin>3.3.0</version.org.apache.maven.plugins.maven-shade-plugin>
-    <version.org.apache.maven.plugins.maven-site-plugin>3.11.0</version.org.apache.maven.plugins.maven-site-plugin>
+    <version.org.apache.maven.plugins.maven-site-plugin>3.12.0</version.org.apache.maven.plugins.maven-site-plugin>
     <version.org.apache.maven.plugins.maven-source-plugin>3.2.1</version.org.apache.maven.plugins.maven-source-plugin>
     <version.org.apache.maven.plugins.maven-surefire-plugin>3.0.0-M6</version.org.apache.maven.plugins.maven-surefire-plugin>
     <version.org.assertj>3.22.0</version.org.assertj>
@@ -127,18 +127,18 @@
     <version.org.ec4j.maven.editorconfig-maven-plugin>0.1.1</version.org.ec4j.maven.editorconfig-maven-plugin>
     <version.org.eclipse.packager>0.18.0</version.org.eclipse.packager>
     <version.org.fusesource.jansi>2.4.0</version.org.fusesource.jansi>
-    <version.org.infinispan>13.0.8.Final</version.org.infinispan>
-    <version.org.infinispan.protostream>4.4.1.Final</version.org.infinispan.protostream>
+    <version.org.infinispan>13.0.9.Final</version.org.infinispan>
+    <version.org.infinispan.protostream>4.4.2.Final</version.org.infinispan.protostream>
     <version.org.jacoco>0.8.8</version.org.jacoco>
     <version.org.jboss.byteman>4.0.18</version.org.jboss.byteman>
     <version.org.jboss.logmanager>2.1.18.Final</version.org.jboss.logmanager>
-    <version.org.jboss.pnc>2.3.0</version.org.jboss.pnc>
+    <version.org.jboss.pnc>2.3.1</version.org.jboss.pnc>
     <version.org.jboss.pnc.pnc-api>2.3.0</version.org.jboss.pnc.pnc-api>
     <version.org.jeasy>5.0.0</version.org.jeasy>
     <version.org.json.json>20200518</version.org.json.json>
     <version.org.junit>5.8.2</version.org.junit>
-    <version.org.junit-pioneer>1.6.2</version.org.junit-pioneer>
-    <version.org.mockito>4.4.0</version.org.mockito>
+    <version.org.junit-pioneer>1.7.0</version.org.junit-pioneer>
+    <version.org.mockito>4.5.0</version.org.mockito>
     <version.org.ow2.asm>9.3</version.org.ow2.asm>
     <version.org.slf4j>1.7.36</version.org.slf4j>
     <version.org.sonatype.plugins.nexus-staging-maven-plugin>1.6.12</version.org.sonatype.plugins.nexus-staging-maven-plugin>
@@ -316,6 +316,12 @@
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
         <version>${version.org.slf4j}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.infinispan.protostream</groupId>
+        <artifactId>protostream</artifactId>
+        <version>${version.org.infinispan.protostream}</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.infinispan.protostream</groupId>
