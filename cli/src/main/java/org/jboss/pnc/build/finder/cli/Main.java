@@ -595,12 +595,21 @@ public final class Main implements Callable<Void> {
                 try {
                     checksums = futureChecksum.get();
                 } catch (ExecutionException e) {
-                    LOGGER.error("Error getting checksums: {}", boldRed(e.getMessage()), e);
+                    LOGGER.error("Error getting checksums: {}", boldRed(e.getMessage()));
                     LOGGER.debug("Error", e);
                     System.exit(1);
                 } catch (InterruptedException e) {
-                    LOGGER.warn("Thread interrupted while getting checksums", e);
+                    LOGGER.warn("Thread interrupted while getting checksums");
+                    LOGGER.debug("Error", e);
                     Thread.currentThread().interrupt();
+                }
+
+                try {
+                    analyzer.outputLicensesToFile();
+                } catch (IOException e) {
+                    LOGGER.error("Error writing licenses file: {}", boldRed(e.getMessage()));
+                    LOGGER.debug("Error", e);
+                    System.exit(1);
                 }
 
                 Set<ChecksumType> keySet = checksums.keySet();
@@ -785,25 +794,34 @@ public final class Main implements Callable<Void> {
                     try {
                         builds = futureBuilds.get();
                     } catch (ExecutionException e) {
-                        LOGGER.error("Error getting builds {}", boldRed(e.getMessage()), e);
+                        LOGGER.error("Error getting builds {}", boldRed(e.getMessage()));
                         LOGGER.debug("ExecutionException", e);
                         System.exit(1);
                     } catch (InterruptedException e) {
-                        LOGGER.warn("Thread interrupted while getting builds", e);
+                        LOGGER.warn("Thread interrupted while getting builds");
+                        LOGGER.debug("Error", e);
                         Thread.currentThread().interrupt();
                     }
 
-                    JSONUtils.dumpObjectToFile(builds, buildsFile);
+                    try {
+                        analyzer.outputLicensesToFile();
+                    } catch (IOException e) {
+                        LOGGER.error("Error writing licenses file: {}", boldRed(e.getMessage()));
+                        LOGGER.debug("Error", e);
+                    }
+
+                    try {
+                        JSONUtils.dumpObjectToFile(builds, buildsFile);
+                    } catch (IOException e) {
+                        LOGGER.error("Error writing builds file: {}", boldRed(e.getMessage()));
+                        LOGGER.debug("Error", e);
+                    }
                 } catch (KojiClientException e) {
-                    LOGGER.error("Error finding builds: {}", boldRed(e.getMessage()), e);
+                    LOGGER.error("Error finding builds: {}", boldRed(e.getMessage()));
                     LOGGER.debug("Koji Client Error", e);
                     System.exit(1);
-                } catch (IOException e) {
-                    LOGGER.error("Error finding builds: {}", boldRed(e.getMessage()), e);
-                    LOGGER.debug("IOException", e);
-                    System.exit(1);
                 } catch (RuntimeException e) {
-                    LOGGER.error("Error finding builds: {}", boldRed(e.getMessage()), e);
+                    LOGGER.error("Error finding builds: {}", boldRed(e.getMessage()));
                     LOGGER.debug("Exception", e);
                     System.exit(1);
                 }
