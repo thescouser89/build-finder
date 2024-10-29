@@ -23,12 +23,12 @@
     <groupId>org.jboss</groupId>
     <artifactId>jboss-parent</artifactId>
     <version>46</version>
-    <relativePath></relativePath>
+    <relativePath />
   </parent>
 
   <groupId>org.jboss.pnc.build.finder</groupId>
   <artifactId>parent</artifactId>
-  <version>2.5.0</version>
+  <version>2.5.1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Build Finder Parent</name>
@@ -58,16 +58,16 @@
   <scm>
     <connection>scm:git:https://github.com/project-ncl/build-finder.git</connection>
     <developerConnection>scm:git:git@github.com:project-ncl/build-finder.git</developerConnection>
-    <tag>2.5.0</tag>
+    <tag>HEAD</tag>
     <url>https://github.com/project-ncl/build-finder</url>
   </scm>
 
   <properties>
-    <koji.hub.url></koji.hub.url>
-    <koji.web.url></koji.web.url>
+    <koji.hub.url />
+    <koji.web.url />
     <maven.compiler.release>11</maven.compiler.release>
     <mavenVersion>3.6.3</mavenVersion>
-    <pnc.url></pnc.url>
+    <pnc.url />
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <skipITs>true</skipITs>
     <version.ch.qos.logback>1.5.12</version.ch.qos.logback>
@@ -384,23 +384,23 @@
       <dependency>
         <groupId>org.jboss.pnc.build.finder</groupId>
         <artifactId>cli</artifactId>
-        <version>2.5.0</version>
+        <version>2.5.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.jboss.pnc.build.finder</groupId>
         <artifactId>core</artifactId>
-        <version>2.5.0</version>
+        <version>2.5.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>org.jboss.pnc.build.finder</groupId>
         <artifactId>core</artifactId>
-        <version>2.5.0</version>
+        <version>2.5.1-SNAPSHOT</version>
         <type>test-jar</type>
       </dependency>
       <dependency>
         <groupId>org.jboss.pnc.build.finder</groupId>
         <artifactId>report</artifactId>
-        <version>2.5.0</version>
+        <version>2.5.1-SNAPSHOT</version>
       </dependency>
       <!-- XXX: Required dependency for kotlin-stdlib-{jdk7,jdk8} (okhttp-4.10.0, 1.5.x and 1.6.x) -->
       <dependency>
@@ -1208,19 +1208,19 @@ limitations under the License.]]></inlineHeader>
             </goals>
             <configuration>
               <rules>
-                <banDistributionManagement></banDistributionManagement>
-                <banDuplicatePomDependencyVersions></banDuplicatePomDependencyVersions>
+                <banDistributionManagement />
+                <banDuplicatePomDependencyVersions />
                 <dependencyConvergence>
                   <uniqueVersions>true</uniqueVersions>
                 </dependencyConvergence>
-                <reactorModuleConvergence></reactorModuleConvergence>
+                <reactorModuleConvergence />
                 <requireJavaVersion>
                   <version>[${maven.compiler.release},)</version>
                 </requireJavaVersion>
                 <requireMavenVersion>
                   <version>${mavenVersion}</version>
                 </requireMavenVersion>
-                <requirePluginVersions></requirePluginVersions>
+                <requirePluginVersions />
                 <requireSameVersions>
                   <plugins>
                     <plugin>org.apache.maven.plugins:maven-failsafe-plugin</plugin>
@@ -1228,7 +1228,7 @@ limitations under the License.]]></inlineHeader>
                     <plugin>org.apache.maven.plugins:maven-surefire-report-plugin</plugin>
                   </plugins>
                 </requireSameVersions>
-                <requireUpperBoundDeps></requireUpperBoundDeps>
+                <requireUpperBoundDeps />
               </rules>
             </configuration>
           </execution>
